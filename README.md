@@ -1,96 +1,87 @@
-# Obsidian Sample Plugin
+# Related Notes
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+**Related Notes Finder** is an Obsidian plugin that intelligently suggests related notes, helping you uncover hidden connections and insights within your knowledge vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+---
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+# 🚧 **Under Construction: Plugin in Development** 🚧
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+> ### ⚠️ **Notice: This Plugin is a Work in Progress!** ⚠️
+>  
+> **This README outlines the intended functionality for the Related Notes Finder plugin, but the plugin is not yet fully operational as described.**  
+> 
+> I'm actively working to bring these features to life. Contributions are encouraged and appreciated! Feel free to dive in, experiment, and help shape the final product.
 
-## First time developing plugins?
+---
 
-Quick starting guide for new plugin devs:
+## Features
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+- **Fully Local and Private**: Your notes and data are never sent outside your device. All processing is done locally to ensure complete privacy.
+- **Automatic Note Linking**: The plugin analyzes your notes' content to suggest contextually related notes, without requiring manual tags or links.
+- **Easy Navigation**: Quickly access related notes in a sidebar or pop-up to deepen your understanding and make connections across your knowledge.
+- **Customization Options**: Configure how many related notes are suggested, relevance thresholds, and more.
 
-## Releasing new releases
+## Installation
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+1. Open Obsidian and go to **Settings > Community plugins**.
+2. Click on **Browse** and search for "Related Notes Finder."
+3. Click **Install** and then **Enable** the plugin.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+Alternatively, you can clone this repository and place it in your Obsidian plugins folder:
+```bash
+git clone https://github.com/JoramMillenaar/related-notes.git
 ```
 
-If you have multiple URLs, you can also do:
+## Usage
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+1. With the plugin enabled, open any note in your Obsidian vault.
+2. Use the command palette (press `Ctrl/Cmd + P`) and type "Show Related Notes" to view suggestions based on the current note's content.
+3. Suggested notes will appear in the sidebar (or your preferred location), allowing you to explore related ideas and make new connections.
 
-## API Documentation
+## Configuration
 
-See https://github.com/obsidianmd/obsidian-api
+Go to **Settings > Related Notes Finder** to customize the plugin’s behavior:
+- **Number of Related Notes**: Set how many notes to display as related.
+- **Relevance Threshold**: Adjust the similarity threshold to fine-tune which notes are shown.
+- **Appearance**: Choose where related notes appear (e.g., sidebar, pop-up, or inline).
+
+## Privacy and Security
+
+Related Notes Finder is designed with privacy as a top priority:
+- **Local Processing**: All note analysis and processing are done on your device. No data is sent outside your vault.
+- **No Third-Party Dependencies**: The plugin does not require any internet access or external API, ensuring a completely private experience.
+
+## Development
+
+Want to contribute? Here's how to set up the development environment:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/JoramMillenaar/related-notes.git
+   ```
+2. Navigate to the plugin directory and install dependencies:
+   ```bash
+   cd related-notes-finder
+   npm install
+   ```
+3. Run the plugin in development mode:
+   ```bash
+   npm run dev
+   ```
+
+For more information on developing Obsidian plugins, check out the [Obsidian Plugin API documentation](https://github.com/obsidianmd/obsidian-api).
+
+
+## Contributing
+
+Contributions are welcome! Please submit an issue or pull request to discuss improvements or suggest new features.
+
+---
+
+### License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+---
+
+With **Related Notes Finder**, explore your knowledge in a new way—intelligently, locally, and privately.
