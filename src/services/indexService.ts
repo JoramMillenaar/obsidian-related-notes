@@ -21,6 +21,7 @@ export class VectraIndexService implements IIndexService {
     async initializeIndex(): Promise<void> {
         if (!await this.isInitialized()) {
             await this.index.createIndex();
+			console.log('Index initialized')
         }
     }
 

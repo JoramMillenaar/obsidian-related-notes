@@ -1,18 +1,32 @@
 import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
-import { updateNoteIndex, removeAllNoteIndices, createManyNoteIndices } from './src/services/noteService';
+import { NoteService } from './src/services/noteService';
+import { OnnxEmbeddingService } from './src/services/embeddingService';
+import { VectraIndexService } from './src/services/indexService';
+import { MarkdownTextProcessingService } from './src/services/textProcessorService';
+import { TokenBasedChunkingService } from './src/services/textChunkingService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
 
 interface RelatedNotesSettings {
 	numberOfRelatedNotes: number;
+	indexDirectory: string;
 }
 
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 
 	async onload() {
+		const textProcessorService = new MarkdownTextProcessingService();
+		const textChunkingService = new TokenBasedChunkingService();
+		const embeddingService = new OnnxEmbeddingService();
+		// TODO: Set defaults for settings and ensure the index directory exists/is created
+		const indexService = new VectraIndexService('./.related_notes');
+		// TODO: Maybe do this elsewhere and consider race conditions by not awaiting this
+		indexService.initializeIndex();
+		const noteService = new NoteService(textProcessorService, textChunkingService, embeddingService, indexService, this.app.vault)
+
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
-			(leaf) => new RelatedNotesListView(leaf)
+			(leaf) => new RelatedNotesListView(leaf, noteService)
 		);
 
 		this.addRibbonIcon('list-ordered', 'Related Notes', () => {
@@ -23,9 +37,9 @@ export default class RelatedNotes extends Plugin {
 			id: 'related-notes-reindex-all',
 			name: 'Related Notes: Refresh relations of all notes',
 			callback: () => {
-				removeAllNoteIndices();
+				noteService.destroyAllNoteIndices();
 				const paths: string[] = this.app.vault.getAllLoadedFiles().map(file => file.path);
-				createManyNoteIndices(paths);
+				noteService.createManyNoteIndices(paths);
 			}
 		});
 		this.addCommand({
@@ -33,7 +47,7 @@ export default class RelatedNotes extends Plugin {
 			name: 'Related Notes: Refresh current note\'s relations',
 			callback: () => {
 				const current = this.app.workspace.getActiveFile();
-				if (current && current.path) { updateNoteIndex(current.path) } else { new Notice('No active note!') }
+				if (current && current.path) { new Notice('Not Implemented yet!') } else { new Notice('No active note!') }
 			}
 		});
 		this.addCommand({

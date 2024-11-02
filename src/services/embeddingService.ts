@@ -1,29 +1,28 @@
-
-import { pipeline } from '@xenova/transformers';
+import * as ort from 'onnxruntime-node';
+import { Tokenizer } from 'tokenizers';
 
 export interface IEmbeddingService {
 	generateEmbedding(text: string): Promise<Float32Array>;
 }
 
 /**
- * Simple but quality text embedder. Might replace with a custom implementation to absolutely ensure privacy
+ * Simple but quality text embedder using ONNX and Tokenizer.
+ * Ensures privacy by keeping everything local and avoiding ESM.
  */
-export class XenovaEmbeddingService implements IEmbeddingService {
-	private embedder: any;
+export class OnnxEmbeddingService implements IEmbeddingService {
+	private tokenizer: Tokenizer | null = null;
+	private session: ort.InferenceSession | null = null;
 
 	constructor() {
 		this.initializeModel();
 	}
 
 	private async initializeModel() {
-		this.embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+		this.tokenizer = Tokenizer.fromFile('path/to/tokenizer.json');
+		this.session = await ort.InferenceSession.create('path/to/model.onnx');
 	}
 
 	async generateEmbedding(text: string): Promise<Float32Array> {
-		if (!this.embedder) {
-			await this.initializeModel();
-		}
-		const embeddings = await this.embedder(text);
-		return embeddings[0];
+		// TODO: implement
 	}
 }
