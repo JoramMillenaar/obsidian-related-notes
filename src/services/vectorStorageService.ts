@@ -1,30 +1,37 @@
 import { LocalIndex } from 'vectra';
 import * as path from 'path';
 
-export interface IVectorStorageService {
-    insert(vector: Float32Array, text: string): Promise<void>; // Promise to handle async operations
+export interface IIndexService {
+    initializeIndex(): Promise<void>;
+    insert(vector: Float32Array, text: string): Promise<void>;
     search(vector: Float32Array, k: number): Promise<{ distance: number, text: string }[]>;
-    dropDb(): Promise<void>;
+    isInitialized(): Promise<boolean>;
+    dropIndex(): Promise<void>;
 }
 
-export class VectraService implements IVectorStorageService {
+export class VectraIndexService implements IIndexService {
     private index: LocalIndex;
+    private indexPath: string;
 
     constructor(indexDirectory: string) {
-        this.index = new LocalIndex(path.join(indexDirectory));
-        this.initializeIndex();
+        this.indexPath = path.join(indexDirectory);
+        this.index = new LocalIndex(this.indexPath);
     }
 
-    private async initializeIndex() {
-        if (!await this.index.isIndexCreated()) {
+    async initializeIndex(): Promise<void> {
+        if (!await this.isInitialized()) {
             await this.index.createIndex();
         }
+    }
+
+    async isInitialized(): Promise<boolean> {
+        return this.index.isIndexCreated();
     }
 
     async insert(vector: Float32Array, text: string): Promise<void> {
         await this.index.insertItem({
             vector: Array.from(vector),
-			metadata: { text }
+            metadata: { text }
         });
     }
 
@@ -32,11 +39,11 @@ export class VectraService implements IVectorStorageService {
         const results = await this.index.queryItems(Array.from(vector), k);
         return results.map(result => ({
             distance: result.score,
-			text: result.item.metadata
+            text: result.item.metadata.text.toString()
         }));
     }
 
-    async dropDb(): Promise<void> {
+    async dropIndex(): Promise<void> {
         await this.index.deleteIndex();
     }
 }
