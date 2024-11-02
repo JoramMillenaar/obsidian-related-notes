@@ -1,6 +1,6 @@
 import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
 import { updateNoteIndex, removeAllNoteIndices, createManyNoteIndices } from './src/services/noteService';
-import { ExampleView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
+import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
 
 interface RelatedNotesSettings {
 	numberOfRelatedNotes: number;
@@ -12,7 +12,7 @@ export default class RelatedNotes extends Plugin {
 	async onload() {
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
-			(leaf) => new ExampleView(leaf)
+			(leaf) => new RelatedNotesListView(leaf)
 		);
 
 		this.addRibbonIcon('list-ordered', 'Related Notes', () => {
