@@ -5,24 +5,39 @@ export interface IEmbeddingService {
 	generateEmbedding(text: string): Promise<Float32Array>;
 }
 
-/**
- * Simple but quality text embedder using ONNX and Tokenizer.
- * Ensures privacy by keeping everything local and avoiding ESM.
- */
-export class OnnxEmbeddingService implements IEmbeddingService {
-	private tokenizer: Tokenizer | null = null;
+export class ONNXEmbeddingService implements IEmbeddingService {
+	private modelPath: string;
 	private session: ort.InferenceSession | null = null;
+	private tokenizer: Tokenizer;
 
-	constructor() {
-		this.initializeModel();
+	constructor(modelPath: string, tokenizerPath: string) {
+		this.modelPath = modelPath;
+		this.tokenizer = Tokenizer.fromFile(tokenizerPath);
 	}
 
-	private async initializeModel() {
-		this.tokenizer = Tokenizer.fromFile('path/to/tokenizer.json');
-		this.session = await ort.InferenceSession.create('path/to/model.onnx');
+	async initialize(): Promise<void> {
+		if (!this.session) {
+			this.session = await ort.InferenceSession.create(this.modelPath);
+		}
 	}
 
 	async generateEmbedding(text: string): Promise<Float32Array> {
-		// TODO: implement
+		if (!this.session) {
+			throw new Error("Model session not initialized. Call 'initialize' before generating embeddings.");
+		}
+
+		const tokenIds = await this.tokenizeTextToIds(text);
+		const inputTensor = new ort.Tensor('int64', new BigInt64Array(tokenIds.map(BigInt)), [1, tokenIds.length]);
+
+		const feeds = { input_ids: inputTensor };
+		const results = await this.session.run(feeds);
+
+		const output = results['output_name']; // TODO: Replace 'output_name' with actual model output name
+		return output.data as Float32Array;
+	}
+
+	private async tokenizeTextToIds(text: string): Promise<number[]> {
+		const encoded = await this.tokenizer.encode(text);
+		return encoded.getIds();
 	}
 }

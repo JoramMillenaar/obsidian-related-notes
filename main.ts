@@ -1,6 +1,6 @@
 import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
 import { NoteService } from './src/services/noteService';
-import { OnnxEmbeddingService } from './src/services/embeddingService';
+import { ONNXEmbeddingService } from './src/services/embeddingService';
 import { VectraIndexService } from './src/services/indexService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
 import { TokenBasedChunkingService } from './src/services/textChunkingService';
@@ -17,7 +17,7 @@ export default class RelatedNotes extends Plugin {
 	async onload() {
 		const textProcessorService = new MarkdownTextProcessingService();
 		const textChunkingService = new TokenBasedChunkingService();
-		const embeddingService = new OnnxEmbeddingService();
+		const embeddingService = new ONNXEmbeddingService('./all-MiniLM-L6-v2.onnx', './tokenizer.json');
 		// TODO: Set defaults for settings and ensure the index directory exists/is created
 		const indexService = new VectraIndexService('./.related_notes');
 		// TODO: Maybe do this elsewhere and consider race conditions by not awaiting this
