@@ -1,5 +1,5 @@
-import * as ort from 'onnxruntime-node';
-import { Tokenizer } from 'tokenizers';
+import * as ort from 'onnxruntime-web';
+import { Tokenizer } from 'tokenizers'; // TODO: find a web-friendly way of tokenizing
 
 export interface IEmbeddingService {
 	generateEmbedding(text: string): Promise<Float32Array>;

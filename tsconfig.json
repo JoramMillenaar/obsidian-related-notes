@@ -13,7 +13,7 @@
 		"importHelpers": true,
 		"isolatedModules": true,
 		"strictNullChecks": true,
-		"typeRoots": ["./node_modules/@types", "./types"],
+		"typeRoots": ["./node_modules/@types"],
 		"lib": [
 			"DOM",
 			"ES2020"
@@ -21,6 +21,5 @@
 	},
 	"include": [
 		"src/**/*.ts",
-		"./types"
 	]
 }
