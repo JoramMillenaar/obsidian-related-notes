@@ -1,7 +1,7 @@
 import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
 import { NoteService } from './src/services/noteService';
-import { ONNXEmbeddingService } from './src/services/embeddingService';
-import { VectraIndexService } from './src/services/indexService';
+import { MockEmbeddingService } from './tests/mocks/mockImbedding';
+import { MockIndexService } from './tests/mocks/mockIndex';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
 import { TokenBasedChunkingService } from './src/services/textChunkingService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
@@ -17,9 +17,9 @@ export default class RelatedNotes extends Plugin {
 	async onload() {
 		const textProcessorService = new MarkdownTextProcessingService();
 		const textChunkingService = new TokenBasedChunkingService();
-		const embeddingService = new ONNXEmbeddingService('./all-MiniLM-L6-v2.onnx', './tokenizer.json');
+		const embeddingService = new MockEmbeddingService();
 		// TODO: Set defaults for settings and ensure the index directory exists/is created
-		const indexService = new VectraIndexService('./.related_notes');
+		const indexService = new MockIndexService();
 		// TODO: Maybe do this elsewhere and consider race conditions by not awaiting this
 		indexService.initializeIndex();
 		const noteService = new NoteService(textProcessorService, textChunkingService, embeddingService, indexService, this.app.vault)
@@ -38,7 +38,7 @@ export default class RelatedNotes extends Plugin {
 			name: 'Related Notes: Refresh relations of all notes',
 			callback: () => {
 				noteService.destroyAllNoteIndices();
-				const paths: string[] = this.app.vault.getAllLoadedFiles().map(file => file.path);
+				const paths: string[] = this.app.vault.getAllLoadedFiles().map(file => file.path).filter(path => path.endsWith('.md'));
 				noteService.createManyNoteIndices(paths);
 			}
 		});

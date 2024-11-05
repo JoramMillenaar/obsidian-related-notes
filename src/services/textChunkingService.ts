@@ -23,7 +23,7 @@ export class TokenBasedChunkingService implements ITextChunkingService {
                 chunks.push(currentChunk.join(' '));
                 currentChunk = [];
             }
-            currentChunk.push(term.text);
+            currentChunk.push(term);
         }
 
         if (currentChunk.length) {
