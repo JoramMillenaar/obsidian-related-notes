@@ -1,15 +1,14 @@
 import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
-import { NoteService, RelatedNote } from '../services/noteService';
+import { AppController } from 'src/controller';
 
 export const VIEW_TYPE_RELATED_NOTES = 'related-notes';
 
 export class RelatedNotesListView extends ItemView {
-	private noteService: NoteService;
-	private notes: RelatedNote[] = [];
+	private controller: AppController;
 
-	constructor(leaf: WorkspaceLeaf, noteService: NoteService) {
+	constructor(leaf: WorkspaceLeaf, controller: AppController) {
 		super(leaf);
-		this.noteService = noteService;
+		this.controller = controller;
 	}
 
 	getViewType() {
@@ -30,16 +29,6 @@ export class RelatedNotesListView extends ItemView {
 		// }
 	};
 
-	private activeNotePath = () => {
-		const current = this.app.workspace.getActiveFile();
-		if (current && current.path) {
-			return current.path;
-		} else {
-			new Notice('No active note!');
-			return "";
-		}
-	};
-
 	async onOpen() {
 		const parent = this.containerEl.children[1];
 		parent.empty();
@@ -47,13 +36,9 @@ export class RelatedNotesListView extends ItemView {
 		const container = parent.createEl('div', { cls: 'tag-container node-insert-event' });
 		const list = container.createEl('div');
 		
-		const activePath = this.activeNotePath();
-		if (activePath) {
-			// TODO: get amount of notes to fetch from settings
-			this.notes = await this.noteService.listRelatedNotes(activePath, 5);
-		}
+		const notes = await this.controller.getActiveNoteRelations(5);
 
-		this.notes.forEach(note => {
+		notes.forEach(note => {
 			const listItem = list.createEl('div', { cls: 'tree-item' });
 			const itemSelf = listItem.createEl('div', { cls: 'tree-item-self tag-pane-tag is-clickable' });
 

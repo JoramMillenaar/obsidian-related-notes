@@ -1,10 +1,7 @@
 import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
 import { NoteService } from './src/services/noteService';
-import { MockEmbeddingService } from './tests/mocks/mockImbedding';
-import { MockIndexService } from './tests/mocks/mockIndex';
-import { MarkdownTextProcessingService } from './src/services/textProcessorService';
-import { TokenBasedChunkingService } from './src/services/textChunkingService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
+import { AppController } from './src/controller';
 
 interface RelatedNotesSettings {
 	numberOfRelatedNotes: number;
@@ -15,18 +12,12 @@ export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 
 	async onload() {
-		const textProcessorService = new MarkdownTextProcessingService();
-		const textChunkingService = new TokenBasedChunkingService();
-		const embeddingService = new MockEmbeddingService();
-		// TODO: Set defaults for settings and ensure the index directory exists/is created
-		const indexService = new MockIndexService();
-		// TODO: Maybe do this elsewhere and consider race conditions by not awaiting this
-		indexService.initializeIndex();
-		const noteService = new NoteService(textProcessorService, textChunkingService, embeddingService, indexService, this.app.vault)
+		const noteService = new NoteService(this.app);
+		const controller = new AppController(noteService);
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
-			(leaf) => new RelatedNotesListView(leaf, noteService)
+			(leaf) => new RelatedNotesListView(leaf, controller)
 		);
 
 		this.addRibbonIcon('list-ordered', 'Related Notes', () => {
@@ -37,17 +28,14 @@ export default class RelatedNotes extends Plugin {
 			id: 'related-notes-reindex-all',
 			name: 'Related Notes: Refresh relations of all notes',
 			callback: () => {
-				noteService.destroyAllNoteIndices();
-				const paths: string[] = this.app.vault.getAllLoadedFiles().map(file => file.path).filter(path => path.endsWith('.md'));
-				noteService.createManyNoteIndices(paths);
+				controller.reindexAll();
 			}
 		});
 		this.addCommand({
 			id: 'related-notes-reindex-note',
 			name: 'Related Notes: Refresh current note\'s relations',
 			callback: () => {
-				const current = this.app.workspace.getActiveFile();
-				if (current && current.path) { new Notice('Not Implemented yet!') } else { new Notice('No active note!') }
+				controller.reindexCurrentActive();
 			}
 		});
 		this.addCommand({
