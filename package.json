@@ -22,7 +22,10 @@
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
+		"@types/p-limit": "^2.1.0",
 		"@types/turndown": "^5.0.5",
+		"axios": "^1.7.7",
+		"p-limit": "^6.1.0",
 		"remove-markdown": "^0.5.5",
 		"turndown": "^7.2.0"
 	}

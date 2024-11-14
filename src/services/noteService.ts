@@ -1,7 +1,7 @@
 import { App, Notice, TFile } from 'obsidian';
 
 export type RelatedNote = {
-	match: number;
+	similarity: number;
 	title: string;
 	path: string;
 };
@@ -16,7 +16,7 @@ export class NoteService {
 		private app: App
 	) { }
 
-	activeNotePath = () => {
+	activeNotePath() {
 		const current = this.app.workspace.getActiveFile();
 		if (current && current.path) {
 			return current.path;
@@ -24,7 +24,11 @@ export class NoteService {
 			new Notice('No active note!');
 			return "";
 		}
-	};
+	}
+
+	getAllNotePaths(): string[] {
+		return this.app.vault.getAllLoadedFiles().map(file => file.path).filter(path => path.endsWith('.md'));
+	}
 
 	async getNoteContent(path: string): Promise<string> {
 		const file = this.app.vault.getAbstractFileByPath(path);

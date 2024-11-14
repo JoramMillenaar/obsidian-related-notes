@@ -30,12 +30,16 @@ export class RelatedNotesListView extends ItemView {
 	};
 
 	async onOpen() {
+		await this.render();
+	}
+
+	async render() {
 		const parent = this.containerEl.children[1];
 		parent.empty();
 
 		const container = parent.createEl('div', { cls: 'tag-container node-insert-event' });
 		const list = container.createEl('div');
-		
+
 		const notes = await this.controller.getActiveNoteRelations(5);
 
 		notes.forEach(note => {
@@ -49,8 +53,12 @@ export class RelatedNotesListView extends ItemView {
 			itemInnerText.createEl('span', { cls: 'tree-item-inner-text', text: note.title });
 
 			const flairOuter = itemSelf.createEl('div', { cls: 'tree-item-flair-outer' });
-			flairOuter.createEl('span', { cls: 'tag-pane-tag-count tree-item-flair', text: `${(note.match * 100).toFixed(0)}%` });
+			flairOuter.createEl('span', { cls: 'tag-pane-tag-count tree-item-flair', text: `${(note.similarity * 100).toFixed(1)}%` });
 		});
+	}
+
+	async refresh() {
+		await this.render();
 	}
 
 	async onClose() {
