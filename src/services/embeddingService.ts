@@ -1,5 +1,5 @@
 import { AxiosInstance } from 'axios';
-import { DefaultApi, EmbeddingsIdPutRequest, EmbeddingsPostRequest, SimilarPostRequest } from './generated_api/api';
+import { DefaultApi, EmbeddingsPutRequest, EmbeddingsPostRequest, SimilarPostRequest } from './generated_api/api';
 
 export class EmbeddingService {
     private apiClient: DefaultApi;
@@ -9,11 +9,12 @@ export class EmbeddingService {
     }
 
     async update(path: string, text: string): Promise<void> {
-        const requestBody: EmbeddingsIdPutRequest = {
+        const requestBody: EmbeddingsPutRequest = {
+			id: path,
             text: text,
             metadata: { path }
         };
-        await this.apiClient.embeddingsIdPut(path, requestBody).then(() => {
+        await this.apiClient.embeddingsPut(requestBody).then(() => {
             console.log('Embedding updated successfully');
         }).catch((error) => {
             console.error('Failed to update embedding:', error);

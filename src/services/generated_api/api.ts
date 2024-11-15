@@ -39,38 +39,6 @@ export interface EmbeddingsIdDelete404Response {
 /**
  * 
  * @export
- * @interface EmbeddingsIdPut404Response
- */
-export interface EmbeddingsIdPut404Response {
-    /**
-     * 
-     * @type {string}
-     * @memberof EmbeddingsIdPut404Response
-     */
-    'error'?: string;
-}
-/**
- * 
- * @export
- * @interface EmbeddingsIdPutRequest
- */
-export interface EmbeddingsIdPutRequest {
-    /**
-     * The new text to update the embedding with.
-     * @type {string}
-     * @memberof EmbeddingsIdPutRequest
-     */
-    'text'?: string;
-    /**
-     * Optional metadata to update along with the text.
-     * @type {{ [key: string]: any; }}
-     * @memberof EmbeddingsIdPutRequest
-     */
-    'metadata'?: { [key: string]: any; };
-}
-/**
- * 
- * @export
  * @interface EmbeddingsPost201Response
  */
 export interface EmbeddingsPost201Response {
@@ -122,6 +90,44 @@ export interface EmbeddingsPostRequest {
      * Optional metadata associated with the text.
      * @type {{ [key: string]: any; }}
      * @memberof EmbeddingsPostRequest
+     */
+    'metadata'?: { [key: string]: any; };
+}
+/**
+ * 
+ * @export
+ * @interface EmbeddingsPut404Response
+ */
+export interface EmbeddingsPut404Response {
+    /**
+     * 
+     * @type {string}
+     * @memberof EmbeddingsPut404Response
+     */
+    'error'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface EmbeddingsPutRequest
+ */
+export interface EmbeddingsPutRequest {
+    /**
+     * The ID of the embedding to update.
+     * @type {string}
+     * @memberof EmbeddingsPutRequest
+     */
+    'id': string;
+    /**
+     * The new text to update the embedding with.
+     * @type {string}
+     * @memberof EmbeddingsPutRequest
+     */
+    'text': string;
+    /**
+     * Optional metadata to update along with the text.
+     * @type {{ [key: string]: any; }}
+     * @memberof EmbeddingsPutRequest
      */
     'metadata'?: { [key: string]: any; };
 }
@@ -241,46 +247,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Updates the embedding of text with the specified ID.
-         * @summary Update an existing embedding by ID
-         * @param {string} id The ID of the embedding to update.
-         * @param {EmbeddingsIdPutRequest} embeddingsIdPutRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        embeddingsIdPut: async (id: string, embeddingsIdPutRequest: EmbeddingsIdPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'id' is not null or undefined
-            assertParamExists('embeddingsIdPut', 'id', id)
-            // verify required parameter 'embeddingsIdPutRequest' is not null or undefined
-            assertParamExists('embeddingsIdPut', 'embeddingsIdPutRequest', embeddingsIdPutRequest)
-            const localVarPath = `/embeddings/{id}`
-                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(embeddingsIdPutRequest, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          * Embeds provided text and stores it with the given ID and metadata. Supports large texts by splitting into multiple embeddings.
          * @summary Embed and store the text
          * @param {EmbeddingsPostRequest} embeddingsPostRequest 
@@ -310,6 +276,42 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(embeddingsPostRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Updates the embedding of text with the specified ID.
+         * @summary Update an existing embedding by ID
+         * @param {EmbeddingsPutRequest} embeddingsPutRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        embeddingsPut: async (embeddingsPutRequest: EmbeddingsPutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'embeddingsPutRequest' is not null or undefined
+            assertParamExists('embeddingsPut', 'embeddingsPutRequest', embeddingsPutRequest)
+            const localVarPath = `/embeddings`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(embeddingsPutRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -388,20 +390,6 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Updates the embedding of text with the specified ID.
-         * @summary Update an existing embedding by ID
-         * @param {string} id The ID of the embedding to update.
-         * @param {EmbeddingsIdPutRequest} embeddingsIdPutRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async embeddingsIdPut(id: string, embeddingsIdPutRequest: EmbeddingsIdPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.embeddingsIdPut(id, embeddingsIdPutRequest, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.embeddingsIdPut']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
          * Embeds provided text and stores it with the given ID and metadata. Supports large texts by splitting into multiple embeddings.
          * @summary Embed and store the text
          * @param {EmbeddingsPostRequest} embeddingsPostRequest 
@@ -412,6 +400,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.embeddingsPost(embeddingsPostRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.embeddingsPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Updates the embedding of text with the specified ID.
+         * @summary Update an existing embedding by ID
+         * @param {EmbeddingsPutRequest} embeddingsPutRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async embeddingsPut(embeddingsPutRequest: EmbeddingsPutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.embeddingsPut(embeddingsPutRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.embeddingsPut']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -457,17 +458,6 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.embeddingsIdDelete(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Updates the embedding of text with the specified ID.
-         * @summary Update an existing embedding by ID
-         * @param {string} id The ID of the embedding to update.
-         * @param {EmbeddingsIdPutRequest} embeddingsIdPutRequest 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        embeddingsIdPut(id: string, embeddingsIdPutRequest: EmbeddingsIdPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
-            return localVarFp.embeddingsIdPut(id, embeddingsIdPutRequest, options).then((request) => request(axios, basePath));
-        },
-        /**
          * Embeds provided text and stores it with the given ID and metadata. Supports large texts by splitting into multiple embeddings.
          * @summary Embed and store the text
          * @param {EmbeddingsPostRequest} embeddingsPostRequest 
@@ -476,6 +466,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         embeddingsPost(embeddingsPostRequest: EmbeddingsPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<EmbeddingsPost201Response> {
             return localVarFp.embeddingsPost(embeddingsPostRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Updates the embedding of text with the specified ID.
+         * @summary Update an existing embedding by ID
+         * @param {EmbeddingsPutRequest} embeddingsPutRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        embeddingsPut(embeddingsPutRequest: EmbeddingsPutRequest, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.embeddingsPut(embeddingsPutRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * Finds and returns IDs, similarity values, and metadata of texts that are most similar to the provided text based on a similarity threshold.
@@ -521,19 +521,6 @@ export class DefaultApi extends BaseAPI {
     }
 
     /**
-     * Updates the embedding of text with the specified ID.
-     * @summary Update an existing embedding by ID
-     * @param {string} id The ID of the embedding to update.
-     * @param {EmbeddingsIdPutRequest} embeddingsIdPutRequest 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public embeddingsIdPut(id: string, embeddingsIdPutRequest: EmbeddingsIdPutRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).embeddingsIdPut(id, embeddingsIdPutRequest, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
      * Embeds provided text and stores it with the given ID and metadata. Supports large texts by splitting into multiple embeddings.
      * @summary Embed and store the text
      * @param {EmbeddingsPostRequest} embeddingsPostRequest 
@@ -543,6 +530,18 @@ export class DefaultApi extends BaseAPI {
      */
     public embeddingsPost(embeddingsPostRequest: EmbeddingsPostRequest, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).embeddingsPost(embeddingsPostRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Updates the embedding of text with the specified ID.
+     * @summary Update an existing embedding by ID
+     * @param {EmbeddingsPutRequest} embeddingsPutRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public embeddingsPut(embeddingsPutRequest: EmbeddingsPutRequest, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).embeddingsPut(embeddingsPutRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

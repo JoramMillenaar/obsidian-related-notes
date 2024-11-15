@@ -65,6 +65,7 @@ export default class RelatedNotes extends Plugin {
 
 		if (leaves.length > 0) {
 			leaf = leaves[0];
+			// @ts-ignore
 			leaf.view.render();
 		} else {
 			leaf = workspace.getRightLeaf(false);
