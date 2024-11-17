@@ -21,7 +21,6 @@ export class RelatedNotesListView extends ItemView {
 
 	private openNote = (path: string) => {
 		const file = this.app.vault.getAbstractFileByPath(path);
-
 		if (file instanceof TFile) {
 			this.app.workspace.getLeaf(false).openFile(file);
 		} else {

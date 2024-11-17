@@ -16,7 +16,7 @@ interface RelatedNotesSettings {
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private serverProcess: ChildProcess | null = null;
-	private controller: AppController | null = null;
+	private controller: AppController;
 
 	async onload() {
 		this.serverProcess = await this.startServer(3000);
@@ -45,14 +45,14 @@ export default class RelatedNotes extends Plugin {
 			id: 'related-notes-reindex-all',
 			name: 'Related Notes: Refresh relations of all notes',
 			callback: () => {
-				this.controller?.reindexAll();
+				this.controller.reindexAll();
 			}
 		});
 		this.addCommand({
 			id: 'related-notes-reindex-note',
 			name: 'Related Notes: Refresh current note\'s relations',
 			callback: () => {
-				this.controller?.reindexCurrentActive();
+				this.controller.reindexCurrentActive();
 			}
 		});
 		this.addCommand({
@@ -64,7 +64,7 @@ export default class RelatedNotes extends Plugin {
 		});
 
 		// Listen for active file changes
-		this.app.workspace.on('active-leaf-change', () => {
+		this.app.workspace.on('file-open', () => {
 			this.updateRelatedNotesView();
 		});
 
