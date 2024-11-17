@@ -1,10 +1,12 @@
-import { Plugin, Notice, WorkspaceLeaf } from 'obsidian';
+import { Plugin, Notice, WorkspaceLeaf, FileSystemAdapter } from 'obsidian';
 import { NoteService } from './src/services/noteService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
 import { AppController } from './src/controller';
 import { EmbeddingService } from './src/services/embeddingService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
 import axios from 'axios';
+import { ChildProcess, spawn } from 'child_process';
+import path from 'path';
 
 interface RelatedNotesSettings {
 	numberOfRelatedNotes: number;
@@ -13,11 +15,13 @@ interface RelatedNotesSettings {
 
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
+	private serverProcess: ChildProcess | null = null;
 
 	async onload() {
+		this.serverProcess = this.startServer(3000);
 		const axiosInstance = axios.create({
 			baseURL: 'http://localhost:3000',
-			headers: {'Content-Type': 'application/json'}
+			headers: { 'Content-Type': 'application/json' }
 		});
 		const textProcessor = new MarkdownTextProcessingService();
 		const embeddingService = new EmbeddingService(axiosInstance);
@@ -55,6 +59,11 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	onunload() {
+		if (this.serverProcess) {
+			this.serverProcess.kill();
+			this.serverProcess = null;
+			console.log('Server process terminated.');
+		}
 	}
 
 	async activateView() {
@@ -75,4 +84,39 @@ export default class RelatedNotes extends Plugin {
 
 		workspace.revealLeaf(leaf);
 	}
+
+	private startServer(port: number) {
+		if (this.app.vault.adapter instanceof FileSystemAdapter) { // true if desktop
+			const vaultDir = this.app.vault.adapter.getBasePath()
+			const pluginDir = path.join(vaultDir, '.obsidian', 'plugins', 'related-notes');
+			const env = { ...process.env };
+			env.PATH = `${env.PATH}:/usr/local/bin`;
+			
+			const serverProcess = spawn('relate-text', ['start-server', '--port', port.toString()], {
+				cwd: pluginDir,
+				stdio: 'inherit',
+				shell: true,
+				env
+			});
+
+			serverProcess.on('error', (err) => {
+				console.error('Failed to start server:', err);
+			});
+
+			serverProcess.on('exit', (code) => {
+				if (code === 0) {
+					console.log('Server exited successfully.');
+				} else {
+					console.error(`Server exited with code ${code}.`);
+				}
+			});
+
+			return serverProcess;
+		} else {
+			new Notice('Mobile not yet supported');
+			return null;
+		}
+	}
 }
+
+

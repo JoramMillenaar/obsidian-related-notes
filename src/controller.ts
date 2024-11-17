@@ -1,3 +1,4 @@
+import { Notice } from "obsidian";
 import { EmbeddingService } from "./services/embeddingService";
 import { NoteService, RelatedNote } from "./services/noteService";
 import { ITextProcessingService } from "./services/textProcessorService";
@@ -23,8 +24,10 @@ export class AppController {
 	}
 
 	async reindexAll(): Promise<void> {
+		new Notice('Indexing...')
 		await this.embeddingService.deleteAll();
-		this.indexAll();
+		await this.indexAll();
+		new Notice('Finished Indexing')
 	}
 
 	async indexAll(): Promise<void> {

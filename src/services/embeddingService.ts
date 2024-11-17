@@ -2,45 +2,45 @@ import { AxiosInstance } from 'axios';
 import { DefaultApi, EmbeddingsPutRequest, EmbeddingsPostRequest, SimilarPostRequest } from './generated_api/api';
 
 export class EmbeddingService {
-    private apiClient: DefaultApi;
+	private apiClient: DefaultApi;
 
-    constructor(apiClient: AxiosInstance, private basePath?: string) {
-        this.apiClient = new DefaultApi(undefined, basePath, apiClient);
-    }
+	constructor(apiClient: AxiosInstance, private basePath?: string) {
+		this.apiClient = new DefaultApi(undefined, basePath, apiClient);
+	}
 
-    async update(path: string, text: string): Promise<void> {
-        const requestBody: EmbeddingsPutRequest = {
+	async update(path: string, text: string): Promise<void> {
+		const requestBody: EmbeddingsPutRequest = {
 			id: path,
-            text: text,
-            metadata: { path }
-        };
-        await this.apiClient.embeddingsPut(requestBody).then(() => {
-            console.log('Embedding updated successfully');
-        }).catch((error) => {
-            console.error('Failed to update embedding:', error);
-        });
-    }
+			text: text,
+			metadata: { path }
+		};
+		await this.apiClient.embeddingsPut(requestBody).then(() => {
+			console.log('Embedding updated successfully');
+		}).catch((error) => {
+			console.error('Failed to update embedding:', error);
+		});
+	}
 
-    async deleteAll(): Promise<void> {
-        await this.apiClient.embeddingsAllDelete().then(() => {
-            console.log('All embeddings deleted successfully');
-        }).catch((error) => {
-            console.error('Failed to delete all embeddings:', error);
-        });
-    }
+	async deleteAll(): Promise<void> {
+		await this.apiClient.embeddingsAllDelete().then(() => {
+			console.log('All embeddings deleted successfully');
+		}).catch((error) => {
+			console.error('Failed to delete all embeddings:', error);
+		});
+	}
 
-    async create(path: string, text: string): Promise<void> {
-        const requestBody: EmbeddingsPostRequest = {
-            id: path,
-            text: text,
-            metadata: { path }
-        };
-        await this.apiClient.embeddingsPost(requestBody).then((response) => {
-            console.log('Embedding created with ID:', response.data.id);
-        }).catch((error) => {
-            console.error('Failed to create embedding:', error);
-        });
-    }
+	async create(path: string, text: string): Promise<void> {
+		const requestBody: EmbeddingsPostRequest = {
+			id: path,
+			text: text,
+			metadata: { path }
+		};
+		await this.apiClient.embeddingsPost(requestBody).then((response) => {
+			console.log('Embedding created with ID:', response.data.id);
+		}).catch((error) => {
+			console.error('Failed to create embedding:', error);
+		});
+	}
 
 	async fetchSimilar(text: string, limit: number): Promise<{ id: string, similarity: number }[]> {
 		const request: SimilarPostRequest = {
@@ -58,5 +58,4 @@ export class EmbeddingService {
 			return [];
 		});
 	}
-	
 }
