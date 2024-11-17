@@ -1,4 +1,4 @@
-import { Plugin, Notice, WorkspaceLeaf, FileSystemAdapter } from 'obsidian';
+import { Plugin, FileSystemAdapter, Notice } from 'obsidian';
 import { NoteService } from './src/services/noteService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
 import { AppController } from './src/controller';
@@ -16,9 +16,11 @@ interface RelatedNotesSettings {
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private serverProcess: ChildProcess | null = null;
+	private controller: AppController | null = null;
 
 	async onload() {
 		this.serverProcess = await this.startServer(3000);
+
 		const axiosInstance = axios.create({
 			baseURL: 'http://localhost:3000',
 			headers: { 'Content-Type': 'application/json' }
@@ -26,12 +28,13 @@ export default class RelatedNotes extends Plugin {
 		const textProcessor = new MarkdownTextProcessingService();
 		const embeddingService = new EmbeddingService(axiosInstance);
 		const noteService = new NoteService(this.app);
-		const controller = new AppController(noteService, embeddingService, textProcessor);
-		controller.reindexAll();
+		this.controller = new AppController(noteService, embeddingService, textProcessor);
+
+		this.controller.reindexAll();
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
-			(leaf) => new RelatedNotesListView(leaf, controller)
+			(leaf) => new RelatedNotesListView(leaf, this.controller)
 		);
 
 		this.addRibbonIcon('list-ordered', 'Related Notes', () => {
@@ -42,20 +45,32 @@ export default class RelatedNotes extends Plugin {
 			id: 'related-notes-reindex-all',
 			name: 'Related Notes: Refresh relations of all notes',
 			callback: () => {
-				controller.reindexAll();
+				this.controller?.reindexAll();
 			}
 		});
 		this.addCommand({
 			id: 'related-notes-reindex-note',
 			name: 'Related Notes: Refresh current note\'s relations',
 			callback: () => {
-				controller.reindexCurrentActive();
+				this.controller?.reindexCurrentActive();
 			}
 		});
 		this.addCommand({
 			id: 'related-notes-show-related',
 			name: 'Related Notes: Show Related Notes',
-			callback: () => { this.activateView() }
+			callback: () => {
+				this.activateView();
+			}
+		});
+
+		// Listen for active file changes
+		this.app.workspace.on('active-leaf-change', () => {
+			this.updateRelatedNotesView();
+		});
+
+		// Ensure the view is present in the sidebar on load
+		this.app.workspace.onLayoutReady(() => {
+			this.ensureRelatedNotesView();
 		});
 	}
 
@@ -65,26 +80,50 @@ export default class RelatedNotes extends Plugin {
 			this.serverProcess = null;
 			console.log('Server process terminated.');
 		}
+
+		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
 	}
 
-	async activateView() {
-		const { workspace } = this.app;
+	private ensureRelatedNotesView() {
+		if (!this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).length) {
+			const leaf = this.app.workspace.getRightLeaf(false);
+			if (leaf) {
+				leaf.setViewState({
+					type: VIEW_TYPE_RELATED_NOTES,
+					active: true,
+				});
+			}
+		}
+	}
 
-		let leaf: WorkspaceLeaf | null = null;
-		const leaves = workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES);
+	private updateRelatedNotesView() {
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile) return;
 
-		if (leaves.length > 0) {
-			leaf = leaves[0];
-			// @ts-ignore
-			leaf.view.render();
-		} else {
-			leaf = workspace.getRightLeaf(false);
-			if (!leaf) { new Notice("Something went wrong"); return }
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES);
+		if (leaves.length) {
+			const view = leaves[0].view as RelatedNotesListView;
+			view.refresh();
+		}
+	}
+
+	private async activateView() {
+		let leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES)[0];
+	
+		if (!leaf) {
+			const newLeaf = this.app.workspace.getRightLeaf(true);
+			if (!newLeaf) {
+				new Notice('Unable to activate the Related Notes view.');
+				return;
+			}
+	
+			leaf = newLeaf;
 			await leaf.setViewState({ type: VIEW_TYPE_RELATED_NOTES, active: true });
 		}
-
-		workspace.revealLeaf(leaf);
+		this.app.workspace.revealLeaf(leaf);
 	}
+	
+
 
 	private async startServer(port: number): Promise<ChildProcess> {
 		if (this.app.vault.adapter instanceof FileSystemAdapter) { // true if desktop
@@ -105,8 +144,7 @@ export default class RelatedNotes extends Plugin {
 					const message = data.toString();
 					console.log(`Server stdout: ${message}`);
 
-					// Detect server ready message
-					if (message.includes('Listening on')) { // Update with the actual confirmation text
+					if (message.includes('Listening on')) {
 						console.log('Server is ready!');
 						resolve(serverProcess);
 					}
@@ -128,5 +166,3 @@ export default class RelatedNotes extends Plugin {
 		}
 	}
 }
-
-

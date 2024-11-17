@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Notice } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Notice, TFile } from 'obsidian';
 import { AppController } from 'src/controller';
 
 export const VIEW_TYPE_RELATED_NOTES = 'related-notes';
@@ -20,14 +20,14 @@ export class RelatedNotesListView extends ItemView {
 	}
 
 	private openNote = (path: string) => {
-		new Notice('Opening notes not implemented yet');
-		// const file = this.app.vault.getAbstractFileByPath(path);
-		// if (file) {
-		// 	this.app.workspace.getLeaf(true).openFile(file);
-		// } else {
-		// 	new Notice("Error: Note not found!");
-		// }
-	};
+		const file = this.app.vault.getAbstractFileByPath(path);
+
+		if (file instanceof TFile) {
+			this.app.workspace.getLeaf(false).openFile(file);
+		} else {
+			new Notice("Error: Note not found or invalid file type!");
+		}
+	}
 
 	async onOpen() {
 		await this.render();
