@@ -76,7 +76,18 @@ For more information on developing Obsidian plugins, check out the [Obsidian Plu
 
 Contributions are welcome! Please submit an issue or pull request to discuss improvements or suggest new features.
 
----
+
+### TODO
+- Rid the Local API and replace by the CLI and make it ephemeral (something that does not need manual closing).
+- Look into making note-specific commands editorCallbacks
+- Make sure the onload method is non-blocking, defer any data fetching to the onLayoutReady callback
+- Implement a settings tab
+- Add support for reflecting file actions like creating, updating and deleting files to the index
+- Added plugin loading progress updates to the status bar
+- Fix getAllNotePaths to use this.app.vault.getMarkdownFiles()
+- Look into file parsing using this.app.metadataCache.getFileCache(file) instead of using regex on the raw file content
+- See if there's a better template to extend the custom view from
+
 
 ### License
 

@@ -70,7 +70,7 @@ export default class RelatedNotes extends Plugin {
 
 		// Ensure the view is present in the sidebar on load
 		this.app.workspace.onLayoutReady(() => {
-			this.ensureRelatedNotesView();
+			this.openRelatedNotesView();
 		});
 	}
 
@@ -84,45 +84,37 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
 	}
 
-	private ensureRelatedNotesView() {
-		if (!this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).length) {
-			const leaf = this.app.workspace.getRightLeaf(false);
-			if (leaf) {
-				leaf.setViewState({
-					type: VIEW_TYPE_RELATED_NOTES,
-					active: true,
-				});
-			}
-		}
+	private openRelatedNotesView() {
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_RELATED_NOTES);
+		const leaf = this.app.workspace.getRightLeaf(false);
+		leaf?.setViewState({ type: VIEW_TYPE_RELATED_NOTES, active: true });
 	}
 
 	private updateRelatedNotesView() {
 		const activeFile = this.app.workspace.getActiveFile();
 		if (!activeFile) return;
-
-		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES);
-		if (leaves.length) {
-			const view = leaves[0].view as RelatedNotesListView;
-			view.refresh();
+		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).first();
+		if (leaf && leaf.view instanceof RelatedNotesListView) {
+			leaf.view.refresh();
 		}
 	}
 
 	private async activateView() {
 		let leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES)[0];
-	
+
 		if (!leaf) {
 			const newLeaf = this.app.workspace.getRightLeaf(true);
 			if (!newLeaf) {
 				new Notice('Unable to activate the Related Notes view.');
 				return;
 			}
-	
+
 			leaf = newLeaf;
 			await leaf.setViewState({ type: VIEW_TYPE_RELATED_NOTES, active: true });
 		}
 		this.app.workspace.revealLeaf(leaf);
 	}
-	
+
 
 
 	private async startServer(port: number): Promise<ChildProcess> {
@@ -135,7 +127,7 @@ export default class RelatedNotes extends Plugin {
 			return new Promise((resolve, reject) => {
 				const serverProcess = spawn('relate-text', ['start-server', '--port', port.toString()], {
 					cwd: pluginDir,
-					stdio: ['pipe', 'pipe', 'inherit'], // Capture stdout
+					stdio: ['pipe', 'pipe', 'inherit'],
 					shell: true,
 					env
 				});
