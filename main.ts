@@ -4,8 +4,8 @@ import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/Relat
 import { AppController } from './src/controller';
 import { EmbeddingService } from './src/services/embeddingService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
+import { ServerProcessSupervisor } from './src/server'
 import axios from 'axios';
-import { ChildProcess, spawn } from 'child_process';
 import path from 'path';
 
 interface RelatedNotesSettings {
@@ -15,12 +15,11 @@ interface RelatedNotesSettings {
 
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
-	private serverProcess: ChildProcess | null = null;
+	private serverSupervisor: ServerProcessSupervisor | null = null;
 	private controller: AppController;
 
 	async onload() {
-		this.serverProcess = await this.startServer(3000);
-
+		this.serverSupervisor = await this.startServer(3000);
 		const axiosInstance = axios.create({
 			baseURL: 'http://localhost:3000',
 			headers: { 'Content-Type': 'application/json' }
@@ -75,10 +74,8 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	onunload() {
-		if (this.serverProcess) {
-			this.serverProcess.kill();
-			this.serverProcess = null;
-			console.log('Server process terminated.');
+		if (this.serverSupervisor) {
+			this.serverSupervisor.terminateServer();
 		}
 
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
@@ -115,46 +112,15 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
+	private async startServer(port=3000) {
+		const supervisor = new ServerProcessSupervisor();
 
-
-	private async startServer(port: number): Promise<ChildProcess> {
-		if (this.app.vault.adapter instanceof FileSystemAdapter) { // true if desktop
+		if (this.app.vault.adapter instanceof FileSystemAdapter) {
 			const vaultDir = this.app.vault.adapter.getBasePath();
 			const pluginDir = path.join(vaultDir, '.obsidian', 'plugins', 'related-notes');
-			const env = { ...process.env };
-			env.PATH = `${env.PATH}:/usr/local/bin`;
-
-			return new Promise((resolve, reject) => {
-				const serverProcess = spawn('relate-text', ['start-server', '--port', port.toString()], {
-					cwd: pluginDir,
-					stdio: ['pipe', 'pipe', 'inherit'],
-					shell: true,
-					env
-				});
-
-				serverProcess.stdout.on('data', (data) => {
-					const message = data.toString();
-					console.log(`Server stdout: ${message}`);
-
-					if (message.includes('Listening on')) {
-						console.log('Server is ready!');
-						resolve(serverProcess);
-					}
-				});
-
-				serverProcess.on('error', (err) => {
-					console.error('Failed to start server:', err);
-					reject(err);
-				});
-
-				serverProcess.on('exit', (code) => {
-					if (code !== 0) {
-						reject(new Error(`Server exited with code ${code}`));
-					}
-				});
-			});
-		} else {
-			throw new Error('Mobile environment not supported');
+			supervisor.startServer(pluginDir, port);
+			return supervisor;
 		}
+		throw new Error('Mobile environment not supported');
 	}
 }
