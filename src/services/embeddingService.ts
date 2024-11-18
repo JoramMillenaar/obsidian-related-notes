@@ -1,6 +1,17 @@
 import { AxiosInstance } from 'axios';
 import { DefaultApi, EmbeddingsPutRequest, EmbeddingsPostRequest, SimilarPostRequest } from './generated_api/api';
 
+
+/**
+ * Provides an abstraction for interacting with a local API process that manages embeddings.
+ * The API process runs on a separate process, handling embedding-related tasks that require 
+ * their own environment and cannot operate within Obsidian's sandboxed (main) process.
+ *
+ * Features:
+ * - Create, update, and delete embeddings associated with text and metadata.
+ * - Query similar embeddings based on a given text, with configurable result limits.
+ * - Leverages an OpenAPI-generated client for seamless communication with the local API.
+ */
 export class EmbeddingService {
 	private apiClient: DefaultApi;
 

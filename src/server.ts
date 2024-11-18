@@ -2,7 +2,20 @@ import { ChildProcessByStdio, spawn } from "child_process";
 import pidusage from 'pidusage';
 import internal from "stream";
 
-
+/**
+ * Manages a separate server process for embedding services, which cannot run in the main
+ * sandboxed Obsidian process due to Node.js API limitations. This class ensures the backend
+ * server process operates independently while monitoring the parent Obsidian process.
+ *
+ * Features:
+ * - Initializes and manages the server process that handles embedding services.
+ * - Monitors the parent Obsidian process (via PID) and shuts down the server if the parent process terminates unexpectedly.
+ * - Ensures safe startup, monitoring, and termination of the server process.
+ * 
+ * TODO:
+ * - Replace HTTP-based communication with a more efficient alternative, such as CLI pipelines or similar, 
+ *   to reduce unnecessary dependencies and streamline the implementation.
+ */
 export class ServerProcessSupervisor {
     private serverProcess: ChildProcessByStdio<internal.Writable, internal.Readable, null> | null;
     private parentPID: number;

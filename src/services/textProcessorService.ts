@@ -1,5 +1,12 @@
 import removeMd from 'remove-markdown';
 
+/**
+ * Processes text by stripping away elements that do not contribute to its semantic meaning.
+ * This ensures efficiency and accuracy when deriving meaning from the text.
+ *
+ * The service applies a series of processors to remove irrelevant syntax and metadata,
+ * converting the text into a clean, meaningful representation.
+ */
 export interface ITextProcessingService {
 	processText(text: string): string;
 }
