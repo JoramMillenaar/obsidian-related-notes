@@ -1,6 +1,6 @@
 # Related Notes
 
-**Related Notes Finder** is an Obsidian plugin that intelligently suggests related notes, helping you uncover hidden connections and insights within your knowledge vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
+**Related Notes Finder** is an Obsidian plugin that intelligently suggests related notes by their meaning, helping you uncover hidden connections and insights within your knowledge vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
 
 ---
 
@@ -18,8 +18,7 @@
 
 - **Fully Local and Private**: Your notes and data are never sent outside your device. All processing is done locally to ensure complete privacy.
 - **Automatic Note Linking**: The plugin analyzes your notes' content to suggest contextually related notes, without requiring manual tags or links.
-- **Easy Navigation**: Quickly access related notes in a sidebar or pop-up to deepen your understanding and make connections across your knowledge.
-- **Customization Options**: Configure how many related notes are suggested, relevance thresholds, and more.
+- **Easy Navigation**: Quickly access related notes in the sidebar to deepen your understanding and make connections across your knowledge.
 
 ## Installation
 
@@ -42,14 +41,14 @@ git clone https://github.com/JoramMillenaar/related-notes.git
 
 Go to **Settings > Related Notes Finder** to customize the plugin’s behavior:
 - **Number of Related Notes**: Set how many notes to display as related.
-- **Relevance Threshold**: Adjust the similarity threshold to fine-tune which notes are shown.
-- **Appearance**: Choose where related notes appear (e.g., sidebar, pop-up, or inline).
 
 ## Privacy and Security
 
-Related Notes Finder is designed with privacy as a top priority:
-- **Local Processing**: All note analysis and processing are done on your device. No data is sent outside your vault.
-- **No Third-Party Dependencies**: The plugin does not require any internet access or external API, ensuring a completely private experience.
+One of Obsidian's greatest strengths is its commitment to data ownership and privacy. This plugin upholds that philosophy by making privacy its highest priority. All processing and note relations happen entirely on your device, ensuring your notes stay yours—always. 
+
+**Related Notes Finder** is built with privacy at its core:  
+- **Local Processing**: Every analysis and operation occurs directly on your device. Your notes never leave your vault.  
+- **No Third-Party Dependencies**: The plugin requires no internet access or external APIs, providing a fully private and secure experience.  
 
 ## Development
 
@@ -71,25 +70,28 @@ Want to contribute? Here's how to set up the development environment:
 
 For more information on developing Obsidian plugins, check out the [Obsidian Plugin API documentation](https://github.com/obsidianmd/obsidian-api).
 
-
 ## Contributing
 
-Contributions are welcome! Please submit an issue or pull request to discuss improvements or suggest new features.
+Contributions are always welcome! If you have ideas for improvements or new features, please open an issue or submit a pull request to start a discussion.  
 
+This plugin relies on [relate-text](https://github.com/JoramMillenaar/relate-text) for much of its core logic. Contributions to this library are equally encouraged and will directly enhance the functionality of the plugin.
 
-### TODO
-- Rid the Local API and replace by the CLI and make it ephemeral (something that does not need manual closing).
-- Look into making note-specific commands editorCallbacks
-- Make sure the onload method is non-blocking, defer any data fetching to the onLayoutReady callback
-	- Ensure that not everything is being re-indexed every time it loads. 
-- Implement a settings tab
-- Add support for reflecting file actions like creating, updating and deleting files to the index
-- Added plugin loading progress updates to the status bar
-- Fix getAllNotePaths to use this.app.vault.getMarkdownFiles()
-- Look into file parsing using this.app.metadataCache.getFileCache(file) instead of using regex on the raw file content
-- See if there's a better template to extend the custom view from
-- Clean up dependenceies: Remove / fix any security issues and minimize dependencies as much as possible.
-	- Eventually remove all dependencies that contain code supporting external API's. Making it evidentially fully local
+### TODO  
+Here are the current development goals for the plugin:  
+- Replace the local API with an ephemeral CLI that doesn't require manual closure.  
+- Explore implementing note-specific commands using `editorCallbacks`.  
+- Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
+  - Prevent unnecessary re-indexing on every load.  
+- Add a settings tab for user customization.  
+- Support reflecting file actions (create, update, delete) in the index.  
+- Display plugin loading progress updates in the status bar.  
+- Optimize `getAllNotePaths` to use `this.app.vault.getMarkdownFiles()`.  
+- Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
+- Find a more suitable template for extending the custom view.  
+- Clean up dependencies:  
+  - Remove or resolve any security issues.  
+  - Minimize dependencies and eventually eliminate those containing any code relating to external APIs to ensure a complete local design.  
+- Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
 
 ### License
 
