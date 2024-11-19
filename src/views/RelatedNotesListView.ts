@@ -52,7 +52,7 @@ export class RelatedNotesListView extends ItemView {
 			itemInnerText.createEl('span', { cls: 'tree-item-inner-text', text: note.title });
 
 			const flairOuter = itemSelf.createEl('div', { cls: 'tree-item-flair-outer' });
-			flairOuter.createEl('span', { cls: 'tag-pane-tag-count tree-item-flair', text: `${(note.similarity * 100).toFixed(1)}%` });
+			flairOuter.createEl('span', { cls: 'tag-pane-tag-count tree-item-flair', text: `${(note.similarity * 100).toFixed(0)}%` });
 		});
 	}
 

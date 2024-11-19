@@ -27,7 +27,7 @@ export class NoteService {
 	}
 
 	getAllNotePaths(): string[] {
-		return this.app.vault.getAllLoadedFiles().map(file => file.path).filter(path => path.endsWith('.md'));
+		return this.app.vault.getMarkdownFiles().map(file => file.path);
 	}
 
 	async getNoteContent(path: string): Promise<string> {

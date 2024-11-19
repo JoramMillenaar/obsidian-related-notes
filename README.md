@@ -78,20 +78,20 @@ This plugin relies on [relate-text](https://github.com/JoramMillenaar/relate-tex
 
 ### TODO  
 Here are the current development goals for the plugin:  
-- Replace the local API with an ephemeral CLI that doesn't require manual closure.  
-- Explore implementing note-specific commands using `editorCallbacks`.  
+- Replace the local API with an ephemeral CLI that doesn't require manual closure.    
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
   - Prevent unnecessary re-indexing on every load.  
 - Add a settings tab for user customization.  
 - Support reflecting file actions (create, update, delete) in the index.  
 - Display plugin loading progress updates in the status bar.  
-- Optimize `getAllNotePaths` to use `this.app.vault.getMarkdownFiles()`.  
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
 - Clean up dependencies:  
   - Remove or resolve any security issues.  
   - Minimize dependencies and eventually eliminate those containing any code relating to external APIs to ensure a complete local design.  
 - Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
+- Improve logging and remove the many console.log statements
+- Add headers to the list view, like 'note' and 'similarity'
 
 ### License
 

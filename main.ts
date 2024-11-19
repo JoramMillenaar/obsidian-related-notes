@@ -19,9 +19,10 @@ export default class RelatedNotes extends Plugin {
 	private controller: AppController;
 
 	async onload() {
-		this.serverSupervisor = await this.startServer(3000);
+		const port = 3000;
+		this.serverSupervisor = await this.startServer(port);
 		const axiosInstance = axios.create({
-			baseURL: 'http://localhost:3000',
+			baseURL: 'http://localhost:' + port,
 			headers: { 'Content-Type': 'application/json' }
 		});
 		const textProcessor = new MarkdownTextProcessingService();
