@@ -81,7 +81,8 @@ Here are the current development goals for the plugin:
 - Replace the local API with an ephemeral CLI that doesn't require manual closure.    
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
   - Prevent unnecessary re-indexing on every load.  
-- Add a settings tab for user customization.  
+  - Fix the huge race condition in the initial indexing (wait for the server have started)
+- Add option to show notes to a similarity threshold, rather than a set amount of notes.
 - Support reflecting file actions (create, update, delete) in the index.  
 - Display plugin loading progress updates in the status bar.  
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  

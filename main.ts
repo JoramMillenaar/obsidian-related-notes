@@ -5,13 +5,20 @@ import { AppController } from './src/controller';
 import { EmbeddingService } from './src/services/embeddingService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
 import { ServerProcessSupervisor } from './src/server'
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import path from 'path';
+import { RelatedNotesSettingTab } from './settings';
 
-interface RelatedNotesSettings {
-	numberOfRelatedNotes: number;
-	indexDirectory: string;
+export interface RelatedNotesSettings {
+	maxRelatedNotes: number;
+	pluginServerPort: number;
 }
+
+export const DEFAULT_SETTINGS: RelatedNotesSettings = {
+	maxRelatedNotes: 5,
+	pluginServerPort: 3000
+};
+
 
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
@@ -19,23 +26,18 @@ export default class RelatedNotes extends Plugin {
 	private controller: AppController;
 
 	async onload() {
-		const port = 3000;
-		this.serverSupervisor = await this.startServer(port);
-		const axiosInstance = axios.create({
-			baseURL: 'http://localhost:' + port,
-			headers: { 'Content-Type': 'application/json' }
-		});
-		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new EmbeddingService(axiosInstance);
-		const noteService = new NoteService(this.app);
-		this.controller = new AppController(noteService, embeddingService, textProcessor);
+		await this.loadSettings();
 
+		const axiosInstance = await this.setupPluginServer();
+		this.controller = await this.setupController(axiosInstance);
 		this.controller.reindexAll();
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
-			(leaf) => new RelatedNotesListView(leaf, this.controller)
+			(leaf) => new RelatedNotesListView(leaf, this.controller, this.settings)
 		);
+
+		this.addSettingTab(new RelatedNotesSettingTab(this.app, this));
 
 		this.addRibbonIcon('list-ordered', 'Related Notes', () => {
 			this.activateView();
@@ -113,7 +115,7 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
-	private async startServer(port=3000) {
+	private async startServer(port: number) {
 		const supervisor = new ServerProcessSupervisor();
 
 		if (this.app.vault.adapter instanceof FileSystemAdapter) {
@@ -123,5 +125,29 @@ export default class RelatedNotes extends Plugin {
 			return supervisor;
 		}
 		throw new Error('Mobile environment not supported');
+	}
+
+	private async setupPluginServer(): Promise<AxiosInstance> {
+		const port = this.settings.pluginServerPort;
+		this.serverSupervisor = await this.startServer(port);
+		return axios.create({
+			baseURL: 'http://localhost:' + port,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
+
+	private async setupController(pluginServer: AxiosInstance): Promise<AppController> {
+		const textProcessor = new MarkdownTextProcessingService();
+		const embeddingService = new EmbeddingService(pluginServer);
+		const noteService = new NoteService(this.app);
+		return new AppController(noteService, embeddingService, textProcessor);
+	}
+
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 }
