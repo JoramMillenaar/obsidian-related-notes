@@ -13,7 +13,6 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
-		"@types/pidusage": "^2.0.5",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
@@ -27,7 +26,6 @@
 		"@types/turndown": "^5.0.5",
 		"axios": "^1.7.7",
 		"p-limit": "^6.1.0",
-		"pidusage": "^3.0.2",
 		"relate-text": "^1.0.0",
 		"remove-markdown": "^0.5.5",
 		"turndown": "^7.2.0"
