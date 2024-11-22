@@ -78,6 +78,7 @@ This plugin relies on [relate-text](https://github.com/JoramMillenaar/relate-tex
 
 ### TODO  
 Here are the current development goals for the plugin:  
+- Move database directory to the plugin
 - Add IPC protocol support to the relate-text
 - Replace the local API with an ephemeral CLI that doesn't require manual closure.    
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  

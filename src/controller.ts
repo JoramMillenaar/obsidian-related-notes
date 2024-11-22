@@ -1,15 +1,16 @@
-import { Notice } from "obsidian";
 import { EmbeddingService } from "./services/embeddingService";
 import { NoteService, RelatedNote } from "./services/noteService";
 import { ITextProcessingService } from "./services/textProcessorService";
 import pLimit from 'p-limit';
+import { StatusBarService } from "./services/statusBarService";
 
 
 export class AppController {
 	constructor(
 		private noteService: NoteService,
 		private embeddingService: EmbeddingService,
-		private textProcessor: ITextProcessingService
+		private textProcessor: ITextProcessingService,
+		private statusBar: StatusBarService
 	) { }
 
 	private async getProcessedNoteContent(path: string) {
@@ -28,21 +29,26 @@ export class AppController {
 	}
 
 	async reindexAll(): Promise<void> {
-		new Notice('Indexing...')
+		this.statusBar.update("Indexing...");
 		await this.embeddingService.deleteAll();
 		await this.indexAll();
-		new Notice('Finished Indexing')
+		this.statusBar.update("Finished Indexing");
+		setTimeout(() => this.statusBar.clear(), 3000); // Clear after 3 seconds
 	}
 
 	async indexAll(): Promise<void> {
 		const paths = await this.noteService.getAllNotePaths();
-		const limit = pLimit(5); // Limit to 5 concurrent requests
+		const total = paths.length;
+		let processed = 0;
 
+		const limit = pLimit(5); // Limit to 5 concurrent requests
 		await Promise.all(
 			paths.map((path) =>
 				limit(async () => {
 					const text = await this.getProcessedNoteContent(path);
 					await this.embeddingService.create(path, text);
+					processed++;
+					this.statusBar.update(`Indexing: ${processed}/${total}`);
 				})
 			)
 		);

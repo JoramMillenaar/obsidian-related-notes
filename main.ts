@@ -6,6 +6,7 @@ import { CLIEmbeddingService } from './src/services/embeddingService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
 import path from 'path';
 import { RelatedNotesSettingTab } from './settings';
+import { StatusBarService } from 'src/services/statusBarService';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
@@ -21,8 +22,10 @@ export const DEFAULT_SETTINGS: RelatedNotesSettings = {
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private controller: AppController;
+	private statusBar: StatusBarService;
 
 	async onload() {
+		this.statusBar = new StatusBarService(this);
 		await this.loadSettings();
 
 		this.controller = this.setupController();
@@ -70,11 +73,14 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			this.openRelatedNotesView();
 		});
+
+		this.statusBar.update("Plugin loaded");
 	}
 
 	onunload() {
 		this.controller.unload();
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
+		this.statusBar.clear();
 	}
 
 	private openRelatedNotesView() {
@@ -118,7 +124,7 @@ export default class RelatedNotes extends Plugin {
 		const textProcessor = new MarkdownTextProcessingService();
 		const embeddingService = new CLIEmbeddingService(this.getPluginDir());
 		const noteService = new NoteService(this.app);
-		return new AppController(noteService, embeddingService, textProcessor);
+		return new AppController(noteService, embeddingService, textProcessor, this.statusBar);
 	}
 
 	async loadSettings() {
