@@ -2,7 +2,7 @@ import { Plugin, Notice } from 'obsidian';
 import { NoteService } from './src/services/noteService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
 import { AppController } from './src/controller';
-import { APIEmbeddingService } from './src/services/embeddingService';
+import { CLIEmbeddingService } from './src/services/embeddingService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
 import path from 'path';
 import { RelatedNotesSettingTab } from './settings';
@@ -26,6 +26,7 @@ export default class RelatedNotes extends Plugin {
 		await this.loadSettings();
 
 		this.controller = this.setupController();
+		this.controller.reindexAll();  // Re-Index every load for now, until we add some mirroring
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
@@ -115,7 +116,7 @@ export default class RelatedNotes extends Plugin {
 
 	private setupController(): AppController {
 		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new APIEmbeddingService(this.settings.pluginServerPort, this.getPluginDir());
+		const embeddingService = new CLIEmbeddingService(this.getPluginDir());
 		const noteService = new NoteService(this.app);
 		return new AppController(noteService, embeddingService, textProcessor);
 	}
