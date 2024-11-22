@@ -17,6 +17,10 @@ export class AppController {
 		return this.textProcessor.processText(content);
 	}
 
+	unload() {
+		this.embeddingService.unload();
+	}
+
 	async reindexCurrentActive(): Promise<void> {
 		const path = this.noteService.activeNotePath();
 		const text = await this.getProcessedNoteContent(path);

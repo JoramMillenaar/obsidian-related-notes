@@ -1,11 +1,9 @@
-import { Plugin, FileSystemAdapter, Notice } from 'obsidian';
+import { Plugin, Notice } from 'obsidian';
 import { NoteService } from './src/services/noteService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
 import { AppController } from './src/controller';
-import { EmbeddingService } from './src/services/embeddingService';
+import { APIEmbeddingService } from './src/services/embeddingService';
 import { MarkdownTextProcessingService } from './src/services/textProcessorService';
-import { ServerProcessSupervisor } from './src/server'
-import axios, { AxiosInstance } from 'axios';
 import path from 'path';
 import { RelatedNotesSettingTab } from './settings';
 
@@ -22,15 +20,12 @@ export const DEFAULT_SETTINGS: RelatedNotesSettings = {
 
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
-	private serverSupervisor: ServerProcessSupervisor | null = null;
 	private controller: AppController;
 
 	async onload() {
 		await this.loadSettings();
 
-		const axiosInstance = await this.setupPluginServer();
-		this.controller = await this.setupController(axiosInstance);
-		this.controller.reindexAll();
+		this.controller = this.setupController();
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
@@ -77,10 +72,7 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	onunload() {
-		if (this.serverSupervisor) {
-			this.serverSupervisor.terminateServer();
-		}
-
+		this.controller.unload();
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
 	}
 
@@ -115,30 +107,15 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
-	private async startServer(port: number) {
-		const supervisor = new ServerProcessSupervisor();
-
-		if (this.app.vault.adapter instanceof FileSystemAdapter) {
-			const vaultDir = this.app.vault.adapter.getBasePath();
-			const pluginDir = path.join(vaultDir, '.obsidian', 'plugins', 'related-notes');
-			supervisor.startServer(pluginDir, port);
-			return supervisor;
-		}
-		throw new Error('Mobile environment not supported');
+	private getPluginDir() {
+		// @ts-ignore
+		const vaultDir = this.app.vault.adapter.getBasePath();
+		return path.join(vaultDir, '.obsidian', 'plugins', 'related-notes');
 	}
 
-	private async setupPluginServer(): Promise<AxiosInstance> {
-		const port = this.settings.pluginServerPort;
-		this.serverSupervisor = await this.startServer(port);
-		return axios.create({
-			baseURL: 'http://localhost:' + port,
-			headers: { 'Content-Type': 'application/json' }
-		});
-	}
-
-	private async setupController(pluginServer: AxiosInstance): Promise<AppController> {
+	private setupController(): AppController {
 		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new EmbeddingService(pluginServer);
+		const embeddingService = new APIEmbeddingService(this.settings.pluginServerPort, this.getPluginDir());
 		const noteService = new NoteService(this.app);
 		return new AppController(noteService, embeddingService, textProcessor);
 	}

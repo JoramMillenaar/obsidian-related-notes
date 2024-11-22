@@ -23,7 +23,7 @@ export class ServerProcessSupervisor {
         this.parentPID = process.pid;
     }
 
-    startServer(pluginDir: string, port: number): void {
+    async startServer(pluginDir: string, port: number): Promise<void> {
         console.log(`Starting server process...`);
         this.serverProcess = spawn('relate-text', ['start-server', '--port', port.toString()], {
             cwd: pluginDir,
