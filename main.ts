@@ -29,7 +29,10 @@ export default class RelatedNotes extends Plugin {
 		await this.loadSettings();
 
 		this.controller = this.setupController();
-		this.controller.reindexAll();  // Re-Index every load for now, until we add some mirroring
+		if (!(await this.loadData()).initialized) {
+			this.controller.reindexAll();
+			this.saveData({initialized: true})
+		}
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
@@ -73,8 +76,6 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			this.openRelatedNotesView();
 		});
-
-		this.statusBar.update("Plugin loaded");
 	}
 
 	onunload() {
@@ -128,6 +129,9 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	async loadSettings() {
+		if (!this.loadData()) {
+			this.saveData({ initialized: false });
+		}
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
