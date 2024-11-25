@@ -3,7 +3,7 @@ import { NoteService, RelatedNote } from "./services/noteService";
 import { ITextProcessingService } from "./services/textProcessorService";
 import pLimit from 'p-limit';
 import { StatusBarService } from "./services/statusBarService";
-import RelatedNotes from "main";
+import RelatedNotes from "./main";
 
 
 export class AppController {

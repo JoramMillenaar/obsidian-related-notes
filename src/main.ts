@@ -1,11 +1,11 @@
 import { Plugin, Notice } from 'obsidian';
-import { NoteService } from './src/services/noteService';
-import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './src/views/RelatedNotesListView';
-import { AppController } from './src/controller';
-import { CLIEmbeddingService } from './src/services/embeddingService';
-import { MarkdownTextProcessingService } from './src/services/textProcessorService';
+import { NoteService } from './services/noteService';
+import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './views/RelatedNotesListView';
+import { AppController } from './controller';
+import { CLIEmbeddingService } from './services/embeddingService';
+import { MarkdownTextProcessingService } from './services/textProcessorService';
 import path from 'path';
-import { RelatedNotesSettingTab } from './settings';
+import { RelatedNotesSettingTab } from '../settings';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
