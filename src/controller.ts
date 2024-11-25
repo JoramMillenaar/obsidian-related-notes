@@ -56,6 +56,9 @@ export class AppController {
 
 	async getActiveNoteRelations(limit: number): Promise<RelatedNote[]> {
 		const currentPath = this.noteService.activeNotePath();
+		if (currentPath === "") {
+			return [];
+		}
 		const text = await this.getProcessedNoteContent(currentPath);
 		const similarNotes = await this.searchSimilarNotes(text, limit + 1); // +1 to remove itself later
 		return similarNotes.filter(note => note.path !== currentPath);

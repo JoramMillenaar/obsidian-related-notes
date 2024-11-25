@@ -19,7 +19,7 @@ export class RelatedNotesListView extends ItemView {
 	}
 
 	getDisplayText() {
-		return 'Related Notes';
+		return 'Similar Notes';
 	}
 
 	private openNote = (path: string) => {
@@ -31,32 +31,47 @@ export class RelatedNotesListView extends ItemView {
 		}
 	}
 
+	getIcon(): string {
+		return 'telescope';
+	}
+
 	async onOpen() {
 		await this.render();
 	}
 
 	async render() {
 		const parent = this.containerEl.children[1];
+
 		parent.empty();
 
 		const container = parent.createEl('div', { cls: 'tag-container node-insert-event' });
-		const list = container.createEl('div');
 
-		const notes = await this.controller.getActiveNoteRelations(this.settings.maxRelatedNotes);
+		const loadingMessage = container.createEl('div', { cls: 'tree-item-self', text: 'Loading similar notes...' });
 
-		notes.forEach(note => {
-			const listItem = list.createEl('div', { cls: 'tree-item' });
-			const itemSelf = listItem.createEl('div', { cls: 'tree-item-self tag-pane-tag is-clickable' });
+		try {
+			const notes = await this.controller.getActiveNoteRelations(this.settings.maxRelatedNotes);
+			loadingMessage.remove();
 
-			itemSelf.addEventListener("click", () => this.openNote(note.path));
+			const list = container.createEl('div');
 
-			const itemInner = itemSelf.createEl('div', { cls: 'tree-item-inner' });
-			const itemInnerText = itemInner.createEl('div', { cls: 'tree-item-inner-text' });
-			itemInnerText.createEl('span', { cls: 'tree-item-inner-text', text: note.title });
+			notes.forEach(note => {
+				const listItem = list.createEl('div', { cls: 'tree-item' });
+				const itemSelf = listItem.createEl('div', { cls: 'tree-item-self tag-pane-tag is-clickable' });
 
-			const flairOuter = itemSelf.createEl('div', { cls: 'tree-item-flair-outer' });
-			flairOuter.createEl('span', { cls: 'tag-pane-tag-count tree-item-flair', text: `${(note.similarity * 100).toFixed(0)}%` });
-		});
+				itemSelf.addEventListener("click", () => this.openNote(note.path));
+
+				const itemInner = itemSelf.createEl('div', { cls: 'tree-item-inner' });
+				const itemInnerText = itemInner.createEl('div', { cls: 'tree-item-inner-text' });
+				itemInnerText.createEl('span', { cls: 'tree-item-inner-text', text: note.title });
+
+				const flairOuter = itemSelf.createEl('div', { cls: 'tree-item-flair-outer' });
+				flairOuter.createEl('span', { cls: 'tag-pane-tag-count tree-item-flair', text: `${(note.similarity * 100).toFixed(0)}%` });
+			});
+		} catch (error) {
+			// Handle errors and notify the user
+			loadingMessage.textContent = 'Failed to load related notes. Please try again.';
+			console.error('Error fetching related notes:', error);
+		}
 	}
 
 	async refresh() {
