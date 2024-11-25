@@ -30,7 +30,17 @@ export class AppController {
 	async reindexCurrentActive(): Promise<void> {
 		const path = this.noteService.activeNotePath();
 		const text = await this.getProcessedNoteContent(path);
-		this.embeddingService.update(path, text);
+		try {
+			await this.embeddingService.update(path, text);
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("EmbeddingDoesNotExist")) {
+				console.log("Embedding does not exist. Creating a new embedding...");
+				await this.embeddingService.create(path, text);
+			} else {
+				console.error("Error reindexing active note:", error);
+				throw error;
+			}
+		}
 	}
 
 	async reindexAll(): Promise<void> {

@@ -103,6 +103,7 @@ Here are the current development goals for the plugin:
 - Improve logging and remove the many console.log statements
 - Add headers to the list view, like 'note' and 'similarity'
 - Fix active note not always being known. Like on plugin load and when a file was just deleted.
+- Look into and fix odd resuls in similarity after updating note embeddings
 
 ### License
 

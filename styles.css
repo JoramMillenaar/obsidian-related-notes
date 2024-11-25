@@ -2,3 +2,7 @@
 	color: var(--text-warning);
 	font-style: italic;
 }
+
+.small-pad-top {
+	padding-top: 4px;
+}
