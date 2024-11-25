@@ -3,15 +3,20 @@ import { NoteService, RelatedNote } from "./services/noteService";
 import { ITextProcessingService } from "./services/textProcessorService";
 import pLimit from 'p-limit';
 import { StatusBarService } from "./services/statusBarService";
+import RelatedNotes from "main";
 
 
 export class AppController {
+	private statusBar: StatusBarService;
+
 	constructor(
+		private plugin: RelatedNotes,
 		private noteService: NoteService,
 		private embeddingService: EmbeddingService,
 		private textProcessor: ITextProcessingService,
-		private statusBar: StatusBarService
-	) { }
+	) {
+		this.statusBar = new StatusBarService(plugin);
+	}
 
 	private async getProcessedNoteContent(path: string) {
 		const content = await this.noteService.getNoteContent(path);
@@ -54,15 +59,17 @@ export class AppController {
 		);
 	}
 
-	async getActiveNoteRelations(limit: number): Promise<RelatedNote[]> {
+	async getActiveNoteRelations(): Promise<RelatedNote[]> {
 		const currentPath = this.noteService.activeNotePath();
-		if (currentPath === "") {
-			return [];
-		}
+		if (!currentPath) return [];
+
 		const text = await this.getProcessedNoteContent(currentPath);
-		const similarNotes = await this.searchSimilarNotes(text, limit + 1); // +1 to remove itself later
+		if (!text) return [];
+
+		const similarNotes = await this.searchSimilarNotes(text, this.plugin.settings.maxRelatedNotes + 1); // +1 to account for the current note
 		return similarNotes.filter(note => note.path !== currentPath);
 	}
+
 
 	async searchSimilarNotes(text: string, limit: number): Promise<RelatedNote[]> {
 		const results = await this.embeddingService.fetchSimilar(text, limit);

@@ -1,4 +1,3 @@
-import { RelatedNotesSettings } from 'main';
 import { ItemView, WorkspaceLeaf, Notice, TFile } from 'obsidian';
 import { AppController } from 'src/controller';
 
@@ -6,12 +5,10 @@ export const VIEW_TYPE_RELATED_NOTES = 'related-notes';
 
 export class RelatedNotesListView extends ItemView {
 	private controller: AppController;
-	private settings: RelatedNotesSettings;
 
-	constructor(leaf: WorkspaceLeaf, controller: AppController, settings: RelatedNotesSettings) {
+	constructor(leaf: WorkspaceLeaf, controller: AppController) {
 		super(leaf);
 		this.controller = controller;
-		this.settings = settings;
 	}
 
 	getViewType() {
@@ -49,7 +46,7 @@ export class RelatedNotesListView extends ItemView {
 		const loadingMessage = container.createEl('div', { cls: 'tree-item-self', text: 'Loading similar notes...' });
 
 		try {
-			const notes = await this.controller.getActiveNoteRelations(this.settings.maxRelatedNotes);
+			const notes = await this.controller.getActiveNoteRelations();
 			loadingMessage.remove();
 
 			const list = container.createEl('div');

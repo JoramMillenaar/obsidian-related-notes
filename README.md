@@ -102,6 +102,7 @@ Here are the current development goals for the plugin:
 - Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
 - Improve logging and remove the many console.log statements
 - Add headers to the list view, like 'note' and 'similarity'
+- Fix active note not always being known. Like on plugin load and when a file was just deleted.
 
 ### License
 
