@@ -1,4 +1,4 @@
-import { App, Notice, TFile } from 'obsidian';
+import { App, TFile } from 'obsidian';
 
 export type RelatedNote = {
 	similarity: number;
@@ -21,7 +21,7 @@ export class NoteService {
 		if (current && current.path) {
 			return current.path;
 		} else {
-			new Notice('No active note!');
+			console.log('No active note!');
 			return "";
 		}
 	}

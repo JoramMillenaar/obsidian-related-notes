@@ -3,11 +3,12 @@ import { DefaultApi, EmbeddingsPutRequest, EmbeddingsPostRequest, SimilarPostReq
 import { ServerProcessSupervisor } from 'src/server';
 
 export interface EmbeddingService {
-	unload(): void
-	update(path: string, text: string): Promise<void>
-	deleteAll(): Promise<void>
-	create(path: string, text: string): Promise<void>
-	fetchSimilar(text: string, limit: number): Promise<{ id: string; similarity: number }[]>
+	unload(): void;
+	update(path: string, text: string): Promise<void>;
+	deleteAll(): Promise<void>;
+	create(path: string, text: string): Promise<void>;
+	delete(path: string): Promise<void>;
+	fetchSimilar(text: string, limit: number): Promise<{ id: string; similarity: number }[]>;
 }
 
 
@@ -76,6 +77,14 @@ export class APIEmbeddingService implements EmbeddingService {
 		};
 		await this.apiClient.embeddingsPost(requestBody).then((response) => {
 			console.log('Embedding created with ID:', response.data.id);
+		}).catch((error) => {
+			console.error('Failed to create embedding:', error);
+		});
+	}
+
+	async delete(path: string): Promise<void> {
+		await this.apiClient.embeddingsIdDelete(path).then((response) => {
+			console.log('Embedding Deleted: ', response.data);
 		}).catch((error) => {
 			console.error('Failed to create embedding:', error);
 		});

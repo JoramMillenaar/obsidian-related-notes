@@ -2,6 +2,18 @@
 
 **Related Notes Finder** is an Obsidian plugin that intelligently suggests related notes by their meaning, helping you uncover hidden connections and insights within your knowledge vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
 
+
+<details>
+<summary>Note From the Creator</summary>
+This plugin excites me. For me, Obsidian’s greatest value lies in reducing the strain of writing. The whole Zettelkasten approach—don’t worry about structure, just focus on relationships—is an amazing method to capture thoughts and build a personal knowledge base. However, there’s still one significant pain point in my writing routine: relating notes. It’s challenging to remember existing notes (especially when you have over a thousand) and decide how to connect them. This plugin aims to ease that burden by presenting an overview of the most closely related notes in meaning—all while staying local and on-device, a core Obsidian principle that I deeply value.
+</details>
+
+
+<details>
+<summary>The Technology Behind Driving It</summary>
+I won’t delve into too much detail or documentation here, but I can’t help but rave about the incredible technology that powers this plugin. At its core is an AI that transforms sentences and paragraphs into representations that encapsulate not just the words but the meaning. These “meaning” representations are stored and used to calculate the closest neighbors in a multidimensional “meaning space.” This space is high-dimensional, enabling it to capture the many nuances of meaning embedded in language. It’s truly fascinating technology, offering immense potential to enhance both our minds and knowledge vaults!
+∂</details>
+
 ---
 
 # 🚧 **Under Construction: Plugin in Development** 🚧
@@ -78,19 +90,14 @@ This plugin relies on [relate-text](https://github.com/JoramMillenaar/relate-tex
 
 ### TODO  
 Here are the current development goals for the plugin:  
-- Move database directory to the plugin
-- Add IPC protocol support to the relate-text
-- Replace the local API with an ephemeral CLI that doesn't require manual closure.    
+- Pass title to the embedder (maybe even make it weighty)
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
-  - Prevent unnecessary re-indexing on every load.  
-  - Fix the huge race condition in the initial indexing (wait for the server have started)
+  - Fix the race condition in the initial indexing (wait for the server have started)
 - Add option to show notes to a similarity threshold, rather than a set amount of notes.
-- Support reflecting file actions (create, update, delete) in the index.  
-- Display plugin loading progress updates in the status bar.  
+- Support reflecting file actions (create, update, delete) in the index.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
 - Clean up dependencies:  
-  - Remove or resolve any security issues.  
   - Minimize dependencies and eventually eliminate those containing any code relating to external APIs to ensure a complete local design.  
 - Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
 - Improve logging and remove the many console.log statements

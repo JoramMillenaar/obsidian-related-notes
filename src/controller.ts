@@ -69,4 +69,8 @@ export class AppController {
 			path: result.id
 		}))
 	}
+
+	async deleteNoteFromIndex(path: string) {
+		await this.embeddingService.delete(path);
+	}
 }

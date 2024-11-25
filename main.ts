@@ -31,7 +31,7 @@ export default class RelatedNotes extends Plugin {
 		this.controller = this.setupController();
 		if (!(await this.loadData()).initialized) {
 			this.controller.reindexAll();
-			this.saveData({initialized: true})
+			this.saveData({ initialized: true })
 		}
 
 		this.registerView(
@@ -65,6 +65,10 @@ export default class RelatedNotes extends Plugin {
 			callback: () => {
 				this.activateView();
 			}
+		});
+
+		this.app.vault.on("delete", (file) => {
+			this.controller.deleteNoteFromIndex(file.path);
 		});
 
 		// Listen for active file changes
