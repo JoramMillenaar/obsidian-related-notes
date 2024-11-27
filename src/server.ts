@@ -1,4 +1,7 @@
 import { ChildProcess, spawn } from "child_process";
+import fs from "fs";
+import path from "path";
+
 
 /**
  * Manages a separate server process for embedding services, which cannot run in the main
@@ -9,80 +12,138 @@ import { ChildProcess, spawn } from "child_process";
  * - Initializes and manages the server process that handles embedding services.
  * - Monitors the parent Obsidian process (via PID) and shuts down the server if the parent process terminates unexpectedly.
  * - Ensures safe startup, monitoring, and termination of the server process.
- * 
- * TODO:
- * - Replace HTTP-based communication with a more efficient alternative, such as CLI pipelines or similar, 
- *   to reduce unnecessary dependencies and streamline the implementation.
+ * - Saves the server PID in case we lose the reference to the serverProcess, we can fallback to use the now detached process
  */
 export class ServerProcessSupervisor {
-    private serverProcess: ChildProcess | null;
-    private parentPID: number;
-    private checkInterval: NodeJS.Timer | null = null;
+	private serverProcess: ChildProcess | null = null;
+	private parentPID: number;
+	private pidFilePath: string;
 
-    constructor() {
-        this.parentPID = process.pid;
-    }
+	constructor(private pluginDir: string) {
+		this.pluginDir = pluginDir;
+		this.parentPID = process.pid;
+		this.pidFilePath = path.join(pluginDir, ".server.pid");
+	}
 
-    async startServer(pluginDir: string, port: number): Promise<void> {
-        console.log(`Starting server process...`);
-        this.serverProcess = spawn('relate-text', ['start-server', '--port', port.toString()], {
-            cwd: pluginDir,
-            stdio: ['inherit', 'pipe', 'pipe'], // Attach child process to parent and forward any messages
-            shell: true,
-            env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin` },
-        });
+	async ensureServerRunning(port: number): Promise<void> {
+		return new Promise((resolve, reject) => {
+			if (this.serverProcess || this.getRunningProcess()) {
+				resolve();
+				return;
+			}
 
-		this.serverProcess.stderr?.on('data', (data) => {
-			console.error(`[Server Error]: ${data.toString()}`);
-		});
+			console.log(`Starting local API server...`);
+			this.serverProcess = spawn("relate-text", ["start-server", "--port", port.toString()], {
+				cwd: this.pluginDir,
+				stdio: ["inherit", "pipe", "pipe"], // Attach child process to parent and forward any messages
+				shell: true,
+				env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin` },
+			});
 
-        this.serverProcess.stdout?.on('data', (data) => {
-            console.log(`[Server]: ${data.toString()}`);
-        });
+			if (this.serverProcess.pid) { this.setupOrphanTerminator(this.parentPID, this.serverProcess.pid) }
 
-        this.serverProcess.on('error', (err) => {
-            console.error('Failed to start server:', err);
-        });
+			this.writePIDToFile(this.serverProcess.pid);
 
-        this.serverProcess.on('close', (code) => {
-            console.log(`Server process closed with code ${code}`);
-            this.stopMonitoring();
-        });
+			this.serverProcess.stderr?.on("data", (data) => {
+				console.error(`[Server Error]: ${data.toString()}`);
+			});
 
-        this.startMonitoring();
-    }
+			this.serverProcess.stdout?.on('data', (data) => {
+				const output = data.toString();
+				if (output.includes('Listening on')) {
+					console.log('API server is ready!');
+					resolve();
+				}
+			});
 
-	private isParentAlive(): boolean {
-		try {
-			process.kill(this.parentPID, 0); // Misleading method name, but it just checks if the process exists
-			return true;
-		} catch {
-			return false; // Process doesn't exist
+			this.serverProcess.on("error", (err) => {
+				console.error("Failed to start server:", err);
+			});
+
+			this.serverProcess.on("close", (code) => {
+				console.log(`Server process closed with code ${code}`);
+				this.cleanupPIDFile();
+			});
+		})
+	}
+
+	terminateServer(): void {
+		if (this.serverProcess) {
+			console.log("Terminating server process.");
+			this.serverProcess.kill("SIGINT");
+			this.serverProcess = null;
+			return;
+		}
+		const serverPID = this.getRunningProcess();
+		if (serverPID) {
+			console.log("Terminating orphaned server process.");
+			process.kill(serverPID);
+		}
+		this.cleanupPIDFile();
+	}
+
+	private writePIDToFile(pid: number | undefined): void {
+		if (pid) {
+			try {
+				fs.writeFileSync(this.pidFilePath, pid.toString());
+			} catch (err) {
+				console.error(`Failed to write PID to file: ${err}`);
+			}
 		}
 	}
 
-    private startMonitoring(): void {
-        console.log(`Monitoring parent process with PID: ${this.parentPID}`);
-        this.checkInterval = setInterval(() => {
-			if (!this.isParentAlive()) {
-				console.log(`Parent process (PID: ${this.parentPID}) is no longer running. Shutting down server.`);
-				this.terminateServer();
+	private readPIDFromFile(): number | null {
+		try {
+			if (fs.existsSync(this.pidFilePath)) {
+				const pid = parseInt(fs.readFileSync(this.pidFilePath, "utf-8"), 10);
+				return isNaN(pid) ? null : pid;
 			}
-        }, 5000); // Check every 5 seconds
-    }
+		} catch (err) {
+			console.error(`Failed to read PID from file: ${err}`);
+		}
+		return null;
+	}
 
-    private stopMonitoring(): void {
-        if (this.checkInterval) {
-            clearInterval(this.checkInterval);
-            this.checkInterval = null;
-        }
-    }
+	private isProcessRunning(pid: number): boolean {
+		try {
+			process.kill(pid, 0); // Check if the process exists
+			return true;
+		} catch {
+			return false;
+		}
+	}
 
-    terminateServer(): void {
-        if (this.serverProcess) {
-            console.log('Terminating server process.');
-            this.serverProcess.kill('SIGINT');
-            this.serverProcess = null;
-        }
-    }
+	private getRunningProcess(): number | null {
+		const pid = this.readPIDFromFile();
+		if (pid && this.isProcessRunning(pid)) {
+			console.log("Using server process that is already running...");
+			return pid;
+		}
+		this.cleanupPIDFile(); // Remove stale PID file
+		return null;
+	}
+
+	private cleanupPIDFile(): void {
+		try {
+			if (fs.existsSync(this.pidFilePath)) {
+				fs.unlinkSync(this.pidFilePath);
+				console.log("Cleaned up PID file.");
+			}
+		} catch (err) {
+			console.error(`Failed to clean up PID file: ${err}`);
+		}
+	}
+
+	private setupOrphanTerminator(parentPID: number, childPID: number) {
+		const monitorPath = path.resolve(this.pluginDir, "monitor.js");
+
+		const monitorProcess = spawn(
+			"node",
+			[monitorPath, parentPID.toString(), childPID.toString()],
+			{ detached: true, stdio: "ignore" }
+		);
+
+		monitorProcess.unref(); // Allow the monitor process to run independently
+		return monitorProcess;
+	}
 }

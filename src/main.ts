@@ -2,7 +2,7 @@ import { Plugin, Notice } from 'obsidian';
 import { NoteService } from './services/noteService';
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './views/RelatedNotesListView';
 import { AppController } from './controller';
-import { CLIEmbeddingService } from './services/embeddingService';
+import { EmbeddingService } from './services/embeddingService';
 import { MarkdownTextProcessingService } from './services/textProcessorService';
 import path from 'path';
 import { RelatedNotesSettingTab } from '../settings';
@@ -123,7 +123,7 @@ export default class RelatedNotes extends Plugin {
 
 	private setupController(): AppController {
 		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new CLIEmbeddingService(this.getPluginDir());
+		const embeddingService = new EmbeddingService(this.settings.pluginServerPort, this.getPluginDir());
 		const noteService = new NoteService(this.app);
 		return new AppController(this, noteService, embeddingService, textProcessor);
 	}

@@ -4,6 +4,7 @@ import { ITextProcessingService } from "./services/textProcessorService";
 import pLimit from 'p-limit';
 import { StatusBarService } from "./services/statusBarService";
 import RelatedNotes from "./main";
+import { getNoteTitleFromPath } from "./services/utils";
 
 
 export class AppController {
@@ -34,7 +35,6 @@ export class AppController {
 			await this.embeddingService.update(path, text);
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("EmbeddingDoesNotExist")) {
-				console.log("Embedding does not exist. Creating a new embedding...");
 				await this.embeddingService.create(path, text);
 			} else {
 				console.error("Error reindexing active note:", error);
@@ -85,7 +85,7 @@ export class AppController {
 		const results = await this.embeddingService.fetchSimilar(text, limit);
 		return results.map(result => ({
 			similarity: result.similarity,
-			title: this.noteService.getNoteTitleFromPath(result.id),
+			title: getNoteTitleFromPath(result.id),
 			path: result.id
 		}))
 	}

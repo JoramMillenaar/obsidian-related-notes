@@ -39,9 +39,4 @@ export class NoteService {
 			throw new Error(`Note not found at path: ${path}`);
 		}
 	}
-
-	getNoteTitleFromPath(path: string): string {
-		const filename = path.split('/').pop() || '';
-		return filename.replace('.md', '');
-	}
 }
