@@ -2,7 +2,6 @@
 
 **Related Notes Finder** is an Obsidian plugin that intelligently suggests related notes by their meaning, helping you uncover hidden connections and insights within your knowledge vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
 
-
 <details>
 <summary>Note From the Creator</summary>
 This plugin excites me. For me, Obsidian’s greatest value lies in reducing the strain of writing. The whole Zettelkasten approach—don’t worry about structure, just focus on relationships—is an amazing method to capture thoughts and build a personal knowledge base. However, there’s still one significant pain point in my writing routine: relating notes. It’s challenging to remember existing notes (especially when you have over a thousand) and decide how to connect them. This plugin aims to ease that burden by presenting an overview of the most closely related notes in meaning—all while staying local and on-device, a core Obsidian principle that I deeply value.
