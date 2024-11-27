@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { DefaultApi, EmbeddingsPutRequest, EmbeddingsPostRequest, SimilarPostRequest } from './generated_api/api';
 import { ServerProcessSupervisor } from 'src/server';
+import { logError } from './utils';
 
 /**
  * Provides an abstraction for interacting with a local API process that manages embeddings.
@@ -41,16 +42,15 @@ export class EmbeddingService {
 			metadata: { path }
 		};
 		await this.apiClient.embeddingsPut(requestBody).catch((error) => {
-			console.error('Failed to update embedding:', error);
+			logError('Failed to update embedding:', error);
 		});
 	}
 
 	async deleteAll(): Promise<void> {
 		await this.ready();
 		await this.apiClient.embeddingsAllDelete().then(() => {
-			console.log('All embeddings deleted successfully');
 		}).catch((error) => {
-			console.error('Failed to delete all embeddings:', error);
+			logError('Failed to delete all embeddings:', error);
 		});
 	}
 
@@ -62,14 +62,14 @@ export class EmbeddingService {
 			metadata: { path }
 		};
 		await this.apiClient.embeddingsPost(requestBody).catch((error) => {
-			console.error('Failed to create embedding:', error);
+			logError('Failed to create embedding:', error);
 		});
 	}
 
 	async delete(path: string): Promise<void> {
 		await this.ready();
 		await this.apiClient.embeddingsIdDelete(path).catch((error) => {
-			console.error('Failed to delete embedding:', error);
+			logError('Failed to delete embedding:', error);
 		});
 	}
 
@@ -85,7 +85,7 @@ export class EmbeddingService {
 				similarity: item.similarity as number
 			}));
 		}).catch((error) => {
-			console.error('Failed to fetch similar texts: ', error, request);
+			logError('Failed to fetch similar texts: ', error, request);
 			return [];
 		});
 	}

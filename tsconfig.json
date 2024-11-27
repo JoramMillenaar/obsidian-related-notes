@@ -20,6 +20,6 @@
 		]
 	},
 	"include": [
-		"src/**/*.ts", "settings.ts",
+		"src/**/*.ts", "src/settings.ts",
 	]
 }

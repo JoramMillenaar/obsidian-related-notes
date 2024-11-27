@@ -97,7 +97,6 @@ Here are the current development goals for the plugin:
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
 - Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
-- Improve logging and remove the many console.log statements
 - Look into and fix odd resuls in similarity after updating note embeddings
 - Test windows compatibility
 

@@ -1,6 +1,8 @@
 import { ChildProcess, spawn } from "child_process";
 import fs from "fs";
 import path from "path";
+import { logError } from "./services/utils";
+import { Notice } from "obsidian";
 
 
 /**
@@ -30,7 +32,6 @@ export class ServerProcessSupervisor {
 				return;
 			}
 
-			console.log(`Starting local API server...`);
 			this.serverProcess = spawn("relate-text", ["start-server", "--port", port.toString()], {
 				cwd: this.pluginDir,
 				stdio: ["inherit", "pipe", "pipe"], // Attach child process to parent and forward any messages
@@ -40,24 +41,29 @@ export class ServerProcessSupervisor {
 
 			this.writePIDToFile(this.serverProcess.pid);
 
-			this.serverProcess.stderr?.on("data", (data) => {
-				console.error(`[Server Error]: ${data.toString()}`);
+			this.serverProcess.stderr?.on("data", (chunk) => {
+				const errorMessage = chunk.toString().trim();
+				logError(`[Server Error]: ${errorMessage}`);
+			
+				if (errorMessage.includes("EADDRINUSE")) {
+					new Notice(
+						`[Related Notes] Port ${port} is already in use.\nPlease set a different value in the settings.`
+					);
+				}
 			});
 
-			this.serverProcess.stdout?.on('data', (data) => {
+			this.serverProcess.stdout?.on("data", (data) => {
 				const output = data.toString();
-				if (output.includes('Listening on')) {
-					console.log('API server is ready!');
+				if (output.includes("Listening on")) {
 					resolve();
 				}
 			});
 
 			this.serverProcess.on("error", (err) => {
-				console.error("Failed to start server:", err);
+				logError("Failed to start server:", err);
 			});
 
 			this.serverProcess.on("close", (code) => {
-				console.log(`Server process closed with code ${code}`);
 				this.cleanupPIDFile();
 			});
 		})
@@ -65,14 +71,12 @@ export class ServerProcessSupervisor {
 
 	terminateServer(): void {
 		if (this.serverProcess && !this.serverProcess.killed) {
-			console.log("Terminating server process.");
 			this.serverProcess.kill("SIGINT");
 			this.serverProcess = null;
 			return;
 		}
 		const serverPID = this.getRunningProcess();
 		if (serverPID) {
-			console.log("Terminating orphaned server process.");
 			process.kill(serverPID);
 		}
 		this.cleanupPIDFile();
@@ -83,7 +87,7 @@ export class ServerProcessSupervisor {
 			try {
 				fs.writeFileSync(this.pidFilePath, pid.toString());
 			} catch (err) {
-				console.error(`Failed to write PID to file: ${err}`);
+				logError(`Failed to write PID to file: ${err}`);
 			}
 		}
 	}
@@ -95,7 +99,7 @@ export class ServerProcessSupervisor {
 				return isNaN(pid) ? null : pid;
 			}
 		} catch (err) {
-			console.error(`Failed to read PID from file: ${err}`);
+			logError(`Failed to read PID from file: ${err}`);
 		}
 		return null;
 	}
@@ -112,7 +116,6 @@ export class ServerProcessSupervisor {
 	private getRunningProcess(): number | null {
 		const pid = this.readPIDFromFile();
 		if (pid && this.isProcessRunning(pid)) {
-			console.log("Using server process that is already running...");
 			return pid;
 		}
 		this.cleanupPIDFile(); // Remove stale PID file
@@ -125,7 +128,7 @@ export class ServerProcessSupervisor {
 				fs.unlinkSync(this.pidFilePath);
 			}
 		} catch (err) {
-			console.error(`Failed to clean up PID file: ${err}`);
+			logError(`Failed to clean up PID file: ${err}`);
 		}
 	}
 }

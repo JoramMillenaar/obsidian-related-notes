@@ -21,8 +21,7 @@ export class NoteService {
 		if (current && current.path) {
 			return current.path;
 		} else {
-			console.log('No active note!');
-			return "";
+			return null;
 		}
 	}
 

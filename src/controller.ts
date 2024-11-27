@@ -4,7 +4,7 @@ import { ITextProcessingService } from "./services/textProcessorService";
 import pLimit from 'p-limit';
 import { StatusBarService } from "./services/statusBarService";
 import RelatedNotes from "./main";
-import { getNoteTitleFromPath } from "./services/utils";
+import { getNoteTitleFromPath, logError } from "./services/utils";
 
 
 export class AppController {
@@ -30,6 +30,7 @@ export class AppController {
 
 	async reindexCurrentActive(): Promise<void> {
 		const path = this.noteService.activeNotePath();
+		if (!path) return;
 		const text = await this.getProcessedNoteContent(path);
 		try {
 			await this.embeddingService.update(path, text);
@@ -37,7 +38,7 @@ export class AppController {
 			if (error instanceof Error && error.message.includes("EmbeddingDoesNotExist")) {
 				await this.embeddingService.create(path, text);
 			} else {
-				console.error("Error reindexing active note:", error);
+				logError("Error reindexing active note:", error);
 				throw error;
 			}
 		}

@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf, Notice, TFile, setIcon } from 'obsidian';
 import { AppController } from 'src/controller';
+import { logError } from 'src/services/utils';
 
 export const VIEW_TYPE_RELATED_NOTES = 'related-notes';
 
@@ -114,7 +115,7 @@ export class RelatedNotesListView extends ItemView {
 		} catch (error) {
 			this.isLoading = false;
 			loadingMessage.textContent = 'Failed to load related notes. Please try again.';
-			console.error('Error fetching related notes:', error);
+			logError('Error fetching related notes:', error);
 		}
 	}
 

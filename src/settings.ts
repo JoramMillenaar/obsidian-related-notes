@@ -34,10 +34,10 @@ export class RelatedNotesSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Plugin Server Port")
-			.setDesc("The local port to run plugin communication through.")
+			.setDesc("The local port to run the plugin's on-device communication through.")
 			.addText((text) => {
 				const restartNotice = containerEl.createEl('small', {
-					text: 'Restart Obsidian for changes to take effect.',
+					text: 'Restart Obsidian or reload the plugin for changes to take effect.',
 					cls: 'plugin-restart-notice',
 				});
 				restartNotice.style.display = 'none';

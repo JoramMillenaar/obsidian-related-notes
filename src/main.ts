@@ -5,7 +5,7 @@ import { AppController } from './controller';
 import { EmbeddingService } from './services/embeddingService';
 import { MarkdownTextProcessingService } from './services/textProcessorService';
 import path from 'path';
-import { RelatedNotesSettingTab } from '../settings';
+import { RelatedNotesSettingTab } from './settings';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
@@ -129,7 +129,7 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	async loadSettings() {
-		if (!this.loadData()) {
+		if (!(await this.loadData())) {
 			this.saveData({ initialized: false });
 		}
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
