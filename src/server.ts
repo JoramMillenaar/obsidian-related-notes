@@ -16,12 +16,10 @@ import path from "path";
  */
 export class ServerProcessSupervisor {
 	private serverProcess: ChildProcess | null = null;
-	private parentPID: number;
 	private pidFilePath: string;
 
 	constructor(private pluginDir: string) {
 		this.pluginDir = pluginDir;
-		this.parentPID = process.pid;
 		this.pidFilePath = path.join(pluginDir, ".server.pid");
 	}
 
@@ -39,8 +37,6 @@ export class ServerProcessSupervisor {
 				shell: true,
 				env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin` },
 			});
-
-			if (this.serverProcess.pid) { this.setupOrphanTerminator(this.parentPID, this.serverProcess.pid) }
 
 			this.writePIDToFile(this.serverProcess.pid);
 
@@ -68,7 +64,7 @@ export class ServerProcessSupervisor {
 	}
 
 	terminateServer(): void {
-		if (this.serverProcess) {
+		if (this.serverProcess && !this.serverProcess.killed) {
 			console.log("Terminating server process.");
 			this.serverProcess.kill("SIGINT");
 			this.serverProcess = null;
@@ -127,23 +123,9 @@ export class ServerProcessSupervisor {
 		try {
 			if (fs.existsSync(this.pidFilePath)) {
 				fs.unlinkSync(this.pidFilePath);
-				console.log("Cleaned up PID file.");
 			}
 		} catch (err) {
 			console.error(`Failed to clean up PID file: ${err}`);
 		}
-	}
-
-	private setupOrphanTerminator(parentPID: number, childPID: number) {
-		const monitorPath = path.resolve(this.pluginDir, "monitor.js");
-
-		const monitorProcess = spawn(
-			"node",
-			[monitorPath, parentPID.toString(), childPID.toString()],
-			{ detached: true, stdio: "ignore" }
-		);
-
-		monitorProcess.unref(); // Allow the monitor process to run independently
-		return monitorProcess;
 	}
 }

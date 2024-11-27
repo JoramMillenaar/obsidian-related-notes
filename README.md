@@ -90,20 +90,16 @@ This plugin relies on [relate-text](https://github.com/JoramMillenaar/relate-tex
 
 ### TODO  
 Here are the current development goals for the plugin:  
-- Pass title to the embedder (maybe even make it weighty)
+- Pass the note's title to the embedder as well (maybe even make it weighty)
+- Kill the local API when Obsidian is quit (I've tried multiple ways, seems to be a challenge)
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
-  - Fix the race condition in the initial indexing (wait for the server have started)
 - Add option to show notes to a similarity threshold, rather than a set amount of notes.
-- Support reflecting file actions (create, update, delete) in the index.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
-- Clean up dependencies:  
-  - Minimize dependencies and eventually eliminate those containing any code relating to external APIs to ensure a complete local design.  
 - Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
 - Improve logging and remove the many console.log statements
-- Add headers to the list view, like 'note' and 'similarity'
-- Fix active note not always being known. Like on plugin load and when a file was just deleted.
 - Look into and fix odd resuls in similarity after updating note embeddings
+- Test windows compatibility
 
 ### License
 
