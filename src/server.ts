@@ -1,4 +1,5 @@
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess } from "child_process";
+import spawn from "cross-spawn";
 import fs from "fs";
 import path from "path";
 import { logError } from "./services/utils";
@@ -40,7 +41,6 @@ export class ServerProcessSupervisor {
 			});
 
 			this.writeStateToFile({ pid: this.serverProcess.pid, port });
-			console.log('Ran server on: ', port, this.serverProcess.pid)
 
 			this.serverProcess.stderr?.on("data", (chunk) => {
 				const errorMessage = chunk.toString().trim();

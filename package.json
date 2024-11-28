@@ -12,6 +12,7 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@types/cross-spawn": "^6.0.6",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
@@ -25,6 +26,7 @@
 		"@types/p-limit": "^2.1.0",
 		"@types/turndown": "^5.0.5",
 		"axios": "^1.7.7",
+		"cross-spawn": "^7.0.6",
 		"get-port": "^7.1.0",
 		"p-limit": "^6.1.0",
 		"relate-text": "^1.1.0",
