@@ -2,6 +2,7 @@ import axios from 'axios';
 import { DefaultApi, EmbeddingsPutRequest, EmbeddingsPostRequest, SimilarPostRequest } from './generated_api/api';
 import { ServerProcessSupervisor } from 'src/server';
 import { logError } from './utils';
+import getPort from 'get-port';
 
 /**
  * Provides an abstraction for interacting with a local API process that manages embeddings.
@@ -10,22 +11,24 @@ export class EmbeddingService {
 	apiClient: DefaultApi;
 	serverSupervisor: ServerProcessSupervisor;
 	basePath: string;
-	port: number;
 
-	constructor(port: number, basePath: string) {
+	constructor(basePath: string) {
 		this.serverSupervisor = new ServerProcessSupervisor(basePath);
 		this.basePath = basePath;
-		this.port = port;
-		this.apiClient = new DefaultApi(undefined, this.basePath, this.setupLocalAPIClient());
 	}
 
 	async ready(): Promise<void> {
-		await this.serverSupervisor.ensureServerRunning(this.port);
+		if (!this.serverSupervisor.isServerRunning()) {
+			await this.serverSupervisor.startNewServer(await getPort());
+		}
+		const port = this.serverSupervisor.getServerPort();
+		const axiosClient = this.setupLocalAPIClient(port)
+		this.apiClient = new DefaultApi(undefined, this.basePath, axiosClient);
 	}
 
-	private setupLocalAPIClient() {
+	private setupLocalAPIClient(port: number) {
 		return axios.create({
-			baseURL: 'http://localhost:' + this.port,
+			baseURL: 'http://localhost:' + port,
 			headers: { 'Content-Type': 'application/json' }
 		});
 	}

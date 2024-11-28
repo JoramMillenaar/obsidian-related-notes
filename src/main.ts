@@ -9,12 +9,10 @@ import { RelatedNotesSettingTab } from './settings';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
-	pluginServerPort: number;
 }
 
 export const DEFAULT_SETTINGS: RelatedNotesSettings = {
 	maxRelatedNotes: 5,
-	pluginServerPort: 3000
 };
 
 
@@ -123,7 +121,7 @@ export default class RelatedNotes extends Plugin {
 
 	private setupController(): AppController {
 		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new EmbeddingService(this.settings.pluginServerPort, this.getPluginDir());
+		const embeddingService = new EmbeddingService(this.getPluginDir());
 		const noteService = new NoteService(this.app);
 		return new AppController(this, noteService, embeddingService, textProcessor);
 	}

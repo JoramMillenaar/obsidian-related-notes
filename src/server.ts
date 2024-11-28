@@ -18,20 +18,20 @@ import { Notice } from "obsidian";
  */
 export class ServerProcessSupervisor {
 	private serverProcess: ChildProcess | null = null;
-	private pidFilePath: string;
+	private stateFilePath: string;
+	private port: number | null = null;
 
 	constructor(private pluginDir: string) {
 		this.pluginDir = pluginDir;
-		this.pidFilePath = path.join(pluginDir, ".server.pid");
+		this.stateFilePath = path.join(pluginDir, ".server.json");
 	}
 
-	async ensureServerRunning(port: number): Promise<void> {
-		return new Promise((resolve, reject) => {
-			if (this.serverProcess || this.getRunningProcess()) {
-				resolve();
-				return;
-			}
+	isServerRunning(): boolean {
+		return !!(this.serverProcess || this.getRunningProcess());
+	}
 
+	async startNewServer(port: number): Promise<void> {
+		return new Promise((resolve, reject) => {
 			this.serverProcess = spawn("relate-text", ["start-server", "--port", port.toString()], {
 				cwd: this.pluginDir,
 				stdio: ["inherit", "pipe", "pipe"], // Attach child process to parent and forward any messages
@@ -39,16 +39,18 @@ export class ServerProcessSupervisor {
 				env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin` },
 			});
 
-			this.writePIDToFile(this.serverProcess.pid);
+			this.writeStateToFile({ pid: this.serverProcess.pid, port });
+			console.log('Ran server on: ', port, this.serverProcess.pid)
 
 			this.serverProcess.stderr?.on("data", (chunk) => {
 				const errorMessage = chunk.toString().trim();
 				logError(`[Server Error]: ${errorMessage}`);
-			
+
 				if (errorMessage.includes("EADDRINUSE")) {
 					new Notice(
 						`[Related Notes] Port ${port} is already in use.\nPlease set a different value in the settings.`
 					);
+					reject(new Error(`Port ${port} is already in use.`));
 				}
 			});
 
@@ -61,12 +63,13 @@ export class ServerProcessSupervisor {
 
 			this.serverProcess.on("error", (err) => {
 				logError("Failed to start server:", err);
+				reject(err);
 			});
 
 			this.serverProcess.on("close", (code) => {
-				this.cleanupPIDFile();
+				this.cleanupStateFile();
 			});
-		})
+		});
 	}
 
 	terminateServer(): void {
@@ -75,31 +78,40 @@ export class ServerProcessSupervisor {
 			this.serverProcess = null;
 			return;
 		}
-		const serverPID = this.getRunningProcess();
-		if (serverPID) {
-			process.kill(serverPID);
+		const serverState = this.readStateFromFile();
+		if (serverState?.pid) {
+			process.kill(serverState.pid);
 		}
-		this.cleanupPIDFile();
+		this.cleanupStateFile();
 	}
 
-	private writePIDToFile(pid: number | undefined): void {
-		if (pid) {
-			try {
-				fs.writeFileSync(this.pidFilePath, pid.toString());
-			} catch (err) {
-				logError(`Failed to write PID to file: ${err}`);
-			}
+	getServerPort(): number {
+		if (this.port) return this.port;
+
+		const state = this.readStateFromFile();
+		if (state?.port) {
+			return (this.port = state.port);
 		}
+
+		throw new Error("Cannot retrieve port of the server. Has the server started?");
 	}
 
-	private readPIDFromFile(): number | null {
+	private writeStateToFile(state: { pid: number | undefined; port: number }): void {
 		try {
-			if (fs.existsSync(this.pidFilePath)) {
-				const pid = parseInt(fs.readFileSync(this.pidFilePath, "utf-8"), 10);
-				return isNaN(pid) ? null : pid;
+			fs.writeFileSync(this.stateFilePath, JSON.stringify(state, null, 2));
+		} catch (err) {
+			logError(`Failed to write state to file: ${err}`);
+		}
+	}
+
+	private readStateFromFile(): { pid: number | null; port: number | null } | null {
+		try {
+			if (fs.existsSync(this.stateFilePath)) {
+				const data = fs.readFileSync(this.stateFilePath, "utf-8");
+				return JSON.parse(data);
 			}
 		} catch (err) {
-			logError(`Failed to read PID from file: ${err}`);
+			logError(`Failed to read state from file: ${err}`);
 		}
 		return null;
 	}
@@ -114,21 +126,21 @@ export class ServerProcessSupervisor {
 	}
 
 	private getRunningProcess(): number | null {
-		const pid = this.readPIDFromFile();
-		if (pid && this.isProcessRunning(pid)) {
-			return pid;
+		const state = this.readStateFromFile();
+		if (state?.pid && this.isProcessRunning(state.pid)) {
+			return state.pid;
 		}
-		this.cleanupPIDFile(); // Remove stale PID file
+		this.cleanupStateFile(); // Remove stale state file
 		return null;
 	}
 
-	private cleanupPIDFile(): void {
+	private cleanupStateFile(): void {
 		try {
-			if (fs.existsSync(this.pidFilePath)) {
-				fs.unlinkSync(this.pidFilePath);
+			if (fs.existsSync(this.stateFilePath)) {
+				fs.unlinkSync(this.stateFilePath);
 			}
 		} catch (err) {
-			logError(`Failed to clean up PID file: ${err}`);
+			logError(`Failed to clean up state file: ${err}`);
 		}
 	}
 }
