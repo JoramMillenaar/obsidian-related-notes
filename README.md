@@ -69,9 +69,10 @@ Here are the current development goals for the plugin:
 - Add option to show notes to a similarity threshold, rather than a set amount of notes.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
-- Consider renaming the plugin to something like **Deeplink**, **Meaning Map**, **SmartLink**, or **Relate Notes**.  
 - Look into and fix odd resuls in similarity after updating note embeddings
 - Test windows compatibility
+- Remove system node dependency
+	- There seem to be WASM solutions for running a AI model, just tokenizing seems to be a challenge to do within the sandboxed environment.
 
 ### License
 
