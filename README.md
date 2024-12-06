@@ -69,6 +69,8 @@ Here are the current development goals for the plugin:
 - Add option to show notes to a similarity threshold, rather than a set amount of notes.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
+- Add a search option to search by semantic meaning
+- Remove the relate-text dependency and pull that into this project
 - Look into and fix odd resuls in similarity after updating note embeddings
 - Test windows compatibility
 - Remove system node dependency
