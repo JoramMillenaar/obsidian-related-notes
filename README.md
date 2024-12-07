@@ -5,6 +5,16 @@ Find notes with similar meaning intelligently, helping you uncover hidden connec
 ![Screenshot](https://github.com/JoramMillenaar/obsidian-related-notes/raw/master/example.gif)
 
 
+---
+# 🚧 **Under Construction: Plugin in Development** 🚧
+> ### ⚠️ **Notice: This Plugin is a Work in Progress!** ⚠️
+>  
+> **This README outlines the intended functionality for the Related Notes Finder plugin, but the plugin is not yet fully operational as described.**  
+> 
+> I'm actively working to bring these features to life. Contributions are encouraged and appreciated! Feel free to dive in, experiment, and help shape the final product.
+---
+
+
 ## Features
 
 - **Fully Local and Private**: Your notes and data are never sent outside your device. All processing is done locally to ensure complete privacy.
