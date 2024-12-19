@@ -39,7 +39,6 @@ export class IframeMessenger {
 
     private onMessageReceived = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
-
         const { requestId, data, error }: { requestId: number; data: IframeResponse; error?: string } = event.data;
         if (this.pendingRequests.has(requestId)) {
             const resolve = this.pendingRequests.get(requestId);

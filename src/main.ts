@@ -21,17 +21,16 @@ export const DEFAULT_SETTINGS: RelatedNotesSettings = {
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private controller: AppController;
+	embeddingService: EmbeddingService;
 
 	async onload() {
 		await this.loadSettings();
 
+		this.embeddingService = new EmbeddingService();
 		this.controller = this.setupController();
 		await this.controller.ready();
 
-		if (!(await this.loadData()).initialized) {
-			this.controller.reindexAll();
-			this.saveData({ initialized: true })
-		}
+		this.controller.reindexAll();
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
@@ -84,6 +83,7 @@ export default class RelatedNotes extends Plugin {
 	onunload() {
 		this.controller.unload();
 		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
+		this.embeddingService.unload();
 	}
 
 	private openRelatedNotesView() {
@@ -119,22 +119,22 @@ export default class RelatedNotes extends Plugin {
 
 	private setupController(): AppController {
 		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new EmbeddingService();
 		const noteService = new NoteService(this.app);
 		const indexIO = new ObsidianIndexIO(this);
+		indexIO.initializeIndex();
 		const localIndex = new LocalIndex(indexIO);
 		const indexController = new VectraDatabaseController(localIndex);
-		return new AppController(this, noteService, embeddingService, textProcessor, indexController);
+		return new AppController(this, noteService, this.embeddingService, textProcessor, indexController);
 	}
 
 	async loadSettings() {
-		if (!(await this.loadData())) {
-			this.saveData({ initialized: false });
-		}
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		// if (!(await this.loadData())) {
+		// 	this.saveData({ initialized: false });
+		// }
+		// this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
-		await this.saveData(this.settings);
+		// await this.saveData(this.settings);
 	}
 }

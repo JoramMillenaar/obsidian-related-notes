@@ -11,17 +11,18 @@ export interface IndexIO {
 
 
 export class ObsidianIndexIO implements IndexIO {
-    constructor(private plugin: Plugin) { }
 
-    async initializeIndex(initialData: IndexData): Promise<void> {
+    constructor(private plugin: Plugin, private initialData: IndexData = {version: 1, items: [], metadata_config: {}}) { }
+
+    async initializeIndex(): Promise<void> {
         const exists = await this.indexExists();
         if (!exists) {
-            await this.plugin.saveData(initialData)
+            await this.plugin.saveData(this.initialData)
         }
     }
 
     async dropIndex(): Promise<void> {
-        await this.plugin.saveData(null)
+        await this.plugin.saveData(this.initialData)
     }
 
     async updateIndex(data: IndexData): Promise<void> {

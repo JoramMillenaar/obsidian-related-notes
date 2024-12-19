@@ -60,7 +60,7 @@ export class AppController {
 	}
 
 	async indexAll(): Promise<void> {
-		const paths = await this.noteService.getAllNotePaths();
+		const paths: string[] = this.noteService.getAllNotePaths();
 		const total = paths.length;
 		let processed = 0;
 
@@ -85,7 +85,7 @@ export class AppController {
 		const text = await this.getProcessedNoteContent(currentPath);
 		if (!text) return [];
 
-		const similarNotes = await this.searchSimilarNotes(text, this.plugin.settings.maxRelatedNotes + 1); // +1 to account for the current note
+		const similarNotes = await this.searchSimilarNotes(text, 5); // this.plugin.settings.maxRelatedNotes + 1 +1 to account for the current note
 		return similarNotes.filter(note => note.path !== currentPath);
 	}
 
