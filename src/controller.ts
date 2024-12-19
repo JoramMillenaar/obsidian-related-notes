@@ -5,6 +5,7 @@ import pLimit from 'p-limit';
 import { StatusBarService } from "./services/statusBarService";
 import RelatedNotes from "./main";
 import { getNoteTitleFromPath, logError } from "./services/utils";
+import { VectraDatabaseController } from "./indexController";
 
 
 export class AppController {
@@ -15,6 +16,7 @@ export class AppController {
 		private noteService: NoteService,
 		private embeddingService: EmbeddingService,
 		private textProcessor: ITextProcessingService,
+		private indexController: VectraDatabaseController
 	) {
 		this.statusBar = new StatusBarService(plugin);
 	}
@@ -24,19 +26,24 @@ export class AppController {
 		return this.textProcessor.processText(content);
 	}
 
-	unload() {
-		this.embeddingService.unload();
+	async ready(): Promise<void> {
+		return await this.embeddingService.ready() 
 	}
 
+	unload() {}
+
 	async reindexCurrentActive(): Promise<void> {
+		// TODO: fix this
 		const path = this.noteService.activeNotePath();
 		if (!path) return;
 		const text = await this.getProcessedNoteContent(path);
+		const embedding = await this.embeddingService.embed(text);
 		try {
-			await this.embeddingService.update(path, text);
+			await this.indexController.delete(path);
+			await this.indexController.create(path, embedding, {});
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("EmbeddingDoesNotExist")) {
-				await this.embeddingService.create(path, text);
+				await this.indexController.create(path, embedding, {});
 			} else {
 				logError("Error reindexing active note:", error);
 				throw error;
@@ -46,7 +53,7 @@ export class AppController {
 
 	async reindexAll(): Promise<void> {
 		this.statusBar.update("Indexing...");
-		await this.embeddingService.deleteAll();
+		await this.indexController.dropDatabase();
 		await this.indexAll();
 		this.statusBar.update("Finished Indexing");
 		setTimeout(() => this.statusBar.clear(), 3000); // Clear after 3 seconds
@@ -62,7 +69,8 @@ export class AppController {
 			paths.map((path) =>
 				limit(async () => {
 					const text = await this.getProcessedNoteContent(path);
-					await this.embeddingService.create(path, text);
+					const embedding = await this.embeddingService.embed(text);
+					this.indexController.create(path, embedding, {})
 					processed++;
 					this.statusBar.update(`Indexing: ${processed}/${total}`);
 				})
@@ -83,15 +91,16 @@ export class AppController {
 
 
 	async searchSimilarNotes(text: string, limit: number): Promise<RelatedNote[]> {
-		const results = await this.embeddingService.fetchSimilar(text, limit);
+		const embedding = await this.embeddingService.embed(text);
+		const results = await this.indexController.querySimilar(embedding, limit)
 		return results.map(result => ({
-			similarity: result.similarity,
+			similarity: result.score,
 			title: getNoteTitleFromPath(result.id),
 			path: result.id
 		}))
 	}
 
 	async deleteNoteFromIndex(path: string) {
-		await this.embeddingService.delete(path);
+		await this.indexController.delete(path);
 	}
 }

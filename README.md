@@ -90,6 +90,9 @@ Here are the current development goals for the plugin:
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
+#### External
+The `src/vectra` folder contains code derived from vectra, licensed under the MIT License. See `src/vectra/LICENSE` for details.
+
 ---
 
 With **Related Notes Finder**, explore your knowledge in a new way—intelligently, locally, and privately.

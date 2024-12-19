@@ -1,0 +1,21 @@
+<script type=module>
+  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0';
+
+  env.allowLocalModels = false;
+  env.backends.onnx.wasm.numThreads = 1;
+
+  function serializeTensor(tensor) {
+    return {
+      data: tensor.data,
+      dims: tensor.dims,
+      type: tensor.type,
+    };
+  }
+
+  const featureExtractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+
+  window.addEventListener('message', async (event) => {
+    const features = await featureExtractor(event.data.payload);
+    event.source.postMessage({requestId: event.data.requestId, data: serializeTensor(features)}, window.origin);
+  });
+</script>

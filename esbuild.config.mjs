@@ -1,6 +1,10 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import fs from 'fs';
+
+const iframeCode = fs.readFileSync('./src/iframe/embeddingService.html');
+const iframeCodeString = JSON.stringify(iframeCode.toString());
 
 const banner =
 `/*
@@ -40,6 +44,9 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	define: {
+		__IFRAME_CONTENTS_PLACEHOLDER__: iframeCodeString, // Inline the bundled Iframe code
+	},
 });
 
 if (prod) {

@@ -4,8 +4,10 @@ import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from './views/RelatedNo
 import { AppController } from './controller';
 import { EmbeddingService } from './services/embeddingService';
 import { MarkdownTextProcessingService } from './services/textProcessorService';
-import path from 'path';
 import { RelatedNotesSettingTab } from './settings';
+import { VectraDatabaseController } from './indexController';
+import { LocalIndex } from './vectra/db';
+import { ObsidianIndexIO } from './services/indexService';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
@@ -24,6 +26,8 @@ export default class RelatedNotes extends Plugin {
 		await this.loadSettings();
 
 		this.controller = this.setupController();
+		await this.controller.ready();
+
 		if (!(await this.loadData()).initialized) {
 			this.controller.reindexAll();
 			this.saveData({ initialized: true })
@@ -113,17 +117,14 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
-	private getPluginDir() {
-		// @ts-ignore
-		const vaultDir = this.app.vault.adapter.getBasePath();
-		return path.join(vaultDir, '.obsidian', 'plugins', 'related-notes');
-	}
-
 	private setupController(): AppController {
 		const textProcessor = new MarkdownTextProcessingService();
-		const embeddingService = new EmbeddingService(this.getPluginDir());
+		const embeddingService = new EmbeddingService();
 		const noteService = new NoteService(this.app);
-		return new AppController(this, noteService, embeddingService, textProcessor);
+		const indexIO = new ObsidianIndexIO(this);
+		const localIndex = new LocalIndex(indexIO);
+		const indexController = new VectraDatabaseController(localIndex);
+		return new AppController(this, noteService, embeddingService, textProcessor, indexController);
 	}
 
 	async loadSettings() {
