@@ -69,22 +69,17 @@ For more information on developing Obsidian plugins, check out the [Obsidian Plu
 
 Contributions are very welcome! If you have ideas for improvements or new features, please open an issue or submit a pull request to start a discussion. I have plenty of ideas on powerful features to implement in the future, but I can use some help in getting the plugin to a stable point first.
 
-At the momentm, this plugin relies on [relate-text](https://github.com/JoramMillenaar/relate-text) for much of its core logic. Contributions to this library are equally encouraged and will directly enhance the functionality of the plugin.
 
 ### TODO  
 Here are the current development goals for the plugin:  
 - Pass the note's title to the embedder as well (maybe even make it weighty)
-- Kill the local API when Obsidian is quit (I've tried multiple ways, seems to be a challenge)
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
 - Add option to show notes to a similarity threshold, rather than a set amount of notes.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
 - Add a search option to search by semantic meaning
-- Remove the relate-text dependency and pull that into this project
 - Look into and fix odd resuls in similarity after updating note embeddings
 - Test windows compatibility
-- Remove system node dependency
-	- There seem to be WASM solutions for running a AI model, just tokenizing seems to be a challenge to do within the sandboxed environment.
 
 ### License
 
