@@ -79,6 +79,7 @@ export class RelatedNotesListView extends ItemView {
 
 		try {
 			this.isLoading = true;
+			await this.controller.ready();
 			const notes = await this.controller.getActiveNoteRelations();
 			this.isLoading = false;
 

@@ -1,13 +1,4 @@
-export interface IframeMessage {
-    requestId: number;
-    payload: string;
-}
-
-export type IframeResponse = {
-    data: Float32Array,
-    dims: number[],
-    type: string,
-}
+import { IframeMessage, IframeResponse } from "src/vectra/types";
 
 export class IframeMessenger {
     private iframe: HTMLIFrameElement | null = null;
@@ -35,6 +26,8 @@ export class IframeMessenger {
 
         window.removeEventListener('message', this.onMessageReceived);
         window.addEventListener('message', this.onMessageReceived);
+
+        await this.waitForIframeReady();
     }
 
     private onMessageReceived = (event: MessageEvent) => {
@@ -53,7 +46,7 @@ export class IframeMessenger {
         }
     };
 
-    sendMessage(payload: string): Promise<Float32Array> {
+    async sendMessage(payload: string, retries = 3): Promise<Float32Array> {
         if (!this.iframe || !this.iframe.contentWindow) {
             throw new Error("Iframe is not ready. Did you call 'initialize()'?");
         }
@@ -61,16 +54,61 @@ export class IframeMessenger {
         const requestId = this.requestIdCounter++;
         const message: IframeMessage = { requestId, payload };
 
-        return new Promise((resolve, reject) => {
-            this.pendingRequests.set(requestId, resolve);
-            this.iframe?.contentWindow?.postMessage(message, window.origin);
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                return await new Promise((resolve, reject) => {
+                    this.pendingRequests.set(requestId, resolve);
+                    this.iframe?.contentWindow?.postMessage(message, window.origin);
 
-            setTimeout(() => {
-                if (this.pendingRequests.has(requestId)) {
-                    this.pendingRequests.delete(requestId);
-                    reject(new Error(`Request with ID '${requestId}' timed out`));
-                }
-            }, 10000); // 10-second timeout
+                    setTimeout(() => {
+                        if (this.pendingRequests.has(requestId)) {
+                            this.pendingRequests.delete(requestId);
+                            reject(new Error(`Request with ID '${requestId}' timed out`));
+                        }
+                    }, 10000); // 10-second timeout
+                });
+            } catch (error) {
+                console.warn(`Attempt ${attempt + 1} failed: ${error}`);
+            }
+        }
+
+        throw new Error(`All ${retries} attempts to send the message failed`);
+    }
+
+    private async waitForIframeReady(): Promise<void> {
+        for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+                await this.ping();
+                return;
+            } catch (error) {
+                console.warn(`Iframe ping attempt ${attempt + 1} failed. Retrying...`);
+                await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
+            }
+        }
+
+        throw new Error("Iframe is not responsive after multiple attempts");
+    }
+
+    private ping(): Promise<void> {
+        if (!this.iframe || !this.iframe.contentWindow) {
+            return Promise.reject(new Error("Iframe is not ready"));
+        }
+
+        return new Promise((resolve, reject) => {
+            const requestId = this.requestIdCounter++;
+            const message: IframeMessage = { requestId, payload: "ping" };
+
+            const timeout = setTimeout(() => {
+                this.pendingRequests.delete(requestId);
+                reject(new Error("Ping timed out"));
+            }, 3000); // 3-second timeout for ping
+
+            this.pendingRequests.set(requestId, () => {
+                clearTimeout(timeout);
+                resolve();
+            });
+
+            this.iframe!.contentWindow!.postMessage(message, window.origin);
         });
     }
 

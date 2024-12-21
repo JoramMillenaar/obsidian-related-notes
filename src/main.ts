@@ -13,9 +13,9 @@ export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
 }
 
-export const DEFAULT_SETTINGS: RelatedNotesSettings = {
-	maxRelatedNotes: 5,
-};
+// export const DEFAULT_SETTINGS: RelatedNotesSettings = {
+// 	maxRelatedNotes: 5,
+// };
 
 
 export default class RelatedNotes extends Plugin {
@@ -27,10 +27,13 @@ export default class RelatedNotes extends Plugin {
 		await this.loadSettings();
 
 		this.embeddingService = new EmbeddingService();
-		this.controller = this.setupController();
+		const textProcessor = new MarkdownTextProcessingService();
+		const noteService = new NoteService(this.app);
+		const indexIO = new ObsidianIndexIO(this);
+		const localIndex = new LocalIndex(indexIO);
+		const indexController = new VectraDatabaseController(localIndex);
+		this.controller = new AppController(this, noteService, this.embeddingService, textProcessor, indexController);
 		await this.controller.ready();
-
-		this.controller.reindexAll();
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
@@ -73,11 +76,11 @@ export default class RelatedNotes extends Plugin {
 		this.app.workspace.on('file-open', () => {
 			this.updateRelatedNotesView();
 		});
-
-		// Ensure the view is present in the sidebar on load
-		this.app.workspace.onLayoutReady(() => {
-			this.openRelatedNotesView();
-		});
+	}
+	
+	async onUserEnable() {
+		this.controller.reindexAll();
+		this.openRelatedNotesView();
 	}
 
 	onunload() {
@@ -115,16 +118,6 @@ export default class RelatedNotes extends Plugin {
 			await leaf.setViewState({ type: VIEW_TYPE_RELATED_NOTES, active: true });
 		}
 		this.app.workspace.revealLeaf(leaf);
-	}
-
-	private setupController(): AppController {
-		const textProcessor = new MarkdownTextProcessingService();
-		const noteService = new NoteService(this.app);
-		const indexIO = new ObsidianIndexIO(this);
-		indexIO.initializeIndex();
-		const localIndex = new LocalIndex(indexIO);
-		const indexController = new VectraDatabaseController(localIndex);
-		return new AppController(this, noteService, this.embeddingService, textProcessor, indexController);
 	}
 
 	async loadSettings() {

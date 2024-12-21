@@ -12,17 +12,18 @@ export interface IndexIO {
 
 export class ObsidianIndexIO implements IndexIO {
 
-    constructor(private plugin: Plugin, private initialData: IndexData = {version: 1, items: [], metadata_config: {}}) { }
+    constructor(private plugin: Plugin) {
+     }
 
-    async initializeIndex(): Promise<void> {
+    async initializeIndex(initialData: IndexData): Promise<void> {
         const exists = await this.indexExists();
         if (!exists) {
-            await this.plugin.saveData(this.initialData)
+            await this.plugin.saveData(initialData)
         }
     }
 
     async dropIndex(): Promise<void> {
-        await this.plugin.saveData(this.initialData)
+        await this.plugin.saveData(null)
     }
 
     async updateIndex(data: IndexData): Promise<void> {
@@ -31,7 +32,7 @@ export class ObsidianIndexIO implements IndexIO {
 
     async indexExists(): Promise<boolean> {
         const data = await this.plugin.loadData();
-        return data !== null;
+        return data && data.items;
     }
 
     async retrieveIndex(): Promise<IndexData> {

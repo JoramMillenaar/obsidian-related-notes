@@ -12,7 +12,7 @@ export class AppController {
 	private statusBar: StatusBarService;
 
 	constructor(
-		private plugin: RelatedNotes,
+		plugin: RelatedNotes,
 		private noteService: NoteService,
 		private embeddingService: EmbeddingService,
 		private textProcessor: ITextProcessingService,
@@ -27,7 +27,8 @@ export class AppController {
 	}
 
 	async ready(): Promise<void> {
-		return await this.embeddingService.ready() 
+		await this.indexController.ready();
+		return await this.embeddingService.ready();
 	}
 
 	unload() {}
@@ -54,6 +55,7 @@ export class AppController {
 	async reindexAll(): Promise<void> {
 		this.statusBar.update("Indexing...");
 		await this.indexController.dropDatabase();
+		await this.indexController.ready();
 		await this.indexAll();
 		this.statusBar.update("Finished Indexing");
 		setTimeout(() => this.statusBar.clear(), 3000); // Clear after 3 seconds
@@ -70,7 +72,7 @@ export class AppController {
 				limit(async () => {
 					const text = await this.getProcessedNoteContent(path);
 					const embedding = await this.embeddingService.embed(text);
-					this.indexController.create(path, embedding, {})
+					this.indexController.create(path, embedding, {});
 					processed++;
 					this.statusBar.update(`Indexing: ${processed}/${total}`);
 				})
