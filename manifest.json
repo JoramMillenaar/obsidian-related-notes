@@ -1,10 +1,10 @@
 {
 	"id": "related-notes",
 	"name": "Related Notes",
-	"version": "1.0.1",
+	"version": "2.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Intelligently suggests related notes—fully local and private, revealing connections in your knowledge vault.",
 	"author": "Joram Millenaar",
 	"authorUrl": "https://github.com/JoramMillenaar",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }
