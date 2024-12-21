@@ -23,7 +23,7 @@ export class VectraDatabaseController {
         }
     }
 
-    async create(id: string, embedding: Float32Array, metadata: Record<string, string>): Promise<void> {
+    async create(id: string, embedding: number[], metadata: Record<string, string>): Promise<void> {
         if ((await this.filterByID(id)).length > 0) {
             throw new Error(`Embedding with ID '${id}' already exists`);
         }
@@ -58,7 +58,7 @@ export class VectraDatabaseController {
         await this.index.deleteIndex();
     }
 
-    async querySimilar(embedding: Float32Array, limit: number): Promise<QueryResult[]> {
+    async querySimilar(embedding: number[], limit: number): Promise<QueryResult[]> {
         const results = await this.index.queryItems(Array.from(embedding), limit);
         return results.map(result => ({
             id: result.item.metadata.id.toString(),

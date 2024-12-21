@@ -1,9 +1,9 @@
-import { IframeMessage, IframeResponse } from "src/vectra/types";
+import { IframeMessage } from "src/vectra/types";
 
 export class IframeMessenger {
     private iframe: HTMLIFrameElement | null = null;
     private requestIdCounter = 0;
-    private pendingRequests = new Map<number, (data: Float32Array) => void>();
+    private pendingRequests = new Map<number, (data: number[]) => void>();
 
     constructor(private iframeId: string, private workerScript: string) {}
 
@@ -32,7 +32,7 @@ export class IframeMessenger {
 
     private onMessageReceived = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
-        const { requestId, data, error }: { requestId: number; data: IframeResponse; error?: string } = event.data;
+        const { requestId, data, error }: { requestId: number; data: number[]; error?: string } = event.data;
         if (this.pendingRequests.has(requestId)) {
             const resolve = this.pendingRequests.get(requestId);
             this.pendingRequests.delete(requestId);
@@ -40,13 +40,13 @@ export class IframeMessenger {
                 console.error(`Error from iframe: ${error}`);
                 return;
             }
-            resolve?.(data.data);
+            resolve?.(data);
         } else {
             console.warn(`Unrecognized requestId: ${requestId}`);
         }
     };
 
-    async sendMessage(payload: string, retries = 3): Promise<Float32Array> {
+    async sendMessage(payload: string, retries = 3): Promise<number[]> {
         if (!this.iframe || !this.iframe.contentWindow) {
             throw new Error("Iframe is not ready. Did you call 'initialize()'?");
         }

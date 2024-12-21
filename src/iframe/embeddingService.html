@@ -4,6 +4,40 @@
   env.allowLocalModels = false;
   env.backends.onnx.wasm.numThreads = 1;
 
+  export class DocumentEmbeddingController {
+    constructor() {
+        this.initialized = this.initializeModel();
+    }
+    async ready() {
+        await this.initialized;
+    }
+    async initializeModel() {
+        this.pipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+    }
+    async generateDocumentEmbedding(text) {
+        const paragraphs = text.split(/\n\s*\n/).filter(paragraph => paragraph.trim().length > 0);
+        if (paragraphs.length === 0) {
+            throw new Error('No valid paragraphs found in the text.');
+        }
+        const embeddings = await Promise.all(paragraphs.map(paragraph => this.pipeline(paragraph, { pooling: 'mean' })));
+        return this.calculateMeanEmbedding(embeddings.map(e => e.data));
+    }
+    calculateMeanEmbedding(embeddings) {
+        const numEmbeddings = embeddings.length;
+        const embeddingSize = embeddings[0].length;
+        const meanEmbedding = new Float32Array(embeddingSize);
+        embeddings.forEach(embedding => {
+            for (let i = 0; i < embeddingSize; i++) {
+                meanEmbedding[i] += embedding[i];
+            }
+        });
+        for (let i = 0; i < embeddingSize; i++) {
+            meanEmbedding[i] /= numEmbeddings;
+        }
+        return meanEmbedding;
+    }
+}
+
   function serializeTensor(tensor) {
     return {
       data: tensor.data,
@@ -12,10 +46,10 @@
     };
   }
 
-  const featureExtractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  const embedder = new DocumentEmbeddingController();
 
   window.addEventListener('message', async (event) => {
-    const features = await featureExtractor(event.data.payload);
-    event.source.postMessage({requestId: event.data.requestId, data: serializeTensor(features)}, window.origin);
+    const features = await embedder.generateDocumentEmbedding(event.data.payload);
+    event.source.postMessage({requestId: event.data.requestId, data: Array.from(features)}, window.origin);
   });
 </script>

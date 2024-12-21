@@ -29,11 +29,6 @@ export interface IframeMessage {
     payload: string;
 }
 
-export type IframeResponse = {
-    data: Float32Array,
-    dims: number[],
-    type: string,
-}
 
 export interface MetadataFilter {
 

@@ -14,8 +14,8 @@ export class EmbeddingService {
         await this.iframeMessenger.initialize();
     }
 
-    async embed(text: string): Promise<Float32Array> {
-        return this.iframeMessenger.sendMessage(text);
+    async embed(text: string): Promise<number[]> {
+        return await this.iframeMessenger.sendMessage(text);
     }
 
     unload(): void {

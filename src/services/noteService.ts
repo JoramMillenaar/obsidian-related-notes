@@ -6,10 +6,6 @@ export type RelatedNote = {
 	path: string;
 };
 
-export type NoteEmbedding = {
-	path: string;
-	embeddings: Float32Array[];
-};
 
 export class NoteService {
 	constructor(
