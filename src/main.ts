@@ -22,6 +22,7 @@ export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private controller: AppController;
 	embeddingService: EmbeddingService;
+	indexIO: ObsidianIndexIO;
 
 	async onload() {
 		await this.loadSettings();
@@ -29,8 +30,8 @@ export default class RelatedNotes extends Plugin {
 		this.embeddingService = new EmbeddingService();
 		const textProcessor = new MarkdownTextProcessingService();
 		const noteService = new NoteService(this.app);
-		const indexIO = new ObsidianIndexIO(this);
-		const localIndex = new LocalIndex(indexIO);
+		this.indexIO = new ObsidianIndexIO(this);
+		const localIndex = new LocalIndex(this.indexIO);
 		const indexController = new VectraDatabaseController(localIndex);
 		this.controller = new AppController(this, noteService, this.embeddingService, textProcessor, indexController);
 		await this.controller.ready();
@@ -77,9 +78,11 @@ export default class RelatedNotes extends Plugin {
 			this.updateRelatedNotesView();
 		});
 	}
-	
+
 	async onUserEnable() {
-		this.controller.reindexAll();
+		if (!(await this.indexIO.retrieveIndex()).items.length) {
+			this.controller.reindexAll();
+		}
 		this.openRelatedNotesView();
 	}
 

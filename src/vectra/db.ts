@@ -122,7 +122,7 @@ export class LocalIndex {
     }
 
     public async isIndexCreated(): Promise<boolean> {
-        return await this.backend.indexExists();
+        return await this.backend.indexInitialized();
     }
 
     public async listItems() {

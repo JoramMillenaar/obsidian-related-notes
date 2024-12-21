@@ -5,18 +5,17 @@ export interface IndexIO {
     initializeIndex(initialData: IndexData): Promise<void>;
     dropIndex(): Promise<void>;
     updateIndex(data: IndexData): Promise<void>;
-    indexExists(): Promise<boolean>;
+    indexInitialized(): Promise<boolean>;
     retrieveIndex(): Promise<IndexData>;
 }
 
 
 export class ObsidianIndexIO implements IndexIO {
 
-    constructor(private plugin: Plugin) {
-     }
+    constructor(private plugin: Plugin) { }
 
     async initializeIndex(initialData: IndexData): Promise<void> {
-        const exists = await this.indexExists();
+        const exists = await this.indexInitialized();
         if (!exists) {
             await this.plugin.saveData(initialData)
         }
@@ -30,7 +29,7 @@ export class ObsidianIndexIO implements IndexIO {
         await this.plugin.saveData(data)
     }
 
-    async indexExists(): Promise<boolean> {
+    async indexInitialized(): Promise<boolean> {
         const data = await this.plugin.loadData();
         return data && data.items;
     }
