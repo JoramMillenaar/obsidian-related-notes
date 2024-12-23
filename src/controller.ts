@@ -53,19 +53,17 @@ export class AppController {
 	}
 
 	async reindexAll(): Promise<void> {
-		this.statusBar.update("Indexing...");
 		await this.indexController.dropDatabase();
 		await this.indexController.ready();
 		await this.indexAll();
-		this.statusBar.update("Finished Indexing");
-		setTimeout(() => this.statusBar.clear(), 3000); // Clear after 3 seconds
 	}
-
+	
 	async indexAll(): Promise<void> {
+		this.statusBar.update("Indexing...");
 		const paths: string[] = this.noteService.getAllNotePaths();
 		const total = paths.length;
 		let processed = 0;
-
+		
 		const limit = pLimit(5); // Limit to 5 concurrent requests
 		await Promise.all(
 			paths.map((path) =>
@@ -78,6 +76,7 @@ export class AppController {
 				})
 			)
 		);
+		this.statusBar.update("Finished Indexing");
 	}
 
 	async getActiveNoteRelations(): Promise<RelatedNote[]> {
