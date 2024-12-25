@@ -6,6 +6,7 @@ import { StatusBarService } from "./services/statusBarService";
 import RelatedNotes from "./main";
 import { getNoteTitleFromPath, logError } from "./services/utils";
 import { VectraDatabaseController } from "./indexController";
+import { basename } from "path";
 
 
 export class AppController {
@@ -23,9 +24,10 @@ export class AppController {
 
 	private async getProcessedNoteContent(path: string) {
 		const content = await this.noteService.getNoteContent(path);
-		return this.textProcessor.processText(content);
+		const fileName = basename(path);
+		const updatedContent = `${fileName}\n${content}`;
+		return this.textProcessor.processText(updatedContent);
 	}
-
 	async ready(): Promise<void> {
 		await this.indexController.ready();
 		return await this.embeddingService.ready();
@@ -34,7 +36,6 @@ export class AppController {
 	unload() {}
 
 	async reindexCurrentActive(): Promise<void> {
-		// TODO: fix this
 		const path = this.noteService.activeNotePath();
 		if (!path) return;
 		const text = await this.getProcessedNoteContent(path);

@@ -62,7 +62,6 @@ Contributions are very welcome! If you have ideas for improvements or new featur
 
 ### TODO  
 Here are the current development goals for the plugin:  
-- Pass the note's title to the embedder as well (maybe even make it weighty)
 - Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
 - Add option to show notes to a similarity threshold, rather than a set amount of notes.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
@@ -70,6 +69,8 @@ Here are the current development goals for the plugin:
 - Add a search option to search by semantic meaning
 - Look into and fix odd resuls in similarity after updating note embeddings
 - Test windows compatibility
+- Add ignore headers option (for people that have heavily template their headers. Then it doesn't really add meaning)
+- Support renaming files
 
 ### License
 
