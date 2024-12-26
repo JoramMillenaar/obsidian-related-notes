@@ -31,15 +31,6 @@ export default class RelatedNotes extends Plugin {
 		this.statusBar.update('Spinning up', 10000);
 		await this.loadSettings();
 
-		this.embeddingService = new EmbeddingService();
-		const textProcessor = new MarkdownTextProcessingService();
-		const noteService = new NoteService(this.app);
-		this.indexIO = new ObsidianIndexIO(this);
-		const localIndex = new LocalIndex(this.indexIO);
-		const indexController = new VectraDatabaseController(localIndex);
-		this.controller = new AppController(this.statusBar, noteService, this.embeddingService, textProcessor, indexController);
-		await this.controller.ready();
-
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
 			(leaf) => new RelatedNotesListView(leaf, this.controller)
@@ -84,6 +75,15 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	async onUserEnable() {
+		this.embeddingService = new EmbeddingService();
+		const textProcessor = new MarkdownTextProcessingService();
+		const noteService = new NoteService(this.app);
+		this.indexIO = new ObsidianIndexIO(this);
+		const localIndex = new LocalIndex(this.indexIO);
+		const indexController = new VectraDatabaseController(localIndex);
+		this.controller = new AppController(this.statusBar, noteService, this.embeddingService, textProcessor, indexController);
+		await this.controller.ready();
+		
 		if (!(await this.indexIO.retrieveIndex()).items.length) {
 			this.controller.reindexAll();
 		}
