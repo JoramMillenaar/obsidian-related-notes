@@ -3,24 +3,19 @@ import { NoteService, RelatedNote } from "./services/noteService";
 import { ITextProcessingService } from "./services/textProcessorService";
 import pLimit from 'p-limit';
 import { StatusBarService } from "./services/statusBarService";
-import RelatedNotes from "./main";
 import { getNoteTitleFromPath, logError } from "./services/utils";
 import { VectraDatabaseController } from "./indexController";
 import { basename } from "path";
 
-
 export class AppController {
-	private statusBar: StatusBarService;
 
 	constructor(
-		plugin: RelatedNotes,
+		private statusBar: StatusBarService,
 		private noteService: NoteService,
 		private embeddingService: EmbeddingService,
 		private textProcessor: ITextProcessingService,
 		private indexController: VectraDatabaseController
-	) {
-		this.statusBar = new StatusBarService(plugin);
-	}
+	) { }
 
 	private async getProcessedNoteContent(path: string) {
 		const content = await this.noteService.getNoteContent(path);
@@ -28,6 +23,7 @@ export class AppController {
 		const updatedContent = `${fileName}\n${content}`;
 		return this.textProcessor.processText(updatedContent);
 	}
+
 	async ready(): Promise<void> {
 		await this.indexController.ready();
 		return await this.embeddingService.ready();

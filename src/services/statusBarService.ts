@@ -14,7 +14,7 @@ export class StatusBarService {
 	 * @param timeout Optional timeout in milliseconds to auto-clear the text.
 	 */
 	update(text: string, timeout = 3000): void {
-		this.statusBarItem.setText(text);
+		this.statusBarItem.setText("[Related Notes]: " + text);
 
 		// Clear any existing timeout to avoid race conditions
 		if (this.clearTimeoutId !== null) {

@@ -8,6 +8,7 @@ import { RelatedNotesSettingTab } from './settings';
 import { VectraDatabaseController } from './indexController';
 import { LocalIndex } from './vectra/db';
 import { ObsidianIndexIO } from './services/indexService';
+import { StatusBarService } from './services/statusBarService';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
@@ -21,10 +22,13 @@ export interface RelatedNotesSettings {
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private controller: AppController;
-	embeddingService: EmbeddingService;
-	indexIO: ObsidianIndexIO;
+	private embeddingService: EmbeddingService;
+	private indexIO: ObsidianIndexIO;
+	private statusBar: StatusBarService;
 
 	async onload() {
+		this.statusBar = new StatusBarService(this);
+		this.statusBar.update('Spinning up', 10000);
 		await this.loadSettings();
 
 		this.embeddingService = new EmbeddingService();
@@ -33,7 +37,7 @@ export default class RelatedNotes extends Plugin {
 		this.indexIO = new ObsidianIndexIO(this);
 		const localIndex = new LocalIndex(this.indexIO);
 		const indexController = new VectraDatabaseController(localIndex);
-		this.controller = new AppController(this, noteService, this.embeddingService, textProcessor, indexController);
+		this.controller = new AppController(this.statusBar, noteService, this.embeddingService, textProcessor, indexController);
 		await this.controller.ready();
 
 		this.registerView(
@@ -84,6 +88,7 @@ export default class RelatedNotes extends Plugin {
 			this.controller.reindexAll();
 		}
 		this.openRelatedNotesView();
+		this.statusBar.clear();
 	}
 
 	onunload() {

@@ -71,6 +71,7 @@ Here are the current development goals for the plugin:
 - Test windows compatibility
 - Add ignore headers option (for people that have heavily template their headers. Then it doesn't really add meaning)
 - Support renaming files
+- Fix bug that the leaf gets stuck on one file's
 
 ### License
 
