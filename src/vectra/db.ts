@@ -3,7 +3,7 @@
 import { v4 } from 'uuid';
 import { IndexData, IndexItem, IndexStats, MetadataFilter } from './types';
 import { ItemSelector } from './item';
-import { IndexIO } from 'src/services/indexService';
+import { IndexIO } from 'src/services/IOService';
 
 
 export interface CreateIndexConfig {

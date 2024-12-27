@@ -7,23 +7,23 @@ import { MarkdownTextProcessingService } from './services/textProcessorService';
 import { RelatedNotesSettingTab } from './settings';
 import { VectraDatabaseController } from './indexController';
 import { LocalIndex } from './vectra/db';
-import { ObsidianIndexIO } from './services/indexService';
+import { IndexIO, ObsidianPluginFileIndexIO } from './services/IOService';
 import { StatusBarService } from './services/statusBarService';
 
 export interface RelatedNotesSettings {
 	maxRelatedNotes: number;
 }
 
-// export const DEFAULT_SETTINGS: RelatedNotesSettings = {
-// 	maxRelatedNotes: 5,
-// };
+export const DEFAULT_SETTINGS: RelatedNotesSettings = {
+	maxRelatedNotes: 5,
+};
 
 
 export default class RelatedNotes extends Plugin {
 	settings: RelatedNotesSettings;
 	private controller: AppController;
 	private embeddingService: EmbeddingService;
-	private indexIO: ObsidianIndexIO;
+	private indexIO: IndexIO;
 	private statusBar: StatusBarService;
 
 	async onload() {
@@ -78,12 +78,12 @@ export default class RelatedNotes extends Plugin {
 		this.embeddingService = new EmbeddingService();
 		const textProcessor = new MarkdownTextProcessingService();
 		const noteService = new NoteService(this.app);
-		this.indexIO = new ObsidianIndexIO(this);
+		this.indexIO = new ObsidianPluginFileIndexIO(this);
 		const localIndex = new LocalIndex(this.indexIO);
 		const indexController = new VectraDatabaseController(localIndex);
 		this.controller = new AppController(this.statusBar, noteService, this.embeddingService, textProcessor, indexController);
 		await this.controller.ready();
-		
+
 		if (!(await this.indexIO.retrieveIndex()).items.length) {
 			this.controller.reindexAll();
 		}
@@ -129,13 +129,10 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	async loadSettings() {
-		// if (!(await this.loadData())) {
-		// 	this.saveData({ initialized: false });
-		// }
-		// this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()).settings;
 	}
 
 	async saveSettings() {
-		// await this.saveData(this.settings);
+		await this.saveData(this.settings);
 	}
 }
