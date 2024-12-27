@@ -13,7 +13,6 @@ export class RelatedNotesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-
 		new Setting(containerEl)
 			.setName("Max Related Notes")
 			.setDesc("Set the maximum number of related notes to display.")

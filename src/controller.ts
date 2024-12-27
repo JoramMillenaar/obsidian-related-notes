@@ -6,10 +6,12 @@ import { StatusBarService } from "./services/statusBarService";
 import { getNoteTitleFromPath, logError } from "./services/utils";
 import { VectraDatabaseController } from "./indexController";
 import { basename } from "path";
+import RelatedNotes from "./main";
 
 export class AppController {
 
 	constructor(
+		private plugin: RelatedNotes,
 		private statusBar: StatusBarService,
 		private noteService: NoteService,
 		private embeddingService: EmbeddingService,
@@ -83,7 +85,7 @@ export class AppController {
 		const text = await this.getProcessedNoteContent(currentPath);
 		if (!text) return [];
 
-		const similarNotes = await this.searchSimilarNotes(text, 5); // this.plugin.settings.maxRelatedNotes + 1 +1 to account for the current note
+		const similarNotes = await this.searchSimilarNotes(text, this.plugin.settings.maxRelatedNotes + 1); // +1 to account for the current note
 		return similarNotes.filter(note => note.path !== currentPath);
 	}
 

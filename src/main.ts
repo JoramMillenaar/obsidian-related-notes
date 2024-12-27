@@ -78,10 +78,11 @@ export default class RelatedNotes extends Plugin {
 		this.embeddingService = new EmbeddingService();
 		const textProcessor = new MarkdownTextProcessingService();
 		const noteService = new NoteService(this.app);
+		// TODO: Lower the amount of dependecy injection here by letting some of these be instantiated inside the dependency itself
 		this.indexIO = new ObsidianPluginFileIndexIO(this);
 		const localIndex = new LocalIndex(this.indexIO);
 		const indexController = new VectraDatabaseController(localIndex);
-		this.controller = new AppController(this.statusBar, noteService, this.embeddingService, textProcessor, indexController);
+		this.controller = new AppController(this, this.statusBar, noteService, this.embeddingService, textProcessor, indexController);
 		await this.controller.ready();
 
 		if (!(await this.indexIO.retrieveIndex()).items.length) {
@@ -129,7 +130,7 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()).settings;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
