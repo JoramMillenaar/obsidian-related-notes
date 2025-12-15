@@ -1,7 +1,7 @@
-import { IframeMessenger } from "src/iframe/messagingService";
+import { IframeMessenger } from "src/adapters/embedder/iframe/messagingService";
 
 
-export class EmbeddingService {
+export class EmbeddingProvider {
     private iframeMessenger: IframeMessenger;
 
     constructor() {

@@ -6,34 +6,34 @@ export class StatusBarService {
 
 	constructor(plugin: Plugin) {
 		this.statusBarItem = plugin.addStatusBarItem();
+		this.statusBarItem.addClass("related-notes-status");
+		this.clear(); // start blank
 	}
 
-	/**
-	 * Updates the status bar text and optionally clears it after a timeout.
-	 * @param text The text to display on the status bar.
-	 * @param timeout Optional timeout in milliseconds to auto-clear the text.
-	 */
-	update(text: string, timeout = 3000): void {
-		this.statusBarItem.setText("[Related Notes]: " + text);
+	update(text: string, timeout: number | null = 3000): void {
+		this.statusBarItem.setText(`[Related Notes]: ${text}`);
 
-		// Clear any existing timeout to avoid race conditions
 		if (this.clearTimeoutId !== null) {
-			clearTimeout(this.clearTimeoutId);
+			window.clearTimeout(this.clearTimeoutId);
+			this.clearTimeoutId = null;
 		}
 
-		// Set a new timeout if specified
-		if (timeout !== undefined) {
+		if (timeout !== null) {
 			this.clearTimeoutId = window.setTimeout(() => {
 				this.clear();
-				this.clearTimeoutId = null; // Reset after clearing
 			}, timeout);
 		}
 	}
 
-	/**
-	 * Clears the status bar text.
-	 */
 	clear(): void {
+		if (this.clearTimeoutId !== null) {
+			window.clearTimeout(this.clearTimeoutId);
+			this.clearTimeoutId = null;
+		}
 		this.statusBarItem.setText("");
+	}
+
+	unload(): void {
+		this.clear();
 	}
 }

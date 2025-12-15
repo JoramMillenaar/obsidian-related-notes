@@ -1,4 +1,4 @@
-import { IframeMessage } from "src/vectra/types";
+import { IframeMessage } from "../../../types";
 
 export class IframeMessenger {
     private iframe: HTMLIFrameElement | null = null;

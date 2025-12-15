@@ -3,7 +3,7 @@ import process from "process";
 import builtins from "builtin-modules";
 import fs from 'fs';
 
-const iframeCode = fs.readFileSync('./src/iframe/embeddingService.html');
+const iframeCode = fs.readFileSync('./src/adapters/embedder/iframe/embeddingService.html');
 const iframeCodeString = JSON.stringify(iframeCode.toString());
 
 const banner =
