@@ -1,6 +1,7 @@
 import { ComputeEmbedding, GetIndex, GetNoteText, IndexedNote, SaveIndex } from "../types";
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
+import { deleteNoteInIndex } from "./deleteNoteInIndex";
 
 export async function indexNote(args: {
 	noteId: string;
@@ -33,11 +34,19 @@ export async function indexNote(args: {
 	if (existing && existing.contentHash === hash) return;
 
 	// 4. Compute embedding (expensive, only if needed)
-	const embedding = normalizeEmbedding(await computeEmbedding(text));
+	const embedding = await computeEmbedding(text);
+	if (!embedding?.length) {
+		await deleteNoteInIndex({
+			noteId,
+			getIndex: this.deps.getIndex,
+			saveIndex: this.deps.saveIndex,
+		});
+		return;
+	}
 
 	const updated: IndexedNote = {
 		id: noteId,
-		embedding,
+		embedding: normalizeEmbedding(embedding),
 		contentHash: hash,
 		updatedAt: new Date().toISOString(),
 	};

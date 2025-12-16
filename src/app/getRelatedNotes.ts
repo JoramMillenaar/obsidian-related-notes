@@ -1,5 +1,5 @@
 import { ComputeEmbedding, GetIndex, RelatedNote } from "../types";
-import { cosineSimilarity } from "../domain/embedding";
+import { cosineSimilarity, normalizeEmbedding } from "../domain/embedding";
 
 export async function getRelatedNotes(args: {
 	noteId?: string;
@@ -34,7 +34,9 @@ export async function getRelatedNotes(args: {
 		if (!text) {
 			throw new Error("getRelatedNotes: need either noteId present in index, or text to embed.");
 		}
-		queryEmbedding = await computeEmbedding(text);
+		const embedding = await computeEmbedding(text);
+		if (!embedding) throw new Error("getRelatedNotes: could not embed text");
+		queryEmbedding = normalizeEmbedding(embedding);
 	}
 
 	return index

@@ -14,7 +14,7 @@ export class EmbeddingProvider {
         await this.iframeMessenger.initialize();
     }
 
-    async embed(text: string): Promise<number[]> {
+    async embed(text: string): Promise<number[] | null> {
         return await this.iframeMessenger.sendMessage(text);
     }
 

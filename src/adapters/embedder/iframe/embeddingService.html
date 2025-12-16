@@ -6,10 +6,7 @@
 
   export class DocumentEmbeddingController {
     constructor() {
-        this.initialized = this.initializeModel();
-    }
-    async ready() {
-        await this.initialized;
+        this.initializeModel();
     }
     async initializeModel() {
         this.pipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
@@ -17,7 +14,8 @@
     async generateDocumentEmbedding(text) {
         const paragraphs = text.split(/\n\s*\n/).filter(paragraph => paragraph.trim().length > 0);
         if (paragraphs.length === 0) {
-            throw new Error('No valid paragraphs found in the text.');
+            console.warn('No valid paragraphs found in the text.');
+			return null;
         }
         const embeddings = await Promise.all(paragraphs.map(paragraph => this.pipeline(paragraph, { pooling: 'mean' })));
         return this.calculateMeanEmbedding(embeddings.map(e => e.data));
@@ -37,14 +35,6 @@
         return meanEmbedding;
     }
 }
-
-  function serializeTensor(tensor) {
-    return {
-      data: tensor.data,
-      dims: tensor.dims,
-      type: tensor.type,
-    };
-  }
 
   const embedder = new DocumentEmbeddingController();
 

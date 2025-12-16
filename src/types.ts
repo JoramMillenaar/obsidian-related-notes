@@ -14,7 +14,7 @@ export type RelatedNote = {
 
 
 export type GetIndex = () => Promise<IndexedNote[]>;
-export type ComputeEmbedding = (text: string) => Promise<number[]>;
+export type ComputeEmbedding = (text: string) => Promise<number[] | null>;
 export type GetNoteText = (noteId: string) => Promise<string | null>;
 export type SaveIndex = (index: IndexedNote[]) => Promise<void>;
 export type ListNoteIds = () => Promise<string[]>;
