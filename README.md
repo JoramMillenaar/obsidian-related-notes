@@ -10,22 +10,12 @@ Find notes with similar meaning intelligently, helping you uncover hidden connec
 - **Fully Local and Private**: Your notes and data are never sent outside your device. All processing is done locally to ensure complete privacy.
 
 
-## Settings
-
-Go to **Settings > Related Notes Finder** to customize the plugin’s behavior:
-- **Number of Related Notes**: Set how many notes to display as related.
-- **Plugin Server Port** (advanced): The plugin spins up a small local server for all the AI tricks. This determines which port to use for the local communication.
-
-
 ## Usage
 
 1. When the plugin is initially enabled, it will automatically start forming the relations in the background. You can see the progress on the bottom right.
 2. After that is finished, open a note and find a new tab in the leaf of your note with a telescope icon. Here you should see the top-related notes as represented by the percentage of overlap in meaning.
 3. You can press on any of the notes in the list to navigate to.
 4. If you created a new note or you edited your current note, be sure to press the refresh button to update the relations. This will also let the other notes relate to your new changes.
-
-### Commands
-- Use the command palette (press `Ctrl/Cmd + P`) and type "Refresh relations of all notes" to reset all the relations. This could be useful if the relations seemed to have been corrupted (the plugin is still in development!).
 
 ## Privacy and Security
 
@@ -62,23 +52,15 @@ Contributions are very welcome! If you have ideas for improvements or new featur
 
 ### TODO  
 Here are the current development goals for the plugin:  
-- Ensure the `onload` method is non-blocking by deferring data fetching to the `onLayoutReady` callback.  
-- Add option to show notes to a similarity threshold, rather than a set amount of notes.
 - Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
 - Find a more suitable template for extending the custom view.  
 - Add a search option to search by semantic meaning
-- Look into and fix odd resuls in similarity after updating note embeddings
 - Test windows compatibility
 - Add ignore headers option (for people that have heavily template their headers. Then it doesn't really add meaning)
-- Support renaming files
-- Fix bug that the leaf gets stuck on one file's
 
 ### License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
-#### External
-The `src/vectra` folder contains code derived from vectra, licensed under the MIT License. See `src/vectra/LICENSE` for details.
 
 ---
 
