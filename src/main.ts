@@ -20,10 +20,6 @@ export default class RelatedNotes extends Plugin {
 			(leaf) => new RelatedNotesListView(leaf, this.facade)
 		);
 
-		this.addRibbonIcon("list-ordered", "Related Notes", () => {
-			this.activateView();
-		});
-
 		this.addCommand({
 			id: "related-notes-sync-vault",
 			name: "Related Notes: Sync vault index",
@@ -114,6 +110,8 @@ export default class RelatedNotes extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => this.refreshView())
 		);
+
+		await this.activateView();
 	}
 
 	onunload() {
@@ -130,16 +128,13 @@ export default class RelatedNotes extends Plugin {
 	private async activateView() {
 		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES);
 		if (existing.length) {
-			this.app.workspace.revealLeaf(existing[0]);
+			await this.app.workspace.revealLeaf(existing[0]);
 			return;
 		}
 
 		const leaf = this.app.workspace.getRightLeaf(false);
 		if (!leaf) return void new Notice("Unable to activate Related Notes view.");
 
-		await leaf.setViewState({type: VIEW_TYPE_RELATED_NOTES, active: true});
-		this.app.workspace.revealLeaf(leaf);
+		await leaf.setViewState({type: VIEW_TYPE_RELATED_NOTES, active: false});
 	}
-
-
 }
