@@ -7,9 +7,6 @@ import { renameNoteInIndex } from "./app/renameNoteInIndex";
 import { rebuildIndex } from "./app/rebuildIndex";
 
 export class RelatedNotesFacade {
-	private indexQueue = new Map<string, number>();
-	private isProcessing = false;
-
 	constructor(private deps: {
 		listNoteIds: ListNoteIds;
 		getNoteText: GetNoteText;
@@ -55,36 +52,14 @@ export class RelatedNotesFacade {
 	}
 
 	async getSimilarNotes(args: { noteId?: string; text?: string; limit?: number; minScore?: number }) {
-		return getRelatedNotes({
-			...args,
-			getIndex: this.deps.getIndex,
-			computeEmbedding: this.deps.computeEmbedding,
-		});
-	}
-
-	async enqueueIndex(noteId: string) {
-		const existing = this.indexQueue.get(noteId);
-		if (existing) clearTimeout(existing);
-
-		const timeout = window.setTimeout(() => {
-			this.indexQueue.delete(noteId);
-			this.processQueue().catch(console.error);
-		}, 5000);
-
-		this.indexQueue.set(noteId, timeout);
-	}
-
-	private async processQueue() {
-		if (this.isProcessing) return;
-		this.isProcessing = true;
-
 		try {
-			for (const noteId of Array.from(this.indexQueue.keys())) {
-				this.indexQueue.delete(noteId);
-				await this.upsertNoteToIndex(noteId);
-			}
-		} finally {
-			this.isProcessing = false;
+			return await getRelatedNotes({
+				...args,
+				getIndex: this.deps.getIndex,
+				computeEmbedding: this.deps.computeEmbedding,
+			});
+		} catch (err) {
+			return [];
 		}
 	}
 

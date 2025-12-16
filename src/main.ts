@@ -60,14 +60,6 @@ export default class RelatedNotes extends Plugin {
 			},
 		});
 
-		this.addCommand({
-			id: "related-notes-open-view",
-			name: "Related Notes: Open view",
-			callback: () => {
-				void this.activateView();
-			},
-		});
-
 		this.app.workspace.onLayoutReady(() => {
 			void this.initAfterLayoutReady();
 		});
@@ -87,7 +79,7 @@ export default class RelatedNotes extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("modify", (file) => {
 				if (!(file instanceof TFile)) return;
-				this.facade.enqueueIndex(file.path);
+				this.facade.upsertNoteToIndex(file.path);
 			})
 		);
 
@@ -127,10 +119,7 @@ export default class RelatedNotes extends Plugin {
 
 	private async activateView() {
 		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES);
-		if (existing.length) {
-			await this.app.workspace.revealLeaf(existing[0]);
-			return;
-		}
+		if (existing.length) return;
 
 		const leaf = this.app.workspace.getRightLeaf(false);
 		if (!leaf) return void new Notice("Unable to activate Related Notes view.");

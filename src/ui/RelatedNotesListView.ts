@@ -61,25 +61,22 @@ export class RelatedNotesListView extends ItemView {
 			try {
 				this.isLoading = true;
 
-				// Reindex current note first, then refresh UI
 				const active = this.app.workspace.getActiveFile();
 				if (active) {
-					// Prefer queue-based indexing if you have it
 					await this.facade.upsertNoteToIndex(active.path);
 				}
 
-				await this.refresh();
 			} catch (e) {
 				logError("Error refreshing current note:", e);
 				new Notice("Failed to refresh related notes.");
 			} finally {
 				this.isLoading = false;
+				await this.refresh();
 			}
 		});
 
 		// Main content container
 		const contentContainer = this.containerEl.createEl("div", {cls: "tag-container"});
-
 		await this.renderContent(contentContainer);
 	}
 
@@ -118,7 +115,7 @@ export class RelatedNotesListView extends ItemView {
 			if (related.length === 0) {
 				contentContainer.createEl("div", {
 					cls: "empty-message",
-					text: "No related notes found. Try refreshing.",
+					text: "No related notes found.",
 				});
 				return;
 			}
