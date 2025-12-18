@@ -1,5 +1,4 @@
-import removeMd from "remove-markdown";
-
+import { Component, MarkdownRenderer } from "obsidian";
 
 export function hashText(text: string): string {
 	let hash = 0x811c9dc5;
@@ -11,37 +10,15 @@ export function hashText(text: string): string {
 	return hash.toString(16).padStart(8, "0");
 }
 
-type TextProcessor = (text: string) => string;
 
-const processors: TextProcessor[] = [
-	removeObsidianMetadata,
-	removeObsidianLinkSyntax,
-	convertMarkdownTableToText,
-	removeMarkdown,
-];
-
-export function cleanMarkdownToPlainText(markdown: string): string {
-	return processors.reduce((text, processor) => processor(text), markdown).trim();
+export async function cleanMarkdownToPlainText(markdown: string, component: Component) {
+	return ((await removeMarkdown(convertMarkdownTableToText(markdown), component)) || "").trim();
 }
 
-function removeMarkdown(markdown: string): string {
-	return removeMd(markdown, {useImgAltText: false});
-}
-
-function removeObsidianLinkSyntax(markdown: string): string {
-	// [[note]] or [[note|alias]] → note
-	return markdown.replace(/\[\[([^\]|]+)(\|[^\]]+)?\]\]/g, "$1");
-}
-
-function removeObsidianMetadata(markdown: string): string {
-	// Frontmatter (--- or +++)
-	return markdown
-		.replace(
-			/^(---[\s\S]*?---|\+\+\+[\s\S]*?\+\+\+)\s*/m,
-			""
-		)
-		.replace(/^\s*$/gm, "")
-		.trim();
+async function removeMarkdown(markdown: string, component: Component) {
+	const el = document.createElement("div");
+	await MarkdownRenderer.render(this.app, markdown, el, "", component);
+	return (el.textContent ?? "").trim();
 }
 
 function convertMarkdownTableToText(markdown: string): string {

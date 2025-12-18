@@ -14,7 +14,7 @@ export async function buildDeps(plugin: Plugin) {
 		if (!(f instanceof TFile)) throw new Error("Unable to read file");
 		const md = await plugin.app.vault.read(f);
 		const title = f.basename;
-		return cleanMarkdownToPlainText(`${title}\n\n${md}`);
+		return await cleanMarkdownToPlainText(`${title}\n\n${md}`, plugin);
 	};
 
 	const getIndex: GetIndex = async () => {
