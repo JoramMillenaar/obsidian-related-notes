@@ -96,16 +96,36 @@ export class RelatedNotesListView extends ItemView {
 				loadingMessage.remove();
 				contentContainer.createEl("div", {
 					cls: "empty-message",
-					text: "Open a note to see related notes.",
+					text: "Oops, we're not ready yet.",
 				});
 				return;
 			}
+
+			const indexIsEmpty = await this.facade.isIndexEmpty();
+			if (indexIsEmpty) {
+				loadingMessage.remove();
+				this.renderEmptyIndex(contentContainer);
+				return;
+			}
+
+			const noteIsEmpty = await this.facade.isNoteEmpty(active.path);
+			if (noteIsEmpty) {
+				loadingMessage.remove();
+				contentContainer.createEl("div", {
+					cls: "empty-message",
+					text: "The current note is empty. Add content to see related notes.",
+				});
+				return;
+			}
+
+			const noteText = await this.facade.getCleanNoteText(active.path);
 
 			// Query related notes through facade.
 			// This assumes your facade returns something like:
 			// [{ id/path, score }] or you can map it.
 			const related = await this.facade.getSimilarNotes({
 				noteId: active.path,
+				text: noteText,
 				limit: 10, // or from settings
 				minScore: 0.3,
 			});
@@ -115,7 +135,7 @@ export class RelatedNotesListView extends ItemView {
 			if (related.length === 0) {
 				contentContainer.createEl("div", {
 					cls: "empty-message",
-					text: "No related notes found.",
+					text: "No related notes were similar enough to display yet.",
 				});
 				return;
 			}
@@ -149,6 +169,111 @@ export class RelatedNotesListView extends ItemView {
 			this.isLoading = false;
 		}
 	}
+
+	private renderEmptyIndex(contentContainer: HTMLElement) {
+		const emptyState = contentContainer.createEl("div", {cls: "empty-message related-notes-empty"});
+		emptyState.createEl("div", {text: "Your related notes index is empty."});
+		emptyState.createEl("div", {
+			cls: "related-notes-warning",
+			text: "Indexing may take a few minutes depending on your device and notes. Not advised on mobile.",
+		});
+
+		const actions = emptyState.createEl("div", {cls: "related-notes-actions"});
+
+		const startButton = actions.createEl("button", {
+			cls: "mod-cta related-notes-button",
+			text: "Start indexing vault",
+		});
+
+		startButton.addEventListener("click", () => this.startIndexingVault(startButton, emptyState));
+	}
+
+	private async startIndexingVault(trigger?: HTMLButtonElement, emptyStateRoot?: HTMLElement) {
+		if (this.isLoading) return;
+
+		this.isLoading = true;
+		trigger?.setAttribute("disabled", "true");
+
+		// Guard against stale progress updates (e.g. rerender / multiple runs)
+		const runId = Date.now();
+		(this as any)._indexRunId = runId;
+
+		const progressRoot = emptyStateRoot?.createEl("div", {cls: "related-notes-progress"});
+
+		const progressText = progressRoot?.createEl("div", {
+			cls: "related-notes-progress-text",
+			text: "Preparing…",
+		});
+
+		const progressBar = progressRoot?.createEl("progress", {
+			cls: "related-notes-progress-bar",
+		}) as HTMLProgressElement | undefined;
+
+		if (progressBar) {
+			progressBar.max = 1;
+			progressBar.value = 0;
+		}
+
+		// Throttle DOM updates so you don’t spam layout/paint
+		let lastPaint = 0;
+
+		const onProgress = (p: { phase: "scan" | "index" | "cleanup"; processed: number; total: number }) => {
+			if ((this as any)._indexRunId !== runId) return;
+
+			const now = Date.now();
+			if (now - lastPaint < 100) return; // ~10fps
+			lastPaint = now;
+
+			const total = Math.max(0, p.total ?? 0);
+			const processed = Math.max(0, p.processed ?? 0);
+			const pct = total > 0 ? Math.min(1, processed / total) : 0;
+
+			const phaseLabel =
+				p.phase === "scan" ? "Scanning" :
+					p.phase === "index" ? "Indexing" :
+						"Cleaning up";
+
+			if (progressText) {
+				progressText.setText(
+					`${phaseLabel}: ${processed}${total ? ` / ${total}` : ""} (${Math.round(pct * 100)}%)`
+				);
+			}
+
+			if (progressBar) {
+				progressBar.max = total || 1;
+				progressBar.value = total ? processed : 0;
+			}
+		};
+
+		try {
+			await this.facade.syncVaultToIndex({
+				batchSize: 25,
+				deleteMissing: false,
+				onProgress,
+				onBatchComplete: async () => {
+					// small yield helps UI remain responsive during big vaults
+					await new Promise((r) => setTimeout(r, 0));
+				},
+			});
+
+			if (progressText) progressText.setText("Done.");
+			if (progressBar) {
+				progressBar.max = 1;
+				progressBar.value = 1;
+			}
+
+			new Notice("Indexing complete. Related notes will appear as they are processed.");
+		} catch (error) {
+			logError("Error syncing vault index:", error);
+			if (progressText) progressText.setText("Failed.");
+			new Notice("Failed to start indexing. See console for details.");
+		} finally {
+			trigger?.removeAttribute("disabled");
+			this.isLoading = false;
+			await this.refresh();
+		}
+	}
+
 
 	async refresh() {
 		if (this.isLoading) return;

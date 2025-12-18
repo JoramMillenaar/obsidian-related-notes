@@ -63,6 +63,21 @@ export class RelatedNotesFacade {
 		}
 	}
 
+	async isIndexEmpty() {
+		const index = await this.deps.getIndex();
+		return index.length === 0;
+	}
+
+	async getCleanNoteText(noteId: string) {
+		const text = await this.deps.getNoteText(noteId);
+		return text?.trim() ?? "";
+	}
+
+	async isNoteEmpty(noteId: string) {
+		const text = await this.getCleanNoteText(noteId);
+		return text.length === 0;
+	}
+
 	async deleteNote(noteId: string) {
 		await deleteNoteInIndex({
 			noteId,

@@ -4,5 +4,26 @@
 }
 
 .small-pad-top {
-	padding-top: 4px;
+        padding-top: 4px;
+}
+
+.related-notes-empty {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+}
+
+.related-notes-warning {
+        color: var(--text-muted);
+        font-size: var(--font-small);
+}
+
+.related-notes-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+}
+
+.related-notes-button {
+        align-self: flex-start;
 }
