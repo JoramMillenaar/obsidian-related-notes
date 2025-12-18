@@ -11,9 +11,10 @@ export async function buildDeps(plugin: Plugin) {
 
 	const getNoteText: GetNoteText = async (id) => {
 		const f = plugin.app.vault.getAbstractFileByPath(id);
-		const md = f instanceof TFile ? await plugin.app.vault.read(f) : null;
-		if (!md) throw new Error("Unable to read file");
-		return cleanMarkdownToPlainText(md)
+		if (!(f instanceof TFile)) throw new Error("Unable to read file");
+		const md = await plugin.app.vault.read(f);
+		const title = f.basename;
+		return cleanMarkdownToPlainText(`${title}\n\n${md}`);
 	};
 
 	const getIndex: GetIndex = async () => {

@@ -95,6 +95,7 @@ export default class RelatedNotes extends Plugin {
 			this.app.vault.on("rename", (file, oldPath) => {
 				if (!(file instanceof TFile)) return;
 				this.facade.renameNote(oldPath, file.path);
+				void this.facade.upsertNoteToIndex(file.path);
 				this.status.update("Index updated (rename)", 1500);
 			})
 		);
