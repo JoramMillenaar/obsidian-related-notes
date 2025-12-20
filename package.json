@@ -1,7 +1,7 @@
 {
-	"name": "related-notes",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "semantic-notes",
+	"version": "2.1.2",
+	"description": "Intelligently suggests related notes—fully local and private, revealing connections in your knowledge vault.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
