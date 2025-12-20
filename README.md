@@ -12,10 +12,12 @@ Find notes with similar meaning intelligently, helping you uncover hidden connec
 
 ## Usage
 
-1. When the plugin is initially enabled, it will automatically start forming the relations in the background. You can see the progress on the bottom right.
-2. After that is finished, open a note and find a new tab in the leaf of your note with a telescope icon. Here you should see the top-related notes as represented by the percentage of overlap in meaning.
-3. You can press on any of the notes in the list to navigate to.
-4. If you created a new note or you edited your current note, be sure to press the refresh button to update the relations. This will also let the other notes relate to your new changes.
+1. After enabling the plugin, a telescope icon will appear in the note’s right sidebar within a few seconds.
+2. On first use, you’ll see a button to start indexing your vault.
+3. Indexing can take anywhere from 1 to 20 minutes depending on your device and vault size, so it's not recommended to do this on mobile.
+4. Once indexing is complete, open any note and click the telescope icon to see notes that are most similar in meaning.
+5. Click any note in the list to navigate to it.
+6. Use the refresh button to update the list of related notes.
 
 ## Privacy and Security
 
@@ -49,14 +51,6 @@ For more information on developing Obsidian plugins, check out the [Obsidian Plu
 
 Contributions are very welcome! If you have ideas for improvements or new features, please open an issue or submit a pull request to start a discussion. I have plenty of ideas on powerful features to implement in the future, but I can use some help in getting the plugin to a stable point first.
 
-
-### TODO  
-Here are the current development goals for the plugin:  
-- Investigate using `this.app.metadataCache.getFileCache(file)` for file parsing instead of regex on raw content.  
-- Find a more suitable template for extending the custom view.  
-- Add a search option to search by semantic meaning
-- Test windows compatibility
-- Add ignore headers option (for people that have heavily template their headers. Then it doesn't really add meaning)
 
 ### License
 
