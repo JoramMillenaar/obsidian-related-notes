@@ -110,7 +110,6 @@ export default class RelatedNotes extends Plugin {
 	onunload() {
 		this.facade.stop();
 		this.status?.unload();
-		this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).forEach((leaf) => leaf.detach());
 	}
 
 	private refreshView() {
