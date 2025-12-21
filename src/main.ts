@@ -8,7 +8,7 @@ export default class RelatedNotes extends Plugin {
 	private facade!: RelatedNotesFacade;
 	private status!: StatusBarService;
 
-	async onload() {
+	onload() {
 		this.status = new StatusBarService(this);
 		this.status.update("Loading…", null);
 
@@ -21,8 +21,8 @@ export default class RelatedNotes extends Plugin {
 		);
 
 		this.addCommand({
-			id: "related-notes-sync-vault",
-			name: "Semantic Notes: Sync vault index",
+			id: "sync-vault",
+			name: "Sync vault index",
 			callback: async () => {
 				this.status.update("Syncing vault index…", null);
 				try {
@@ -32,18 +32,18 @@ export default class RelatedNotes extends Plugin {
 						},
 					});
 					this.status.update("Index synced", 2500);
-					new Notice("Semantic Notes index synced");
+					new Notice("Semantic notes index synced");
 				} catch (e) {
 					this.status.update("Sync failed (see console)", 5000);
 					console.error("[Semantic Notes] Sync failed", e);
-					new Notice("Semantic Notes sync failed");
+					new Notice("Semantic notes sync failed");
 				}
 			},
 		});
 
 		this.addCommand({
-			id: "semantic-notes-reindex-current",
-			name: "Semantic Notes: Refresh current note",
+			id: "reindex-current",
+			name: "Refresh current note",
 			callback: async () => {
 				const f = this.app.workspace.getActiveFile();
 				if (!f) return;

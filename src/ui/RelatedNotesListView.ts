@@ -85,7 +85,7 @@ export class RelatedNotesListView extends ItemView {
 		}
 	}
 
-	private async renderContent(contentContainer: HTMLElement) {
+	private async renderContent(contentContainer: Element) {
 		contentContainer.empty();
 
 		const loadingMessage = contentContainer.createEl("div", {
@@ -175,7 +175,7 @@ export class RelatedNotesListView extends ItemView {
 		}
 	}
 
-	private renderEmptyIndex(contentContainer: HTMLElement) {
+	private renderEmptyIndex(contentContainer: Element) {
 		const emptyState = contentContainer.createEl("div", {cls: "empty-message related-notes-empty"});
 		emptyState.createEl("div", {text: "Your semantic notes index is empty."});
 		emptyState.createEl("div", {
@@ -214,7 +214,7 @@ export class RelatedNotesListView extends ItemView {
 
 		const progressBar = progressRoot?.createEl("progress", {
 			cls: "related-notes-progress-bar",
-		}) as HTMLProgressElement | undefined;
+		});
 
 		if (progressBar) {
 			progressBar.max = 1;
@@ -285,7 +285,7 @@ export class RelatedNotesListView extends ItemView {
 	async refresh() {
 		if (this.isLoading) return;
 
-		const contentContainer = this.containerEl.querySelector(".tag-container") as HTMLElement | null;
+		const contentContainer = this.containerEl.querySelector(".tag-container");
 		if (contentContainer) {
 			await this.renderContent(contentContainer);
 		}
