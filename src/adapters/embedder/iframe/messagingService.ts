@@ -80,7 +80,7 @@ export class IframeMessenger {
             try {
                 await this.ping();
                 return;
-            } catch (error) {
+            } catch {
 				if (attempt) console.warn(`Iframe ping attempt ${attempt + 1} failed. Retrying...`);
                 await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second before retrying
             }

@@ -58,7 +58,7 @@ export class RelatedNotesFacade {
 				getIndex: this.deps.getIndex,
 				computeEmbedding: this.deps.computeEmbedding,
 			});
-		} catch (err) {
+		} catch {
 			return [];
 		}
 	}

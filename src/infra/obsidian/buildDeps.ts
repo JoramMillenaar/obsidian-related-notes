@@ -3,10 +3,10 @@ import { Plugin, TFile } from "obsidian";
 import { EmbeddingProvider } from "../../adapters/embedder/embeddingProvider";
 import { cleanMarkdownToPlainText } from "../../domain/text";
 
-export async function buildDeps(plugin: Plugin) {
+export function buildDeps(plugin: Plugin) {
 	const embeddingProvider = new EmbeddingProvider();
 
-	const listNoteIds: ListNoteIds = async () =>
+	const listNoteIds: ListNoteIds = () =>
 		plugin.app.vault.getMarkdownFiles().map(f => f.path);
 
 	const getNoteText: GetNoteText = async (id) => {
@@ -27,11 +27,11 @@ export async function buildDeps(plugin: Plugin) {
 		await plugin.saveData({...data, index});
 	};
 
-	const computeEmbedding: ComputeEmbedding = async (text: string) => embeddingProvider.embed(text);
+	const computeEmbedding: ComputeEmbedding = (text: string) => embeddingProvider.embed(text);
 
 	const unload = () => embeddingProvider.unload();
 
-	const load = async () => await embeddingProvider.ready();
+	const load = () => embeddingProvider.ready();
 
 	return {listNoteIds, getNoteText, getIndex, saveIndex, computeEmbedding, load, unload};
 }

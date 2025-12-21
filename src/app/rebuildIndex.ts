@@ -11,7 +11,7 @@ export async function rebuildIndex(args: {
 	await saveIndex([]);
 
 	// 2) reindex all notes sequentially
-	const ids = await listNoteIds();
+	const ids = listNoteIds();
 	for (const id of ids) {
 		await indexNote(id);
 	}

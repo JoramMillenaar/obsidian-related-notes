@@ -17,8 +17,6 @@ export async function syncVault(args: {
 	onBatchComplete?: () => Promise<void>;
 }): Promise<{
 	scanned: number;
-	indexed: number;
-	updated: number;
 	unchanged: number;
 	removed: number;
 }> {
@@ -36,20 +34,18 @@ export async function syncVault(args: {
 	} = args;
 
 	// Phase 1: scan vault
-	const noteIds = await listNoteIds();
+	const noteIds = listNoteIds();
 	const total = noteIds.length;
 	onProgress?.({phase: "scan", processed: 0, total});
 
 	// Phase 2: index notes (sequential by design)
 	let processed = 0;
-	let indexed = 0;
-	let updated = 0;
 	let unchanged = 0;
 
 	for (const noteId of noteIds) {
 		try {
 			await indexNote(noteId);
-		} catch (e) {
+		} catch {
 			unchanged++;  // Naive for now. Improve error handling
 		}
 		processed++;
@@ -79,8 +75,6 @@ export async function syncVault(args: {
 
 	return {
 		scanned: total,
-		indexed,
-		updated,
 		unchanged,
 		removed,
 	};

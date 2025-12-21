@@ -39,11 +39,16 @@ export async function getRelatedNotes(args: {
 		queryEmbedding = normalizeEmbedding(embedding);
 	}
 
+	const finalEmbedding = queryEmbedding;
+	if (!finalEmbedding) {
+		throw new Error("getRelatedNotes: missing query embedding");
+	}
+
 	return index
 		.filter(n => (noteId ? n.id !== noteId : true))
 		.map(n => ({
 			id: n.id,
-			score: cosineSimilarity(queryEmbedding!, n.embedding),
+			score: cosineSimilarity(finalEmbedding, n.embedding),
 		}))
 		.filter(r => Number.isFinite(r.score) && r.score >= minScore)
 		.sort((a, b) => b.score - a.score)

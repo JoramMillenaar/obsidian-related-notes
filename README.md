@@ -1,4 +1,4 @@
-# Related Notes
+# Semantic Notes
 
 Find notes with similar meaning intelligently, helping you uncover hidden connections and insights within your Obsidian vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
 
@@ -23,7 +23,7 @@ Find notes with similar meaning intelligently, helping you uncover hidden connec
 
 One of Obsidian's greatest strengths is its commitment to data ownership and privacy. This plugin upholds that philosophy by making privacy its highest priority. All processing and note relations happen entirely on your device, ensuring your notes stay yours—always. 
 
-**Related Notes Finder** is built with privacy at its core:  
+**Semantic Notes Finder** is built with privacy at its core:  
 - **Local Processing**: Every analysis and operation occurs directly on your device. Your notes never leave your vault.  
 - **No Third-Party Dependencies**: Once installed, the plugin requires no internet access or external APIs, providing a fully private and secure experience.  
 
@@ -58,4 +58,4 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-With **Related Notes Finder**, explore your knowledge in a new way—intelligently, locally, and privately.
+With **Semantic Notes Finder**, explore your knowledge in a new way—intelligently, locally, and privately.

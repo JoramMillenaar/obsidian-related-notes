@@ -1,14 +1,15 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import { RelatedNotesFacade } from "../facade";
 
-export function logError(message: any, ...optionalParams: any[]) {
-	console.error('[Related Notes]:', message, ...optionalParams);
+export function logError(message: unknown, ...optionalParams: unknown[]) {
+	console.error("[Semantic Notes]:", message, ...optionalParams);
 }
 
-export const VIEW_TYPE_RELATED_NOTES = "related-notes";
+export const VIEW_TYPE_SEMANTIC_NOTES = "semantic-notes";
 
 export class RelatedNotesListView extends ItemView {
 	private isLoading = false;
+	private indexRunId?: number;
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -18,11 +19,11 @@ export class RelatedNotesListView extends ItemView {
 	}
 
 	getViewType() {
-		return VIEW_TYPE_RELATED_NOTES;
+		return VIEW_TYPE_SEMANTIC_NOTES;
 	}
 
 	getDisplayText() {
-		return "Similar Notes";
+		return "Similar notes";
 	}
 
 	getIcon(): string {
@@ -32,9 +33,12 @@ export class RelatedNotesListView extends ItemView {
 	private openNote = (path: string) => {
 		const file = this.app.vault.getAbstractFileByPath(path);
 		if (file instanceof TFile) {
-			this.app.workspace.getLeaf(false).openFile(file);
+			void this.app.workspace.getLeaf(false).openFile(file).catch((error) => {
+				logError("Error opening note:", error);
+				new Notice("Failed to open note.");
+			});
 		} else {
-			new Notice("Error: Note not found or invalid file type!");
+			new Notice("Error: note not found or invalid file type.");
 		}
 	};
 
@@ -55,29 +59,30 @@ export class RelatedNotesListView extends ItemView {
 		});
 		setIcon(refreshButton, "refresh-ccw");
 
-		refreshButton.addEventListener("click", async () => {
-			if (this.isLoading) return;
-
-			try {
-				this.isLoading = true;
-
-				const active = this.app.workspace.getActiveFile();
-				if (active) {
-					await this.facade.upsertNoteToIndex(active.path);
-				}
-
-			} catch (e) {
-				logError("Error refreshing current note:", e);
-				new Notice("Failed to refresh related notes.");
-			} finally {
-				this.isLoading = false;
-				await this.refresh();
-			}
-		});
+		refreshButton.addEventListener("click", () => void this.handleRefresh());
 
 		// Main content container
 		const contentContainer = this.containerEl.createEl("div", {cls: "tag-container"});
 		await this.renderContent(contentContainer);
+	}
+
+	private async handleRefresh() {
+		if (this.isLoading) return;
+
+		try {
+			this.isLoading = true;
+
+			const active = this.app.workspace.getActiveFile();
+			if (active) {
+				await this.facade.upsertNoteToIndex(active.path);
+			}
+		} catch (error) {
+			logError("Error refreshing current note:", error);
+			new Notice("Failed to refresh related notes.");
+		} finally {
+			this.isLoading = false;
+			await this.refresh();
+		}
 	}
 
 	private async renderContent(contentContainer: HTMLElement) {
@@ -172,7 +177,7 @@ export class RelatedNotesListView extends ItemView {
 
 	private renderEmptyIndex(contentContainer: HTMLElement) {
 		const emptyState = contentContainer.createEl("div", {cls: "empty-message related-notes-empty"});
-		emptyState.createEl("div", {text: "Your related notes index is empty."});
+		emptyState.createEl("div", {text: "Your semantic notes index is empty."});
 		emptyState.createEl("div", {
 			cls: "related-notes-warning",
 			text: "Indexing may take a few minutes depending on your device and notes. Not advised on mobile.",
@@ -185,7 +190,9 @@ export class RelatedNotesListView extends ItemView {
 			text: "Start indexing vault",
 		});
 
-		startButton.addEventListener("click", () => this.startIndexingVault(startButton, emptyState));
+		startButton.addEventListener("click", () => {
+			void this.startIndexingVault(startButton, emptyState);
+		});
 	}
 
 	private async startIndexingVault(trigger?: HTMLButtonElement, emptyStateRoot?: HTMLElement) {
@@ -196,7 +203,7 @@ export class RelatedNotesListView extends ItemView {
 
 		// Guard against stale progress updates (e.g. rerender / multiple runs)
 		const runId = Date.now();
-		(this as any)._indexRunId = runId;
+		this.indexRunId = runId;
 
 		const progressRoot = emptyStateRoot?.createEl("div", {cls: "related-notes-progress"});
 
@@ -218,7 +225,7 @@ export class RelatedNotesListView extends ItemView {
 		let lastPaint = 0;
 
 		const onProgress = (p: { phase: "scan" | "index" | "cleanup"; processed: number; total: number }) => {
-			if ((this as any)._indexRunId !== runId) return;
+			if (this.indexRunId !== runId) return;
 
 			const now = Date.now();
 			if (now - lastPaint < 100) return; // ~10fps

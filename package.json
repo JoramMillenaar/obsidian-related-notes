@@ -1,6 +1,6 @@
 {
 	"name": "semantic-notes",
-	"version": "2.1.4",
+	"version": "2.1.5",
 	"description": "Intelligently suggests related notes—fully local and private, revealing connections in your knowledge vault.",
 	"main": "main.js",
 	"scripts": {
