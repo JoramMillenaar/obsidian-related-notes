@@ -9,6 +9,25 @@ Find notes with similar meaning intelligently, helping you uncover hidden connec
 
 - **Fully Local and Private**: Your notes and data are never sent outside your device. All processing is done locally to ensure complete privacy.
 
+## Install (Early Access via BRAT)
+
+If this plugin isn’t available in Obsidian Community Plugins yet (or you want the latest build), you can install it directly from GitHub using **BRAT** (Beta Reviewers Auto-update Tool).
+
+1. Open **Obsidian → Settings → Community plugins**
+   - Turn off **Safe mode**
+   - Click **Browse** and install **Obsidian42 - BRAT**
+2. Enable **Obsidian42 - BRAT**
+3. Open the **Command Palette** (`Ctrl/Cmd + P`) and run:  
+   **BRAT: Add a beta plugin for testing**
+4. When prompted, paste this repository URL: https://github.com/JoramMillenaar/obsidian-related-notes
+5. After adding it, go to **Settings → Community plugins** and enable **Semantic Notes**.
+
+### Updating
+
+To pull the latest changes from GitHub, open the Command Palette and run:  
+**BRAT: Check for updates to all beta plugins and UPDATE**
+
+
 
 ## Usage
 
