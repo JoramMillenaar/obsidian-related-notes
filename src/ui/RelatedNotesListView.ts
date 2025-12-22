@@ -110,7 +110,7 @@ export class RelatedNotesListView extends ItemView {
 
 		this.isLoading = true;
 		try {
-			const active = await this.getActiveFileOrShowEmptyState(container, loadingEl);
+			const active = this.getActiveFileOrShowEmptyState(container, loadingEl);
 			if (!active) return;
 
 			const state = await this.getIndexAndNoteState(active.path);
@@ -142,7 +142,7 @@ export class RelatedNotesListView extends ItemView {
 		}
 	}
 
-	private async getActiveFileOrShowEmptyState(container: HTMLElement, loadingEl: HTMLElement) {
+	private getActiveFileOrShowEmptyState(container: HTMLElement, loadingEl: HTMLElement) {
 		const active = this.app.workspace.getActiveFile();
 		if (active) return active;
 
