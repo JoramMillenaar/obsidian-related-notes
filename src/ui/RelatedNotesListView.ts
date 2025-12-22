@@ -7,14 +7,19 @@ export function logError(message: unknown, ...optionalParams: unknown[]) {
 
 export const VIEW_TYPE_SEMANTIC_NOTES = "semantic-notes";
 
+type IndexProgress = {
+	phase: "scan" | "index" | "cleanup";
+	processed: number;
+	total: number;
+};
+
+type SimilarNote = { id: string; score: number };
+
 export class RelatedNotesListView extends ItemView {
 	private isLoading = false;
 	private indexRunId?: number;
 
-	constructor(
-		leaf: WorkspaceLeaf,
-		private facade: RelatedNotesFacade
-	) {
+	constructor(leaf: WorkspaceLeaf, private facade: RelatedNotesFacade) {
 		super(leaf);
 	}
 
@@ -32,14 +37,18 @@ export class RelatedNotesListView extends ItemView {
 
 	private openNote = (path: string) => {
 		const file = this.app.vault.getAbstractFileByPath(path);
-		if (file instanceof TFile) {
-			void this.app.workspace.getLeaf(false).openFile(file).catch((error) => {
+		if (!(file instanceof TFile)) {
+			new Notice("Error: note not found or invalid file type.");
+			return;
+		}
+
+		void this.app.workspace
+			.getLeaf(false)
+			.openFile(file)
+			.catch((error) => {
 				logError("Error opening note:", error);
 				new Notice("Failed to open note.");
 			});
-		} else {
-			new Notice("Error: note not found or invalid file type.");
-		}
 	};
 
 	async onOpen() {
@@ -48,9 +57,13 @@ export class RelatedNotesListView extends ItemView {
 
 	async render() {
 		this.containerEl.empty();
+		this.buildHeader(this.containerEl);
+		const content = this.containerEl.createEl("div", {cls: "tag-container"});
+		await this.renderContent(content);
+	}
 
-		// Header
-		const header = this.containerEl.createEl("div", {cls: "nav-header"});
+	private buildHeader(root: HTMLElement) {
+		const header = root.createEl("div", {cls: "nav-header"});
 		const navHeader = header.createEl("div", {cls: "nav-buttons-container"});
 
 		const refreshButton = navHeader.createEl("div", {
@@ -58,24 +71,16 @@ export class RelatedNotesListView extends ItemView {
 			attr: {"aria-label": "Refresh related notes"},
 		});
 		setIcon(refreshButton, "refresh-ccw");
-
 		refreshButton.addEventListener("click", () => void this.handleRefresh());
-
-		// Main content container
-		const contentContainer = this.containerEl.createEl("div", {cls: "tag-container"});
-		await this.renderContent(contentContainer);
 	}
 
 	private async handleRefresh() {
 		if (this.isLoading) return;
 
+		this.isLoading = true;
 		try {
-			this.isLoading = true;
-
 			const active = this.app.workspace.getActiveFile();
-			if (active) {
-				await this.facade.upsertNoteToIndex(active.path);
-			}
+			if (active) await this.facade.upsertNoteToIndex(active.path);
 		} catch (error) {
 			logError("Error refreshing current note:", error);
 			new Notice("Failed to refresh related notes.");
@@ -85,94 +90,109 @@ export class RelatedNotesListView extends ItemView {
 		}
 	}
 
-	private async renderContent(contentContainer: Element) {
-		contentContainer.empty();
-
-		const loadingMessage = contentContainer.createEl("div", {
+	private renderLoading(container: HTMLElement) {
+		return container.createEl("div", {
 			cls: "tree-item-self",
 			text: "Loading similar notes...",
 		});
+	}
 
+	private renderMessage(container: HTMLElement, text: string, extraCls?: string) {
+		container.createEl("div", {
+			cls: extraCls ? `empty-message ${extraCls}` : "empty-message",
+			text,
+		});
+	}
+
+	private async renderContent(container: HTMLElement) {
+		container.empty();
+		const loadingEl = this.renderLoading(container);
+
+		this.isLoading = true;
 		try {
-			this.isLoading = true;
+			const active = await this.getActiveFileOrShowEmptyState(container, loadingEl);
+			if (!active) return;
 
-			const active = this.app.workspace.getActiveFile();
-			if (!active) {
-				loadingMessage.remove();
-				contentContainer.createEl("div", {
-					cls: "empty-message",
-					text: "Oops, we're not ready yet.",
-				});
+			const state = await this.getIndexAndNoteState(active.path);
+			if (state.indexEmpty) {
+				loadingEl.remove();
+				this.renderEmptyIndex(container);
+				return;
+			}
+			if (state.noteEmpty) {
+				loadingEl.remove();
+				this.renderMessage(container, "The current note is empty. Add content to see related notes.");
 				return;
 			}
 
-			const indexIsEmpty = await this.facade.isIndexEmpty();
-			if (indexIsEmpty) {
-				loadingMessage.remove();
-				this.renderEmptyIndex(contentContainer);
-				return;
-			}
-
-			const noteIsEmpty = await this.facade.isNoteEmpty(active.path);
-			if (noteIsEmpty) {
-				loadingMessage.remove();
-				contentContainer.createEl("div", {
-					cls: "empty-message",
-					text: "The current note is empty. Add content to see related notes.",
-				});
-				return;
-			}
-
-			const noteText = await this.facade.getCleanNoteText(active.path);
-
-			// Query related notes through facade.
-			// This assumes your facade returns something like:
-			// [{ id/path, score }] or you can map it.
-			const related = await this.facade.getSimilarNotes({
-				noteId: active.path,
-				text: noteText,
-				limit: 10, // or from settings
-				minScore: 0.3,
-			});
-
-			loadingMessage.remove();
+			const related = await this.loadSimilarNotesForActiveFile(active.path);
+			loadingEl.remove();
 
 			if (related.length === 0) {
-				contentContainer.createEl("div", {
-					cls: "empty-message",
-					text: "No related notes were similar enough to display yet.",
-				});
+				this.renderMessage(container, "No related notes were similar enough to display yet.");
 				return;
 			}
 
-			const list = contentContainer.createEl("div");
-			related.forEach((note) => {
-				const path = note.id;
-
-				const listItem = list.createEl("div", {cls: "tree-item"});
-				const itemSelf = listItem.createEl("div", {cls: "tree-item-self tag-pane-tag is-clickable"});
-
-				itemSelf.addEventListener("click", () => this.openNote(path));
-
-				const itemInner = itemSelf.createEl("div", {cls: "tree-item-inner"});
-				const itemInnerText = itemInner.createEl("div", {cls: "tree-item-inner-text"});
-
-				// Title: either store title in index, or derive from path
-				const title = path.split("/").pop()?.replace(/\.md$/i, "") ?? path;
-				itemInnerText.createEl("span", {cls: "tree-item-inner-text", text: title});
-
-				const flairOuter = itemSelf.createEl("div", {cls: "tree-item-flair-outer"});
-				flairOuter.createEl("span", {
-					cls: "tag-pane-tag-count tree-item-flair",
-					text: `${Math.round(note.score * 100)}%`,
-				});
-			});
+			this.renderRelatedList(container, related);
 		} catch (error) {
-			loadingMessage.textContent = "Failed to load related notes. Please try again.";
 			logError("Error fetching related notes:", error);
+			loadingEl.textContent = "Failed to load related notes. Please try again.";
 		} finally {
 			this.isLoading = false;
 		}
+	}
+
+	private async getActiveFileOrShowEmptyState(container: HTMLElement, loadingEl: HTMLElement) {
+		const active = this.app.workspace.getActiveFile();
+		if (active) return active;
+
+		loadingEl.remove();
+		this.renderMessage(container, "Oops, we're not ready yet.");
+		return null;
+	}
+
+	private async getIndexAndNoteState(notePath: string) {
+		const [indexEmpty, noteEmpty] = await Promise.all([
+			this.facade.isIndexEmpty(),
+			this.facade.isNoteEmpty(notePath),
+		]);
+		return {indexEmpty, noteEmpty};
+	}
+
+	private async loadSimilarNotesForActiveFile(notePath: string): Promise<SimilarNote[]> {
+		const noteText = await this.facade.getCleanNoteText(notePath);
+		return this.facade.getSimilarNotes({
+			noteId: notePath,
+			text: noteText,
+			limit: 10,
+			minScore: 0.3,
+		});
+	}
+
+	private renderRelatedList(container: HTMLElement, related: SimilarNote[]) {
+		const list = container.createEl("div");
+
+		related.forEach((note) => {
+			const path = note.id;
+
+			const listItem = list.createEl("div", {cls: "tree-item"});
+			const itemSelf = listItem.createEl("div", {
+				cls: "tree-item-self tag-pane-tag is-clickable",
+			});
+			itemSelf.addEventListener("click", () => this.openNote(path));
+
+			const itemInner = itemSelf.createEl("div", {cls: "tree-item-inner"});
+			const itemInnerText = itemInner.createEl("div", {cls: "tree-item-inner-text"});
+
+			const title = path.split("/").pop()?.replace(/\.md$/i, "") ?? path;
+			itemInnerText.createEl("span", {cls: "tree-item-inner-text", text: title});
+
+			const flairOuter = itemSelf.createEl("div", {cls: "tree-item-flair-outer"});
+			flairOuter.createEl("span", {
+				cls: "tag-pane-tag-count tree-item-flair",
+				text: `${Math.round(note.score * 100)}%`,
+			});
+		});
 	}
 
 	private renderEmptyIndex(contentContainer: Element) {
@@ -184,7 +204,6 @@ export class RelatedNotesListView extends ItemView {
 		});
 
 		const actions = emptyState.createEl("div", {cls: "related-notes-actions"});
-
 		const startButton = actions.createEl("button", {
 			cls: "mod-cta related-notes-button",
 			text: "Start indexing vault",
@@ -195,17 +214,8 @@ export class RelatedNotesListView extends ItemView {
 		});
 	}
 
-	private async startIndexingVault(trigger?: HTMLButtonElement, emptyStateRoot?: HTMLElement) {
-		if (this.isLoading) return;
-
-		this.isLoading = true;
-		trigger?.setAttribute("disabled", "true");
-
-		// Guard against stale progress updates (e.g. rerender / multiple runs)
-		const runId = Date.now();
-		this.indexRunId = runId;
-
-		const progressRoot = emptyStateRoot?.createEl("div", {cls: "related-notes-progress"});
+	private createIndexingProgressUI(root?: HTMLElement) {
+		const progressRoot = root?.createEl("div", {cls: "related-notes-progress"});
 
 		const progressText = progressRoot?.createEl("div", {
 			cls: "related-notes-progress-text",
@@ -221,10 +231,13 @@ export class RelatedNotesListView extends ItemView {
 			progressBar.value = 0;
 		}
 
-		// Throttle DOM updates so you don’t spam layout/paint
+		return {progressText, progressBar};
+	}
+
+	private makeProgressHandler(runId: number, ui: ReturnType<typeof this.createIndexingProgressUI>) {
 		let lastPaint = 0;
 
-		const onProgress = (p: { phase: "scan" | "index" | "cleanup"; processed: number; total: number }) => {
+		return (p: IndexProgress) => {
 			if (this.indexRunId !== runId) return;
 
 			const now = Date.now();
@@ -236,21 +249,30 @@ export class RelatedNotesListView extends ItemView {
 			const pct = total > 0 ? Math.min(1, processed / total) : 0;
 
 			const phaseLabel =
-				p.phase === "scan" ? "Scanning" :
-					p.phase === "index" ? "Indexing" :
-						"Cleaning up";
+				p.phase === "scan" ? "Scanning" : p.phase === "index" ? "Indexing" : "Cleaning up";
 
-			if (progressText) {
-				progressText.setText(
-					`${phaseLabel}: ${processed}${total ? ` / ${total}` : ""} (${Math.round(pct * 100)}%)`
-				);
-			}
+			ui.progressText?.setText(
+				`${phaseLabel}: ${processed}${total ? ` / ${total}` : ""} (${Math.round(pct * 100)}%)`
+			);
 
-			if (progressBar) {
-				progressBar.max = total || 1;
-				progressBar.value = total ? processed : 0;
+			if (ui.progressBar) {
+				ui.progressBar.max = total || 1;
+				ui.progressBar.value = total ? processed : 0;
 			}
 		};
+	}
+
+	private async startIndexingVault(trigger?: HTMLButtonElement, emptyStateRoot?: HTMLElement) {
+		if (this.isLoading) return;
+
+		this.isLoading = true;
+		trigger?.setAttribute("disabled", "true");
+
+		const runId = Date.now();
+		this.indexRunId = runId;
+
+		const ui = this.createIndexingProgressUI(emptyStateRoot);
+		const onProgress = this.makeProgressHandler(runId, ui);
 
 		try {
 			await this.facade.syncVaultToIndex({
@@ -258,21 +280,20 @@ export class RelatedNotesListView extends ItemView {
 				deleteMissing: false,
 				onProgress,
 				onBatchComplete: async () => {
-					// small yield helps UI remain responsive during big vaults
 					await new Promise((r) => setTimeout(r, 0));
 				},
 			});
 
-			if (progressText) progressText.setText("Done.");
-			if (progressBar) {
-				progressBar.max = 1;
-				progressBar.value = 1;
+			ui.progressText?.setText("Done.");
+			if (ui.progressBar) {
+				ui.progressBar.max = 1;
+				ui.progressBar.value = 1;
 			}
 
 			new Notice("Indexing complete. Related notes will appear as they are processed.");
 		} catch (error) {
 			logError("Error syncing vault index:", error);
-			if (progressText) progressText.setText("Failed.");
+			ui.progressText?.setText("Failed.");
 			new Notice("Failed to start indexing. See console for details.");
 		} finally {
 			trigger?.removeAttribute("disabled");
@@ -281,14 +302,10 @@ export class RelatedNotesListView extends ItemView {
 		}
 	}
 
-
 	async refresh() {
 		if (this.isLoading) return;
-
 		const contentContainer = this.containerEl.querySelector(".tag-container");
-		if (contentContainer) {
-			await this.renderContent(contentContainer);
-		}
+		if (contentContainer) await this.renderContent(contentContainer as HTMLElement);
 	}
 
 	async onClose() {
