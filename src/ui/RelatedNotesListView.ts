@@ -2,10 +2,10 @@ import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import { RelatedNotesFacade } from "../facade";
 
 export function logError(message: unknown, ...optionalParams: unknown[]) {
-	console.error("[Semantic Notes]:", message, ...optionalParams);
+	console.error("[Similarity]:", message, ...optionalParams);
 }
 
-export const VIEW_TYPE_SEMANTIC_NOTES = "semantic-notes";
+export const VIEW_TYPE_RELATED_NOTES = "similarity";
 
 type IndexProgress = {
 	phase: "scan" | "index" | "cleanup";
@@ -24,7 +24,7 @@ export class RelatedNotesListView extends ItemView {
 	}
 
 	getViewType() {
-		return VIEW_TYPE_SEMANTIC_NOTES;
+		return VIEW_TYPE_RELATED_NOTES;
 	}
 
 	getDisplayText() {
@@ -197,7 +197,7 @@ export class RelatedNotesListView extends ItemView {
 
 	private renderEmptyIndex(contentContainer: Element) {
 		const emptyState = contentContainer.createEl("div", {cls: "empty-message related-notes-empty"});
-		emptyState.createEl("div", {text: "Your semantic notes index is empty."});
+		emptyState.createEl("div", {text: "Your similarity index is empty."});
 		emptyState.createEl("div", {
 			cls: "related-notes-warning",
 			text: "Indexing may take a few minutes depending on your device and notes. Not advised on mobile.",

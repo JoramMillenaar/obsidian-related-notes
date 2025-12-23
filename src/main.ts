@@ -1,5 +1,5 @@
 import { Notice, Plugin, TFile } from "obsidian";
-import { RelatedNotesListView, VIEW_TYPE_SEMANTIC_NOTES } from "./ui/RelatedNotesListView";
+import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from "./ui/RelatedNotesListView";
 import { RelatedNotesFacade } from "./facade";
 import { buildDeps } from "./infra/obsidian/buildDeps";
 import { StatusBarService } from "./services/statusBarService";
@@ -16,7 +16,7 @@ export default class RelatedNotes extends Plugin {
 		this.facade = new RelatedNotesFacade(deps);
 
 		this.registerView(
-			VIEW_TYPE_SEMANTIC_NOTES,
+			VIEW_TYPE_RELATED_NOTES,
 			(leaf) => new RelatedNotesListView(leaf, this.facade)
 		);
 
@@ -32,11 +32,11 @@ export default class RelatedNotes extends Plugin {
 						},
 					});
 					this.status.update("Index synced", 2500);
-					new Notice("Semantic notes index synced");
+					new Notice("Similarity index synced");
 				} catch (e) {
 					this.status.update("Sync failed (see console)", 5000);
-					console.error("[Semantic Notes] Sync failed", e);
-					new Notice("Semantic notes sync failed");
+					console.error("[Similarity] Sync failed", e);
+					new Notice("Similarity sync failed");
 				}
 			},
 		});
@@ -55,7 +55,7 @@ export default class RelatedNotes extends Plugin {
 					this.status.update("Current note indexed", 2000);
 				} catch (e) {
 					this.status.update("Index failed (see console)", 5000);
-					console.error("[Semantic Notes] Reindex current failed", e);
+					console.error("[Similarity] Reindex current failed", e);
 				}
 			},
 		});
@@ -73,14 +73,14 @@ export default class RelatedNotes extends Plugin {
 			this.status.update("Ready", 1500);
 		} catch (e) {
 			this.status.update("Failed to start (see console)", 8000);
-			console.error("[Semantic Notes] start() failed", e);
+			console.error("[Similarity] start() failed", e);
 		}
 
 		this.registerEvent(
 			this.app.vault.on("modify", (file) => {
 				if (!(file instanceof TFile)) return;
 				void this.facade.upsertNoteToIndex(file.path).catch((error) => {
-					console.error("[Semantic Notes] Reindex failed", error);
+					console.error("[Similarity] Reindex failed", error);
 				});
 			})
 		);
@@ -89,7 +89,7 @@ export default class RelatedNotes extends Plugin {
 			this.app.vault.on("delete", (file) => {
 				if (!(file instanceof TFile)) return;
 				void this.facade.deleteNote(file.path).catch((error) => {
-					console.error("[Semantic Notes] Delete from index failed", error);
+					console.error("[Similarity] Delete from index failed", error);
 				});
 				this.status.update("Note removed from index", 1500);
 			})
@@ -99,10 +99,10 @@ export default class RelatedNotes extends Plugin {
 			this.app.vault.on("rename", (file, oldPath) => {
 				if (!(file instanceof TFile)) return;
 				void this.facade.renameNote(oldPath, file.path).catch((error) => {
-					console.error("[Semantic Notes] Rename note failed", error);
+					console.error("[Similarity] Rename note failed", error);
 				});
 				void this.facade.upsertNoteToIndex(file.path).catch((error) => {
-					console.error("[Semantic Notes] Reindex after rename failed", error);
+					console.error("[Similarity] Reindex after rename failed", error);
 				});
 				this.status.update("Index updated (rename)", 1500);
 			})
@@ -121,17 +121,17 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	private refreshView() {
-		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_SEMANTIC_NOTES).first();
+		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES).first();
 		if (leaf && leaf.view instanceof RelatedNotesListView) void leaf.view.refresh();
 	}
 
 	private async activateView() {
-		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_SEMANTIC_NOTES);
+		const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_RELATED_NOTES);
 		if (existing.length) return;
 
 		const leaf = this.app.workspace.getRightLeaf(false);
-		if (!leaf) return void new Notice("Unable to activate semantic notes view.");
+		if (!leaf) return void new Notice("Unable to activate similarity view.");
 
-		await leaf.setViewState({type: VIEW_TYPE_SEMANTIC_NOTES, active: false});
+		await leaf.setViewState({type: VIEW_TYPE_RELATED_NOTES, active: false});
 	}
 }

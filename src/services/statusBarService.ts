@@ -6,12 +6,12 @@ export class StatusBarService {
 
 	constructor(plugin: Plugin) {
 		this.statusBarItem = plugin.addStatusBarItem();
-		this.statusBarItem.addClass("semantic-notes-status");
+		this.statusBarItem.addClass("similarity-status");
 		this.clear(); // start blank
 	}
 
 	update(text: string, timeout: number | null = 3000): void {
-		this.statusBarItem.setText(`[Semantic Notes]: ${text}`);
+		this.statusBarItem.setText(`[Similarity]: ${text}`);
 
 		if (this.clearTimeoutId !== null) {
 			window.clearTimeout(this.clearTimeoutId);

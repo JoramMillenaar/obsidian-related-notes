@@ -1,4 +1,4 @@
-# Semantic Notes
+# Similarity
 
 Find notes with similar meaning intelligently, helping you uncover hidden connections and insights within your Obsidian vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
 
@@ -20,7 +20,7 @@ If this plugin isn’t available in Obsidian Community Plugins yet (or you want 
 3. Open the **Command Palette** (`Ctrl/Cmd + P`) and run:  
    **BRAT: Add a beta plugin for testing**
 4. When prompted, paste this repository URL: https://github.com/JoramMillenaar/obsidian-related-notes
-5. After adding it, go to **Settings → Community plugins** and enable **Semantic Notes**.
+5. After adding it, go to **Settings → Community plugins** and enable **Similarity**.
 
 ### Updating
 
@@ -42,7 +42,7 @@ To pull the latest changes from GitHub, open the Command Palette and run:
 
 One of Obsidian's greatest strengths is its commitment to data ownership and privacy. This plugin upholds that philosophy by making privacy its highest priority. All processing and note relations happen entirely on your device, ensuring your notes stay yours—always. 
 
-**Semantic Notes Finder** is built with privacy at its core:  
+**Similarity** is built with privacy at its core:  
 - **Local Processing**: Every analysis and operation occurs directly on your device. Your notes never leave your vault.  
 - **No Third-Party Dependencies**: Once installed, the plugin requires no internet access or external APIs, providing a fully private and secure experience.  
 
@@ -77,4 +77,4 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ---
 
-With **Semantic Notes Finder**, explore your knowledge in a new way—intelligently, locally, and privately.
+With **Similarity**, explore your knowledge in a new way—intelligently, locally, and privately.
