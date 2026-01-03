@@ -24,7 +24,7 @@ export async function indexNote(args: {
 		throw new Error("Could not find note with id " + noteId);
 	}
 
-	// 2. Compute content hash (cheap, always)
+	// 2. Compute content hash
 	const hash = hashText(text);
 
 	// 3. Load index and check existing entry
@@ -52,9 +52,16 @@ export async function indexNote(args: {
 	};
 
 	// 5. Upsert
-	const nextIndex = existing
-		? index.map(n => (n.id === noteId ? updated : n))
-		: [...index, updated];
+	let nextIndex;
+
+	if (existing) {
+		nextIndex = index.map(note =>
+			note.id === noteId ? updated : note
+		);
+	} else {
+		nextIndex = [...index, updated];
+	}
+
 
 	await saveIndex(nextIndex);
 }

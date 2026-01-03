@@ -4,7 +4,6 @@ import { getRelatedNotes } from "./app/getRelatedNotes";
 import { syncVault } from "./app/syncVault";
 import { deleteNoteInIndex } from "./app/deleteNoteInIndex";
 import { renameNoteInIndex } from "./app/renameNoteInIndex";
-import { rebuildIndex } from "./app/rebuildIndex";
 
 export class RelatedNotesFacade {
 	constructor(private deps: {
@@ -92,14 +91,6 @@ export class RelatedNotesFacade {
 			newId,
 			getIndex: this.deps.getIndex,
 			saveIndex: this.deps.saveIndex,
-		});
-	}
-
-	async rebuildVaultIndex() {
-		await rebuildIndex({
-			listNoteIds: this.deps.listNoteIds,
-			saveIndex: this.deps.saveIndex,
-			indexNote: (id) => this.upsertNoteToIndex(id),
 		});
 	}
 
