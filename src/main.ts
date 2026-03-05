@@ -3,14 +3,18 @@ import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from "./ui/RelatedNotes
 import { RelatedNotesFacade } from "./facade";
 import { buildDeps } from "./infra/obsidian/buildDeps";
 import { StatusBarService } from "./services/statusBarService";
+import { KeyedDebouncer } from "./infra/debouncer";
 
 export default class RelatedNotes extends Plugin {
 	private facade!: RelatedNotesFacade;
 	private status!: StatusBarService;
+	private upsertDebouncer!: KeyedDebouncer<string>;
 
 	onload() {
 		this.status = new StatusBarService(this);
 		this.status.update("Loading…", null);
+
+		this.upsertDebouncer = new KeyedDebouncer(800);
 
 		const deps = buildDeps(this);
 		this.facade = new RelatedNotesFacade(deps);
@@ -79,8 +83,10 @@ export default class RelatedNotes extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("modify", (file) => {
 				if (!(file instanceof TFile)) return;
-				void this.facade.upsertNoteToIndex(file.path).catch((error) => {
-					console.error("[Similarity] Reindex failed", error);
+				this.upsertDebouncer.schedule(file.path, async () => {
+					await this.facade.upsertNoteToIndex(file.path).catch((error) => {
+						console.error("[Similarity] Reindex failed", error);
+					});
 				});
 			})
 		);
@@ -117,6 +123,7 @@ export default class RelatedNotes extends Plugin {
 
 	onunload() {
 		this.facade.stop();
+		this.upsertDebouncer.cancel();
 		this.status?.unload();
 	}
 
