@@ -94,6 +94,21 @@ export default class RelatedNotes extends Plugin {
 
 		try {
 			await this.facade.start();
+
+			const isEmpty = await this.facade.isIndexEmpty();
+			if (!isEmpty) {
+				this.status.update("Repairing index…", null);
+				try {
+					await this.facade.syncVaultToIndex({
+						onProgress: (p) => {
+							this.status.update(`${p.processed}/${p.total} indexed`, null);
+						},
+					});
+				} catch (e) {
+					console.error("[Similarity] Index repair failed", e);
+				}
+			}
+
 			this.status.update("Ready", 1500);
 		} catch (e) {
 			this.status.update("Failed to start (see console)", 8000);
