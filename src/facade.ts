@@ -59,7 +59,13 @@ export class RelatedNotesFacade {
 				});
 			},
 			batchSize: opts?.batchSize,
-			deleteNote: this.deleteNote
+			deleteNote: async (noteId: string) => {
+				await deleteNoteInIndex({
+					noteId,
+					getIndex: this.deps.getIndex,
+					saveIndex: this.deps.saveIndex,
+				});
+			}
 		})
 	}
 
