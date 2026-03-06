@@ -14,8 +14,6 @@ export default class RelatedNotes extends Plugin {
 		this.status = new StatusBarService(this);
 		this.status.update("Loading…", null);
 
-		this.upsertDebouncer = new KeyedDebouncer(800);
-
 		const deps = buildDeps(this);
 		this.facade = new RelatedNotesFacade(deps);
 
@@ -23,6 +21,27 @@ export default class RelatedNotes extends Plugin {
 			VIEW_TYPE_RELATED_NOTES,
 			(leaf) => new RelatedNotesListView(leaf, this.facade)
 		);
+
+		this.addCommand({
+			id: "rebuild-vault",
+			name: "Rebuild vault index",
+			callback: async () => {
+				this.status.update("Building vault index…", null);
+				try {
+					await this.facade.indexVault({
+						onProgress: (p) => {
+							this.status.update(`${p.processed}/${p.total} indexed`, null);
+						},
+					});
+					this.status.update("Index built", 2500);
+					new Notice("Similarity index built");
+				} catch (e) {
+					this.status.update("Index build failed (see console)", 5000);
+					console.error("[Similarity] Build failed", e);
+					new Notice("Similarity build failed");
+				}
+			},
+		});
 
 		this.addCommand({
 			id: "sync-vault",
@@ -71,6 +90,7 @@ export default class RelatedNotes extends Plugin {
 
 	private async initAfterLayoutReady() {
 		this.status.update("Starting…", null);
+		this.upsertDebouncer = new KeyedDebouncer(800);
 
 		try {
 			await this.facade.start();

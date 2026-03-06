@@ -1,10 +1,11 @@
 import { ComputeEmbedding, GetIndex, GetNoteText, ListNoteIds, SaveIndex } from "./types";
 import { indexNote } from "./app/indexNote";
 import { getRelatedNotes } from "./app/getRelatedNotes";
-import { syncVault } from "./app/syncVault";
+import { buildIndex } from "./app/buildIndex";
 import { deleteNoteInIndex } from "./app/deleteNoteInIndex";
 import { renameNoteInIndex } from "./app/renameNoteInIndex";
-import { rebuildIndex } from "./app/rebuildIndex";
+import { getSyncActions } from "./app/getSyncActions";
+import { executeSyncActions } from "./app/executeSyncActions";
 
 export class RelatedNotesFacade {
 	constructor(private deps: {
@@ -18,16 +19,13 @@ export class RelatedNotesFacade {
 	}) {
 	}
 
-	async syncVaultToIndex(opts?: {
-		deleteMissing?: boolean;
+	async indexVault(opts?: {
 		batchSize?: number;
-		onProgress?: (p: { phase: "scan" | "index" | "cleanup"; processed: number; total: number }) => void;
+		onProgress?: (p: { phase: string; processed: number; total: number }) => void;
 		onBatchComplete?: () => Promise<void>;
 	}) {
-		return syncVault({
+		return buildIndex({
 			listNoteIds: this.deps.listNoteIds,
-			getIndex: this.deps.getIndex,
-			saveIndex: this.deps.saveIndex,
 			indexNote: async (noteId: string) => {
 				await indexNote({
 					noteId,
@@ -40,6 +38,31 @@ export class RelatedNotesFacade {
 			...opts,
 		});
 	}
+
+	async syncVaultToIndex(opts?: {
+		batchSize?: number;
+		onProgress?: (p: { phase: string; processed: number; total: number }) => void;
+		onBatchComplete?: () => Promise<void>;
+	}) {
+		const actions = await getSyncActions({listNoteIds: this.deps.listNoteIds, getIndex: this.deps.getIndex})
+		await executeSyncActions({
+			actions,
+			onBatchComplete: opts?.onBatchComplete,
+			onProgress: opts?.onProgress,
+			indexNote: async (noteId: string) => {
+				await indexNote({
+					noteId,
+					getNoteText: this.deps.getNoteText,
+					getIndex: this.deps.getIndex,
+					saveIndex: this.deps.saveIndex,
+					computeEmbedding: this.deps.computeEmbedding,
+				});
+			},
+			batchSize: opts?.batchSize,
+			deleteNote: this.deleteNote
+		})
+	}
+
 
 	async upsertNoteToIndex(noteId: string) {
 		await indexNote({
@@ -92,14 +115,6 @@ export class RelatedNotesFacade {
 			newId,
 			getIndex: this.deps.getIndex,
 			saveIndex: this.deps.saveIndex,
-		});
-	}
-
-	async rebuildVaultIndex() {
-		await rebuildIndex({
-			listNoteIds: this.deps.listNoteIds,
-			saveIndex: this.deps.saveIndex,
-			indexNote: (id) => this.upsertNoteToIndex(id),
 		});
 	}
 

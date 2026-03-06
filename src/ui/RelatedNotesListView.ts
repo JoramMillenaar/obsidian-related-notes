@@ -275,9 +275,7 @@ export class RelatedNotesListView extends ItemView {
 		const onProgress = this.makeProgressHandler(runId, ui);
 
 		try {
-			await this.facade.syncVaultToIndex({
-				batchSize: 25,
-				deleteMissing: false,
+			await this.facade.indexVault({
 				onProgress,
 				onBatchComplete: async () => {
 					await new Promise((r) => setTimeout(r, 0));
