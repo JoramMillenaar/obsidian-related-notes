@@ -147,7 +147,7 @@ export class RelatedNotesListView extends ItemView {
 		if (active) return active;
 
 		loadingEl.remove();
-		this.renderMessage(container, "Oops, we're not ready yet.");
+		this.renderMessage(container, "Open a note to see similar notes.", "similar-notes-no-active");
 		return null;
 	}
 
