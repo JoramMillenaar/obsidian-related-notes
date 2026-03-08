@@ -38,7 +38,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	onChooseSuggestion(item: RelatedNote, evt: MouseEvent | KeyboardEvent): void {
 		const file = this.app.vault.getAbstractFileByPath(item.id);
 		if (file instanceof TFile) {
-			this.app.workspace.getLeaf().openFile(file);
+			void this.app.workspace.getLeaf().openFile(file);
 		}
 	}
 

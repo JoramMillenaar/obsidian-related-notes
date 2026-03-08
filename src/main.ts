@@ -87,7 +87,6 @@ export default class RelatedNotes extends Plugin {
 		this.addCommand({
 			id: "open-search-modal",
 			name: "Open semantic search",
-			hotkeys: [{modifiers: ['Mod', 'Shift'], key: 'o'}],
 			callback: () => {
 				new SearchModal(this.app, this.facade).open();
 			}
