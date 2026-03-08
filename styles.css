@@ -27,3 +27,8 @@
 .related-notes-button {
         align-self: flex-start;
 }
+
+.suggestion-note {
+        color: var(--text-muted);
+        font-size: var(--font-smallest);
+}

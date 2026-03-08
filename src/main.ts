@@ -4,6 +4,7 @@ import { RelatedNotesFacade } from "./facade";
 import { buildDeps } from "./infra/obsidian/buildDeps";
 import { StatusBarService } from "./services/statusBarService";
 import { KeyedDebouncer } from "./infra/debouncer";
+import { SearchModal } from "./ui/searchModal";
 
 export default class RelatedNotes extends Plugin {
 	private facade!: RelatedNotesFacade;
@@ -81,6 +82,15 @@ export default class RelatedNotes extends Plugin {
 					console.error("[Similarity] Reindex current failed", e);
 				}
 			},
+		});
+
+		this.addCommand({
+			id: "open-search-modal",
+			name: "Open semantic search",
+			hotkeys: [{modifiers: ['Mod', 'Shift'], key: 'o'}],
+			callback: () => {
+				new SearchModal(this.app, this.facade).open();
+			}
 		});
 
 		this.app.workspace.onLayoutReady(() => {
