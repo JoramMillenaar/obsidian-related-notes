@@ -1,70 +1,69 @@
 import { ReconciliationResult } from "../domain/setReconciliation";
+import { yieldToUI } from "../domain/yieldToUI";
+import { IndexedNoteRepository, OnProgressCallback } from "../types";
+import { IndexNoteUseCase } from "./indexNote";
 
-export async function executeSyncActions(args: {
-  actions: ReconciliationResult<string>;
-  indexNote: (noteId: string) => Promise<void>;
-  deleteNote: (noteId: string) => Promise<void>;
-  onProgress?: (p: {
-    phase: "index" | "delete";
-    processed: number;
-    total: number;
-  }) => void;
-  onBatchComplete?: () => Promise<void>;
-  batchSize?: number;
-}): Promise<{
-  indexed: number;
-  deleted: number;
-}> {
-  const {
-    actions,
-    indexNote,
-    deleteNote,
-    onProgress,
-    onBatchComplete = async () => {
-      await new Promise<void>(r => setTimeout(r, 0));
-    },
-    batchSize = 25,
-  } = args;
 
-  const {toAdd, toRemove} = actions;
+export type ExecuteSyncActionsUseCase = (args: {
+	actions: ReconciliationResult<string>;
+	batchSize?: number;
+	onBatchComplete?: () => Promise<void>;
+	onProgress?: OnProgressCallback;
+}) => Promise<{
+	indexed: number;
+	deleted: number;
+}>
 
-  // Phase 1: Delete removed notes
-  let deleted = 0;
-  for (const noteId of toRemove) {
-    try {
-      await deleteNote(noteId);
-      deleted++;
-    } catch (error) {
-      console.error(`Failed to delete note ${noteId}:`, error);
-    }
+export function makeExecuteSyncActions(deps: {
+	indexNote: IndexNoteUseCase;
+	noteRepo: IndexedNoteRepository;
+}): ExecuteSyncActionsUseCase {
+	return async function executeSyncActions(args) {
+		const {
+			actions,
+			batchSize = 25,
+			onBatchComplete = yieldToUI,
+			onProgress,
+		} = args;
+		const {toAdd, toRemove} = actions;
 
-    onProgress?.({phase: "delete", processed: deleted, total: toRemove.length});
+		// Phase 1: Delete removed notes
+		let deleted = 0;
+		for (const noteId of toRemove) {
+			try {
+				await deps.noteRepo.remove(noteId);
+				deleted++;
+			} catch (error) {
+				console.error(`Failed to delete note ${noteId}:`, error);
+			}
 
-    if (deleted % batchSize === 0) {
-      await onBatchComplete();
-    }
-  }
+			onProgress?.({phase: "delete", processed: deleted, total: toRemove.length});
 
-  // Phase 2: Index new notes
-  let indexed = 0;
-  for (const noteId of toAdd) {
-    try {
-      await indexNote(noteId);
-      indexed++;
-    } catch (error) {
-      console.error(`Failed to index note ${noteId}:`, error);
-    }
+			if (deleted % batchSize === 0) {
+				await onBatchComplete();
+			}
+		}
 
-    onProgress?.({phase: "index", processed: indexed, total: toAdd.length});
+		// Phase 2: Index new notes
+		let indexed = 0;
+		for (const noteId of toAdd) {
+			try {
+				await deps.indexNote(noteId);
+				indexed++;
+			} catch (error) {
+				console.error(`Failed to index note ${noteId}:`, error);
+			}
 
-    if (indexed % batchSize === 0) {
-      await onBatchComplete();
-    }
-  }
+			onProgress?.({phase: "index", processed: indexed, total: toAdd.length});
 
-  return {
-    indexed,
-    deleted,
-  };
+			if (indexed % batchSize === 0) {
+				await onBatchComplete();
+			}
+		}
+
+		return {
+			indexed,
+			deleted,
+		};
+	}
 }
-

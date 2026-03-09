@@ -1,15 +1,20 @@
 import { App, SuggestModal, TFile } from "obsidian";
-import { RelatedNotesFacade } from "../facade";
-import { KeyedDebouncer } from "../infra/debouncer";
+import { KeyedDebouncer } from "../domain/debouncer";
 import { RelatedNote } from "../types";
+import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
+
+export type SearchModalDeps = {
+	getSimilarNotes: GetSimilarNotesUseCase
+}
+
 
 export class SearchModal extends SuggestModal<RelatedNote> {
-	private facade: RelatedNotesFacade;
+	private deps: SearchModalDeps;
 	private debouncer: KeyedDebouncer<string>;
 
-	constructor(app: App, facade: RelatedNotesFacade) {
+	constructor(app: App, deps: SearchModalDeps) {
 		super(app);
-		this.facade = facade;
+		this.deps = deps;
 		this.debouncer = new KeyedDebouncer(300); // 300ms debounce delay
 	}
 
@@ -21,11 +26,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 		return new Promise((resolve) => {
 			this.debouncer.schedule("search", async () => {
 				try {
-					const results = await this.facade.getSimilarNotes({
-						text: query,
-						limit: 10,
-						minScore: 0.25,
-					});
+					const results = await this.deps.getSimilarNotes({text: query});
 					resolve(results);
 				} catch (e) {
 					console.error("[Related Notes Search] Failed to get related notes:", e);

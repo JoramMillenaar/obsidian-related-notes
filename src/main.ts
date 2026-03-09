@@ -1,58 +1,81 @@
 import { Notice, Plugin, TFile } from "obsidian";
 import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from "./ui/RelatedNotesListView";
-import { RelatedNotesFacade } from "./facade";
-import { buildDeps } from "./infra/obsidian/buildDeps";
-import { StatusBarService } from "./services/statusBarService";
-import { KeyedDebouncer } from "./infra/debouncer";
-import { SearchModal } from "./ui/searchModal";
+import { KeyedDebouncer } from "./domain/debouncer";
+import { SearchModal } from "./ui/SearchModal";
+import { ObsidianStatusBar } from "./infra/obsidian/obsidianStatusBar";
+import { EmbeddingPort, IndexedNoteRepository, IndexStorage, NoteSource, StatusReporter } from "./types";
+import { JsonIndexedNoteRepository } from "./infra/index/jsonIndexedNoteRepository";
+import { ObsidianNoteSource } from "./infra/obsidian/obsidianNoteSource";
+import { EmbeddingProvider } from "./infra/embedder/embeddingProvider";
+import { ObsidianPluginDataIndexStorage } from "./infra/obsidian/obsidianStorage";
+import { IndexNoteUseCase, makeIndexNote } from "./app/indexNote";
+import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./app/getSimilarNotes";
+import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./app/syncIndexToVault";
+import { makeGetSyncActions } from "./app/getSyncActions";
+import { makeExecuteSyncActions } from "./app/executeSyncActions";
 
 export default class RelatedNotes extends Plugin {
-	private facade!: RelatedNotesFacade;
-	private status!: StatusBarService;
+	private status!: StatusReporter;
+	private noteSource!: NoteSource;
+	private indexStorage!: IndexStorage;
+	private embedder!: EmbeddingPort;
+	private indexRepo!: IndexedNoteRepository;
+
+	private indexNote!: IndexNoteUseCase;
+	private getSimilarNotes!: GetSimilarNotesUseCase;
+	private syncIndexToVault!: SyncIndexToVaultUseCase;
+
 	private upsertDebouncer!: KeyedDebouncer<string>;
 
 	onload() {
-		this.status = new StatusBarService(this);
-		this.status.update("Loading…", null);
+		this.status = new ObsidianStatusBar(this);
+		this.status.update("Loading…");
 
-		const deps = buildDeps(this);
-		this.facade = new RelatedNotesFacade(deps);
+		this.noteSource = new ObsidianNoteSource(this);
+		this.indexStorage = new ObsidianPluginDataIndexStorage(this);
+		this.embedder = new EmbeddingProvider();
+		this.indexRepo = new JsonIndexedNoteRepository(this.indexStorage);
+
+		this.indexNote = makeIndexNote({
+			noteSource: this.noteSource,
+			embedder: this.embedder,
+			indexRepo: this.indexRepo,
+		});
+		this.getSimilarNotes = makeGetSimilarNotes({
+			indexStorage: this.indexStorage,
+			embedder: this.embedder,
+		});
+		const getSyncActions = makeGetSyncActions({
+			noteSource: this.noteSource,
+			indexStorage: this.indexStorage,
+		});
+		const executeSyncActions = makeExecuteSyncActions({
+			indexNote: this.indexNote,
+			noteRepo: this.indexRepo,
+		});
+		this.syncIndexToVault = makeSyncIndexToVault({getSyncActions, executeSyncActions});
+
 
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
-			(leaf) => new RelatedNotesListView(leaf, this.facade)
+			(leaf) => new RelatedNotesListView(leaf, {
+				indexStorage: this.indexStorage,
+				noteSource: this.noteSource,
+				indexNote: this.indexNote,
+				getSimilarNotes: this.getSimilarNotes,
+				indexVault: this.syncIndexToVault,
+			})
 		);
-
-		this.addCommand({
-			id: "rebuild-vault",
-			name: "Rebuild vault index",
-			callback: async () => {
-				this.status.update("Building vault index…", null);
-				try {
-					await this.facade.indexVault({
-						onProgress: (p) => {
-							this.status.update(`${p.processed}/${p.total} indexed`, null);
-						},
-					});
-					this.status.update("Index built", 2500);
-					new Notice("Similarity index built");
-				} catch (e) {
-					this.status.update("Index build failed (see console)", 5000);
-					console.error("[Similarity] Build failed", e);
-					new Notice("Similarity build failed");
-				}
-			},
-		});
 
 		this.addCommand({
 			id: "sync-vault",
 			name: "Sync vault index",
 			callback: async () => {
-				this.status.update("Syncing vault index…", null);
+				this.status.update("Syncing vault index…");
 				try {
-					await this.facade.syncVaultToIndex({
+					await this.syncIndexToVault({
 						onProgress: (p) => {
-							this.status.update(`${p.processed}/${p.total} indexed`, null);
+							this.status.update(`${p.processed}/${p.total} indexed`);
 						},
 					});
 					this.status.update("Index synced", 2500);
@@ -72,9 +95,9 @@ export default class RelatedNotes extends Plugin {
 				const f = this.app.workspace.getActiveFile();
 				if (!f) return;
 
-				this.status.update("Indexing current note…", null);
+				this.status.update("Indexing current note…");
 				try {
-					await this.facade.upsertNoteToIndex(f.path);
+					await this.indexNote(f.path);
 					this.refreshView();
 					this.status.update("Current note indexed", 2000);
 				} catch (e) {
@@ -88,7 +111,7 @@ export default class RelatedNotes extends Plugin {
 			id: "open-search-modal",
 			name: "Open semantic search",
 			callback: () => {
-				new SearchModal(this.app, this.facade).open();
+				new SearchModal(this.app, {getSimilarNotes: this.getSimilarNotes}).open();
 			}
 		});
 
@@ -98,19 +121,19 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	private async initAfterLayoutReady() {
-		this.status.update("Starting…", null);
+		this.status.update("Starting…");
 		this.upsertDebouncer = new KeyedDebouncer(800);
 
 		try {
-			await this.facade.start();
+			await this.embedder.load();
 
-			const isEmpty = await this.facade.isIndexEmpty();
+			const isEmpty = await this.indexStorage.isIndexEmpty();
 			if (!isEmpty) {
-				this.status.update("Repairing index…", null);
+				this.status.update("Repairing index…");
 				try {
-					await this.facade.syncVaultToIndex({
+					await this.syncIndexToVault({
 						onProgress: (p) => {
-							this.status.update(`${p.processed}/${p.total} indexed`, null);
+							this.status.update(`${p.processed}/${p.total} indexed`);
 						},
 					});
 				} catch (e) {
@@ -128,7 +151,7 @@ export default class RelatedNotes extends Plugin {
 			this.app.vault.on("modify", (file) => {
 				if (!(file instanceof TFile)) return;
 				this.upsertDebouncer.schedule(file.path, async () => {
-					await this.facade.upsertNoteToIndex(file.path).catch((error) => {
+					await this.indexNote(file.path).catch((error) => {
 						console.error("[Similarity] Reindex failed", error);
 					});
 				});
@@ -138,7 +161,7 @@ export default class RelatedNotes extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("delete", (file) => {
 				if (!(file instanceof TFile)) return;
-				void this.facade.deleteNote(file.path).catch((error) => {
+				void this.indexRepo.remove(file.path).catch((error) => {
 					console.error("[Similarity] Delete from index failed", error);
 				});
 				this.status.update("Note removed from index", 1500);
@@ -148,10 +171,10 @@ export default class RelatedNotes extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("rename", (file, oldPath) => {
 				if (!(file instanceof TFile)) return;
-				void this.facade.renameNote(oldPath, file.path).catch((error) => {
+				void this.indexRepo.rename(oldPath, file.path).catch((error) => {
 					console.error("[Similarity] Rename note failed", error);
 				});
-				void this.facade.upsertNoteToIndex(file.path).catch((error) => {
+				void this.indexNote(file.path).catch((error) => {
 					console.error("[Similarity] Reindex after rename failed", error);
 				});
 				this.status.update("Index updated (rename)", 1500);
@@ -166,9 +189,9 @@ export default class RelatedNotes extends Plugin {
 	}
 
 	onunload() {
-		this.facade.stop();
 		this.upsertDebouncer.cancel();
-		this.status?.unload();
+		this.embedder.unload();
+		this.status?.clear();
 	}
 
 	private refreshView() {

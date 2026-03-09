@@ -1,25 +1,22 @@
-import { GetIndex, ListNoteIds } from "../types";
-import { reconcileSets, ReconciliationResult } from "../domain/setReconciliation";
+import { IndexStorage, NoteSource } from "../types";
+import { ReconciliationResult } from "../domain/setReconciliation";
+import { deriveSyncActions } from "../domain/getSyncActions";
 
-export async function getSyncActions(args: {
-	listNoteIds: ListNoteIds;
-	getIndex: GetIndex;
-}): Promise<ReconciliationResult<string>> {
-	const {listNoteIds, getIndex} = args;
 
-	const vaultNoteIds = listNoteIds();
+export type GetSyncActionsUseCase = () => Promise<ReconciliationResult<string>>;
 
-	const index = await getIndex();
-	const indexedNoteIds = index.map(entry => entry.id);
 
-	const {toAdd, toRemove} = reconcileSets(vaultNoteIds, indexedNoteIds);
+export function makeGetSyncActions(deps: {
+	noteSource: NoteSource;
+	indexStorage: IndexStorage;
+}): GetSyncActionsUseCase {
+	return async function getSyncActions(): Promise<ReconciliationResult<string>> {
+		const vaultNoteIds = deps.noteSource.listNoteIds();
 
-	const duplicates = indexedNoteIds.filter((id, i) => indexedNoteIds.indexOf(id) !== i);
-	for (const duplicate of duplicates) {
-		toAdd.push(duplicate);
-		toRemove.push(duplicate);
+		const index = await deps.indexStorage.getIndex();
+		const indexedNoteIds = index.map(entry => entry.id);
+
+		return deriveSyncActions(vaultNoteIds, indexedNoteIds);
 	}
-
-	return {toAdd, toRemove}
 }
 

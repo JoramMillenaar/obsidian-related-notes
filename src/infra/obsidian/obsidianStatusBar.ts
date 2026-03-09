@@ -1,6 +1,7 @@
 import { Plugin } from "obsidian";
+import { StatusReporter } from "../../types";
 
-export class StatusBarService {
+export class ObsidianStatusBar implements StatusReporter {
 	private statusBarItem: HTMLElement;
 	private clearTimeoutId: number | null = null;
 
@@ -31,9 +32,5 @@ export class StatusBarService {
 			this.clearTimeoutId = null;
 		}
 		this.statusBarItem.setText("");
-	}
-
-	unload(): void {
-		this.clear();
 	}
 }

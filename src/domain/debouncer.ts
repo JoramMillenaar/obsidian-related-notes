@@ -15,9 +15,7 @@ export class KeyedDebouncer<K> {
 	 */
 	schedule(key: K, callback: () => void | Promise<void>): void {
 		const existing = this.pendingTimers.get(key);
-		if (existing != null) {
-			window.clearTimeout(existing);
-		}
+		if (existing != null) window.clearTimeout(existing);
 
 		const timerId = window.setTimeout(() => {
 			this.pendingTimers.delete(key);

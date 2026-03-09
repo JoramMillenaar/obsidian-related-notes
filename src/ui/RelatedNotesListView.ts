@@ -1,5 +1,8 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
-import { RelatedNotesFacade } from "../facade";
+import { SyncIndexToVaultUseCase } from "../app/syncIndexToVault";
+import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
+import { IndexStorage, NoteSource } from "../types";
+import { IndexNoteUseCase } from "../app/indexNote";
 
 export function logError(message: unknown, ...optionalParams: unknown[]) {
 	console.error("[Similarity]:", message, ...optionalParams);
@@ -15,11 +18,20 @@ type IndexProgress = {
 
 type SimilarNote = { id: string; score: number };
 
+export type SimilarNotesListViewDeps = {
+	indexStorage: IndexStorage;
+	noteSource: NoteSource,
+	indexNote: IndexNoteUseCase;
+	getSimilarNotes: GetSimilarNotesUseCase,
+	indexVault: SyncIndexToVaultUseCase,
+}
+
+
 export class RelatedNotesListView extends ItemView {
 	private isLoading = false;
 	private indexRunId?: number;
 
-	constructor(leaf: WorkspaceLeaf, private facade: RelatedNotesFacade) {
+	constructor(leaf: WorkspaceLeaf, private deps: SimilarNotesListViewDeps) {
 		super(leaf);
 	}
 
@@ -80,7 +92,7 @@ export class RelatedNotesListView extends ItemView {
 		this.isLoading = true;
 		try {
 			const active = this.app.workspace.getActiveFile();
-			if (active) await this.facade.upsertNoteToIndex(active.path);
+			if (active) await this.deps.indexNote(active.path);
 		} catch (error) {
 			logError("Error refreshing current note:", error);
 			new Notice("Failed to refresh related notes.");
@@ -113,13 +125,17 @@ export class RelatedNotesListView extends ItemView {
 			const active = this.getActiveFileOrShowEmptyState(container, loadingEl);
 			if (!active) return;
 
-			const state = await this.getIndexAndNoteState(active.path);
-			if (state.indexEmpty) {
+			const [indexEmpty, noteEmpty] = await Promise.all([
+				this.deps.indexStorage.isIndexEmpty(),
+				this.deps.noteSource.isNoteEmpty(active.path),
+			]);
+
+			if (indexEmpty) {
 				loadingEl.remove();
 				this.renderEmptyIndex(container);
 				return;
 			}
-			if (state.noteEmpty) {
+			if (noteEmpty) {
 				loadingEl.remove();
 				this.renderMessage(container, "The current note is empty. Add content to see related notes.");
 				return;
@@ -151,22 +167,9 @@ export class RelatedNotesListView extends ItemView {
 		return null;
 	}
 
-	private async getIndexAndNoteState(notePath: string) {
-		const [indexEmpty, noteEmpty] = await Promise.all([
-			this.facade.isIndexEmpty(),
-			this.facade.isNoteEmpty(notePath),
-		]);
-		return {indexEmpty, noteEmpty};
-	}
-
 	private async loadSimilarNotesForActiveFile(notePath: string): Promise<SimilarNote[]> {
-		const noteText = await this.facade.getCleanNoteText(notePath);
-		return this.facade.getSimilarNotes({
-			noteId: notePath,
-			text: noteText,
-			limit: 10,
-			minScore: 0.3,
-		});
+		const noteText = await this.deps.noteSource.getNoteText(notePath);
+		return this.deps.getSimilarNotes({noteId: notePath, text: noteText});
 	}
 
 	private renderRelatedList(container: HTMLElement, related: SimilarNote[]) {
@@ -206,7 +209,7 @@ export class RelatedNotesListView extends ItemView {
 		const actions = emptyState.createEl("div", {cls: "related-notes-actions"});
 		const startButton = actions.createEl("button", {
 			cls: "mod-cta related-notes-button",
-			text: "Start indexing vault",
+			text: "Start indexing",
 		});
 
 		startButton.addEventListener("click", () => {
@@ -275,12 +278,7 @@ export class RelatedNotesListView extends ItemView {
 		const onProgress = this.makeProgressHandler(runId, ui);
 
 		try {
-			await this.facade.indexVault({
-				onProgress,
-				onBatchComplete: async () => {
-					await new Promise((r) => setTimeout(r, 0));
-				},
-			});
+			await this.deps.indexVault({onProgress});
 
 			ui.progressText?.setText("Done.");
 			if (ui.progressBar) {

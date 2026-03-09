@@ -1,60 +1,40 @@
-import { ComputeEmbedding, GetIndex, GetNoteText, IndexedNote, SaveIndex } from "../types";
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
-import { deleteNoteInIndex } from "./deleteNoteInIndex";
+import { EmbeddingPort, IndexedNoteRepository, NoteSource } from "../types";
 
-export async function indexNote(args: {
-	noteId: string;
-	getNoteText: GetNoteText;
-	getIndex: GetIndex;
-	saveIndex: SaveIndex;
-	computeEmbedding: ComputeEmbedding;
-}): Promise<void> {
-	const {
-		noteId,
-		getNoteText,
-		getIndex,
-		saveIndex,
-		computeEmbedding,
-	} = args;
+export type IndexNoteDeps = {
+	noteSource: NoteSource;
+	embedder: EmbeddingPort;
+	indexRepo: IndexedNoteRepository;
+};
 
-	// 1. Load note contents
-	const text = await getNoteText(noteId);
-	if (text == null) {
-		throw new Error("Could not find note with id " + noteId);
+export type IndexNoteUseCase = (noteId: string) => Promise<void>;
+
+export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
+	return async function indexNote(noteId: string) {
+		const text = await deps.noteSource.getNoteText(noteId);
+		if (text == null) throw new Error(`Could not find note with id ${noteId}`);
+
+		const contentHash = hashText(text);
+
+		const existing = await deps.indexRepo.findById(noteId);
+		if (existing && existing.contentHash === contentHash) {
+			return;
+		}
+
+		const rawEmbedding = await deps.embedder.embed(text);
+		if (!rawEmbedding?.length) {
+			await deps.indexRepo.remove(noteId);
+			return;
+		}
+
+		const indexedNote = {
+			id: noteId,
+			embedding: normalizeEmbedding(rawEmbedding),
+			contentHash,
+			updatedAt: new Date().toISOString(),
+		};
+
+		await deps.indexRepo.upsert(indexedNote);
 	}
-
-	// 2. Compute content hash (cheap, always)
-	const hash = hashText(text);
-
-	// 3. Load index and check existing entry
-	const index = await getIndex();
-	const existing = index.find(n => n.id === noteId);
-
-	if (existing && existing.contentHash === hash) return;
-
-	// 4. Compute embedding (expensive, only if needed)
-	const embedding = await computeEmbedding(text);
-	if (!embedding?.length) {
-		await deleteNoteInIndex({
-			noteId,
-			getIndex: this.deps.getIndex,
-			saveIndex: this.deps.saveIndex,
-		});
-		return;
-	}
-
-	const updated: IndexedNote = {
-		id: noteId,
-		embedding: normalizeEmbedding(embedding),
-		contentHash: hash,
-		updatedAt: new Date().toISOString(),
-	};
-
-	// 5. Upsert
-	const nextIndex = existing
-		? index.map(n => (n.id === noteId ? updated : n))
-		: [...index, updated];
-
-	await saveIndex(nextIndex);
 }
