@@ -16,7 +16,7 @@ export type ExecuteSyncActionsUseCase = (args: {
 
 export function makeExecuteSyncActions(deps: {
 	indexNote: IndexNoteUseCase;
-	noteRepo: IndexRepository;
+	indexRepo: IndexRepository;
 }): ExecuteSyncActionsUseCase {
 	return async function executeSyncActions(args) {
 		const {
@@ -31,7 +31,7 @@ export function makeExecuteSyncActions(deps: {
 		let deleted = 0;
 		for (const noteId of toRemove) {
 			try {
-				await deps.noteRepo.remove(noteId);
+				await deps.indexRepo.remove(noteId);
 				deleted++;
 			} catch (error) {
 				console.error(`Failed to delete note ${noteId}:`, error);

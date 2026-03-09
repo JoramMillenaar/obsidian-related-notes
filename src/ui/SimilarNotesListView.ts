@@ -8,7 +8,7 @@ export function logError(message: unknown, ...optionalParams: unknown[]) {
 	console.error("[Similarity]:", message, ...optionalParams);
 }
 
-export const VIEW_TYPE_RELATED_NOTES = "similarity";
+export const VIEW_TYPE_SIMILARITY = "similarity";
 
 type IndexProgress = {
 	phase: "scan" | "index" | "cleanup";
@@ -27,7 +27,7 @@ export type SimilarNotesListViewDeps = {
 }
 
 
-export class RelatedNotesListView extends ItemView {
+export class SimilarNotesListView extends ItemView {
 	private isLoading = false;
 	private indexRunId?: number;
 
@@ -36,7 +36,7 @@ export class RelatedNotesListView extends ItemView {
 	}
 
 	getViewType() {
-		return VIEW_TYPE_RELATED_NOTES;
+		return VIEW_TYPE_SIMILARITY;
 	}
 
 	getDisplayText() {
