@@ -3,7 +3,7 @@ import { RelatedNotesListView, VIEW_TYPE_RELATED_NOTES } from "./ui/RelatedNotes
 import { KeyedDebouncer } from "./domain/debouncer";
 import { SearchModal } from "./ui/SearchModal";
 import { ObsidianStatusBar } from "./infra/obsidian/obsidianStatusBar";
-import { EmbeddingPort, IndexedNoteRepository, IndexStorage, NoteSource, StatusReporter } from "./types";
+import { EmbeddingPort, IndexRepository, NoteSource, StatusReporter } from "./types";
 import { JsonIndexedNoteRepository } from "./infra/index/jsonIndexedNoteRepository";
 import { ObsidianNoteSource } from "./infra/obsidian/obsidianNoteSource";
 import { EmbeddingProvider } from "./infra/embedder/embeddingProvider";
@@ -17,9 +17,8 @@ import { makeExecuteSyncActions } from "./app/executeSyncActions";
 export default class RelatedNotes extends Plugin {
 	private status!: StatusReporter;
 	private noteSource!: NoteSource;
-	private indexStorage!: IndexStorage;
 	private embedder!: EmbeddingPort;
-	private indexRepo!: IndexedNoteRepository;
+	private indexRepo!: IndexRepository;
 
 	private indexNote!: IndexNoteUseCase;
 	private getSimilarNotes!: GetSimilarNotesUseCase;
@@ -31,10 +30,10 @@ export default class RelatedNotes extends Plugin {
 		this.status = new ObsidianStatusBar(this);
 		this.status.update("Loading…");
 
+		const indexStorage = new ObsidianPluginDataIndexStorage(this);
 		this.noteSource = new ObsidianNoteSource(this);
-		this.indexStorage = new ObsidianPluginDataIndexStorage(this);
 		this.embedder = new EmbeddingProvider();
-		this.indexRepo = new JsonIndexedNoteRepository(this.indexStorage);
+		this.indexRepo = new JsonIndexedNoteRepository(indexStorage);
 
 		this.indexNote = makeIndexNote({
 			noteSource: this.noteSource,
@@ -42,12 +41,12 @@ export default class RelatedNotes extends Plugin {
 			indexRepo: this.indexRepo,
 		});
 		this.getSimilarNotes = makeGetSimilarNotes({
-			indexStorage: this.indexStorage,
+			indexRepo: this.indexRepo,
 			embedder: this.embedder,
 		});
 		const getSyncActions = makeGetSyncActions({
 			noteSource: this.noteSource,
-			indexStorage: this.indexStorage,
+			indexRepo: this.indexRepo,
 		});
 		const executeSyncActions = makeExecuteSyncActions({
 			indexNote: this.indexNote,
@@ -59,7 +58,7 @@ export default class RelatedNotes extends Plugin {
 		this.registerView(
 			VIEW_TYPE_RELATED_NOTES,
 			(leaf) => new RelatedNotesListView(leaf, {
-				indexStorage: this.indexStorage,
+				indexRepo: this.indexRepo,
 				noteSource: this.noteSource,
 				indexNote: this.indexNote,
 				getSimilarNotes: this.getSimilarNotes,
@@ -127,7 +126,7 @@ export default class RelatedNotes extends Plugin {
 		try {
 			await this.embedder.load();
 
-			const isEmpty = await this.indexStorage.isIndexEmpty();
+			const isEmpty = await this.indexRepo.isEmpty();
 			if (!isEmpty) {
 				this.status.update("Repairing index…");
 				try {

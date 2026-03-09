@@ -25,8 +25,12 @@ export interface EmbeddingPort {
 	unload(): void;
 }
 
-export interface IndexedNoteRepository {
+export interface IndexRepository {
 	findById(noteId: string): Promise<IndexedNote | null>;
+
+	listAll(): Promise<IndexedNote[]>;
+
+	isEmpty(): Promise<boolean>;
 
 	upsert(note: IndexedNote): Promise<void>;
 
@@ -38,19 +42,19 @@ export interface IndexedNoteRepository {
 }
 
 export interface IndexStorage {
-	getIndex(): Promise<IndexedNote[]>;
+	getAll(): Promise<IndexedNote[]>;
 
-	saveIndex(index: IndexedNote[]): Promise<void>;
+	rewrite(index: IndexedNote[]): Promise<void>;
 
-	isIndexEmpty(): Promise<boolean>;
+	isEmpty(): Promise<boolean>;
 }
 
 export interface NoteSource {
-	getNoteText(noteId: string): Promise<string>;
+	getTextById(noteId: string): Promise<string>;
 
-	listNoteIds(): string[];
+	listIds(): string[];
 
-	isNoteEmpty(noteId: string): Promise<boolean>;
+	isEmpty(noteId: string): Promise<boolean>;
 }
 
 export interface StatusReporter {

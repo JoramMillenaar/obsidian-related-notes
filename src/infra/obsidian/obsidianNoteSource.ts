@@ -6,7 +6,7 @@ export class ObsidianNoteSource implements NoteSource {
 	constructor(private readonly plugin: Plugin) {
 	}
 
-	async getNoteText(noteId: string): Promise<string> {
+	async getTextById(noteId: string): Promise<string> {
 		const f = this.plugin.app.vault.getAbstractFileByPath(noteId);
 		if (!(f instanceof TFile)) throw new Error("Unable to read file");
 		const md = await this.plugin.app.vault.read(f);
@@ -14,12 +14,12 @@ export class ObsidianNoteSource implements NoteSource {
 		return await cleanMarkdownToPlainText(`${title}\n\n${md}`, this.plugin)
 	}
 
-	listNoteIds() {
+	listIds() {
 		return this.plugin.app.vault.getMarkdownFiles().map(f => f.path);
 	}
 
-	async isNoteEmpty(noteId: string) {
-		const text = await this.getNoteText(noteId);
+	async isEmpty(noteId: string) {
+		const text = await this.getTextById(noteId);
 		return text.length === 0;
 	}
 

@@ -5,18 +5,18 @@ export class ObsidianPluginDataIndexStorage implements IndexStorage {
 	constructor(private readonly plugin: Plugin) {
 	}
 
-	async getIndex() {
+	async getAll() {
 		const data = (await this.plugin.loadData()) ?? {};
 		return Array.isArray(data.index) ? data.index : [];
 	}
 
-	async saveIndex(index: IndexedNote[]) {
+	async rewrite(index: IndexedNote[]) {
 		const data = (await this.plugin.loadData()) ?? {};
 		await this.plugin.saveData({...data, index});
 	}
 
-	async isIndexEmpty() {
-		const index = await this.getIndex();
+	async isEmpty() {
+		const index = await this.getAll();
 		return index.length === 0;
 	}
 }

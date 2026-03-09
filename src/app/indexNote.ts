@@ -1,18 +1,18 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
-import { EmbeddingPort, IndexedNoteRepository, NoteSource } from "../types";
+import { EmbeddingPort, IndexRepository, NoteSource } from "../types";
 
 export type IndexNoteDeps = {
 	noteSource: NoteSource;
 	embedder: EmbeddingPort;
-	indexRepo: IndexedNoteRepository;
+	indexRepo: IndexRepository;
 };
 
 export type IndexNoteUseCase = (noteId: string) => Promise<void>;
 
 export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 	return async function indexNote(noteId: string) {
-		const text = await deps.noteSource.getNoteText(noteId);
+		const text = await deps.noteSource.getTextById(noteId);
 		if (text == null) throw new Error(`Could not find note with id ${noteId}`);
 
 		const contentHash = hashText(text);

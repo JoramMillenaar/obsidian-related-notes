@@ -1,7 +1,7 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import { SyncIndexToVaultUseCase } from "../app/syncIndexToVault";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
-import { IndexStorage, NoteSource } from "../types";
+import { IndexRepository, NoteSource } from "../types";
 import { IndexNoteUseCase } from "../app/indexNote";
 
 export function logError(message: unknown, ...optionalParams: unknown[]) {
@@ -19,7 +19,7 @@ type IndexProgress = {
 type SimilarNote = { id: string; score: number };
 
 export type SimilarNotesListViewDeps = {
-	indexStorage: IndexStorage;
+	indexRepo: IndexRepository,
 	noteSource: NoteSource,
 	indexNote: IndexNoteUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase,
@@ -126,8 +126,8 @@ export class RelatedNotesListView extends ItemView {
 			if (!active) return;
 
 			const [indexEmpty, noteEmpty] = await Promise.all([
-				this.deps.indexStorage.isIndexEmpty(),
-				this.deps.noteSource.isNoteEmpty(active.path),
+				this.deps.indexRepo.isEmpty(),
+				this.deps.noteSource.isEmpty(active.path),
 			]);
 
 			if (indexEmpty) {
@@ -168,7 +168,7 @@ export class RelatedNotesListView extends ItemView {
 	}
 
 	private async loadSimilarNotesForActiveFile(notePath: string): Promise<SimilarNote[]> {
-		const noteText = await this.deps.noteSource.getNoteText(notePath);
+		const noteText = await this.deps.noteSource.getTextById(notePath);
 		return this.deps.getSimilarNotes({noteId: notePath, text: noteText});
 	}
 

@@ -1,4 +1,4 @@
-import { EmbeddingPort, IndexStorage, RelatedNote } from "../types";
+import { EmbeddingPort, IndexRepository, RelatedNote } from "../types";
 import { cosineSimilarity, normalizeEmbedding } from "../domain/embedding";
 
 
@@ -10,7 +10,7 @@ export type GetSimilarNotesUseCase = (args: {
 }) => Promise<RelatedNote[]>;
 
 export function makeGetSimilarNotes(deps: {
-	indexStorage: IndexStorage;
+	indexRepo: IndexRepository;
 	embedder: EmbeddingPort;
 }): GetSimilarNotesUseCase {
 	return async function getSimilarNotes(args): Promise<RelatedNote[]> {
@@ -20,14 +20,12 @@ export function makeGetSimilarNotes(deps: {
 			limit = 10,
 			minScore = 0.25,
 		} = args;
-		const index = await deps.indexStorage.getIndex();
-		if (index.length === 0) return [];
 
 		// Prefer using an existing embedding if we have a noteId in the index.
 		let queryEmbedding: number[] | undefined;
 
 		if (noteId) {
-			const existing = index.find(n => n.id === noteId);
+			const existing = await deps.indexRepo.findById(noteId);
 			if (existing) queryEmbedding = existing.embedding;
 		}
 
@@ -46,7 +44,9 @@ export function makeGetSimilarNotes(deps: {
 			throw new Error("getRelatedNotes: missing query embedding");
 		}
 
-		return index
+		const indexedNotes = await deps.indexRepo.listAll();
+
+		return indexedNotes
 			.filter(n => (noteId ? n.id !== noteId : true))
 			.map(n => ({
 				id: n.id,

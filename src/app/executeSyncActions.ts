@@ -1,6 +1,6 @@
 import { ReconciliationResult } from "../domain/setReconciliation";
 import { yieldToUI } from "../domain/yieldToUI";
-import { IndexedNoteRepository, OnProgressCallback } from "../types";
+import { IndexRepository, OnProgressCallback } from "../types";
 import { IndexNoteUseCase } from "./indexNote";
 
 
@@ -16,7 +16,7 @@ export type ExecuteSyncActionsUseCase = (args: {
 
 export function makeExecuteSyncActions(deps: {
 	indexNote: IndexNoteUseCase;
-	noteRepo: IndexedNoteRepository;
+	noteRepo: IndexRepository;
 }): ExecuteSyncActionsUseCase {
 	return async function executeSyncActions(args) {
 		const {
