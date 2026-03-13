@@ -6,40 +6,64 @@
 
   export class DocumentEmbeddingController {
     constructor() {
-        this.initializeModel();
+      this.initializeModel();
     }
     async initializeModel() {
-        this.pipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      this.pipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     }
     async generateDocumentEmbedding(text) {
-        const paragraphs = text.split(/\n\s*\n/).filter(paragraph => paragraph.trim().length > 0);
-        if (paragraphs.length === 0) {
-            console.warn('No valid paragraphs found in the text.');
-			return null;
-        }
-        const embeddings = await Promise.all(paragraphs.map(paragraph => this.pipeline(paragraph, { pooling: 'mean' })));
-        return this.calculateMeanEmbedding(embeddings.map(e => e.data));
+      const paragraphs = text
+        .split(/\n\s*\n/)
+        .map((paragraph) => paragraph.trim())
+        .filter((paragraph) => paragraph.length > 0);
+
+      if (paragraphs.length === 0) {
+        console.warn('No valid paragraphs found in the text.');
+        return null;
+      }
+
+      const embeddings = [];
+      for (const paragraph of paragraphs) {
+        const result = await this.pipeline(paragraph, { pooling: 'mean' });
+        embeddings.push(result.data);
+      }
+
+      return this.calculateMeanEmbedding(embeddings);
     }
+
     calculateMeanEmbedding(embeddings) {
-        const numEmbeddings = embeddings.length;
-        const embeddingSize = embeddings[0].length;
-        const meanEmbedding = new Float32Array(embeddingSize);
-        embeddings.forEach(embedding => {
-            for (let i = 0; i < embeddingSize; i++) {
-                meanEmbedding[i] += embedding[i];
-            }
-        });
+      const numEmbeddings = embeddings.length;
+      const embeddingSize = embeddings[0].length;
+      const meanEmbedding = new Float32Array(embeddingSize);
+
+      embeddings.forEach((embedding) => {
         for (let i = 0; i < embeddingSize; i++) {
-            meanEmbedding[i] /= numEmbeddings;
+          meanEmbedding[i] += embedding[i];
         }
-        return meanEmbedding;
+      });
+      for (let i = 0; i < embeddingSize; i++) {
+        meanEmbedding[i] /= numEmbeddings;
+      }
+      return meanEmbedding;
     }
-}
+  }
 
   const embedder = new DocumentEmbeddingController();
 
   window.addEventListener('message', async (event) => {
-    const features = await embedder.generateDocumentEmbedding(event.data.payload);
-    event.source.postMessage({requestId: event.data.requestId, data: Array.from(features)}, window.origin);
+    const { requestId, payload } = event.data;
+
+    if (payload === 'ping') {
+      event.source.postMessage({ requestId, data: [] }, window.origin);
+      return;
+    }
+
+    try {
+      const features = await embedder.generateDocumentEmbedding(payload);
+      event.source.postMessage({ requestId, data: features ? Array.from(features) : [] }, window.origin);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      event.source.postMessage({ requestId, data: [], error: message }, window.origin);
+    }
   });
 </script>

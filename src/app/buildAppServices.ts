@@ -61,7 +61,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		executeSyncActions,
 	});
 
-	const upsertDebouncer = new KeyedDebouncer<string>(500);
+	const upsertDebouncer = new KeyedDebouncer<string>(1100);
 
 	return {
 		status,

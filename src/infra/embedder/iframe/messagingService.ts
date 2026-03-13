@@ -3,7 +3,7 @@ import { IframeMessage } from "../../../types";
 export class IframeMessenger {
     private iframe: HTMLIFrameElement | null = null;
     private requestIdCounter = 0;
-    private pendingRequests = new Map<number, (data: number[]) => void>();
+    private pendingRequests = new Map<number, { resolve: (data: number[]) => void; reject: (error: Error) => void; timeoutId: number }>();
 
     constructor(private iframeId: string, private workerScript: string) {}
 
@@ -32,18 +32,22 @@ export class IframeMessenger {
 
     private onMessageReceived = (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
+        if (event.source !== this.iframe?.contentWindow) return;
+
         const { requestId, data, error }: { requestId: number; data: number[]; error?: string } = event.data;
-        if (this.pendingRequests.has(requestId)) {
-            const resolve = this.pendingRequests.get(requestId);
-            this.pendingRequests.delete(requestId);
-            if (error) {
-                console.error(`Error from iframe: ${error}`);
-                return;
-            }
-            resolve?.(data);
-        } else {
-            console.warn(`Unrecognized requestId: ${requestId}`);
+        const pending = this.pendingRequests.get(requestId);
+
+        if (!pending) return;
+
+        this.pendingRequests.delete(requestId);
+        window.clearTimeout(pending.timeoutId);
+
+        if (error) {
+            pending.reject(new Error(`Error from iframe: ${error}`));
+            return;
         }
+
+        pending.resolve(data);
     };
 
     async sendMessage(payload: string, retries = 3): Promise<number[] | null> {
@@ -51,21 +55,21 @@ export class IframeMessenger {
             throw new Error("Iframe is not ready. Did you call 'initialize()'?");
         }
 
-        const requestId = this.requestIdCounter++;
-        const message: IframeMessage = { requestId, payload };
-
         for (let attempt = 0; attempt < retries; attempt++) {
-            try {
-                return await new Promise((resolve, reject) => {
-                    this.pendingRequests.set(requestId, resolve);
-                    this.iframe?.contentWindow?.postMessage(message, window.origin);
+            const requestId = this.requestIdCounter++;
+            const message: IframeMessage = { requestId, payload };
 
-                    setTimeout(() => {
+            try {
+                return await new Promise<number[]>((resolve, reject) => {
+                    const timeoutId = window.setTimeout(() => {
                         if (this.pendingRequests.has(requestId)) {
                             this.pendingRequests.delete(requestId);
                             reject(new Error(`Request with ID '${requestId}' timed out`));
                         }
-                    }, 10000); // 10-second timeout
+                    }, 10000);
+
+                    this.pendingRequests.set(requestId, { resolve, reject, timeoutId });
+                    this.iframe?.contentWindow?.postMessage(message, window.origin);
                 });
             } catch (error) {
                 console.warn(`Attempt ${attempt + 1} failed: ${error}`);
@@ -98,14 +102,15 @@ export class IframeMessenger {
             const requestId = this.requestIdCounter++;
             const message: IframeMessage = { requestId, payload: "ping" };
 
-            const timeout = setTimeout(() => {
+            const timeoutId = window.setTimeout(() => {
                 this.pendingRequests.delete(requestId);
                 reject(new Error("Ping timed out"));
-            }, 3000); // 3-second timeout for ping
+            }, 3000);
 
-            this.pendingRequests.set(requestId, () => {
-                clearTimeout(timeout);
-                resolve();
+            this.pendingRequests.set(requestId, {
+                resolve: () => resolve(),
+                reject,
+                timeoutId,
             });
 
             this.iframe!.contentWindow!.postMessage(message, window.origin);
