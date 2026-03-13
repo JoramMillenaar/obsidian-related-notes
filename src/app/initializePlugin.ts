@@ -33,7 +33,8 @@ export async function initializePlugin(
 	}
 
 	plugin.registerEvent(
-		plugin.app.vault.on("modify", (file) => {
+		plugin.app.workspace.on("editor-change", (_editor, info) => {
+			const file = info.file;
 			if (!(file instanceof TFile)) return;
 
 			app.upsertDebouncer.schedule(file.path, async () => {
