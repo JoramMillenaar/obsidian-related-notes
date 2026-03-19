@@ -1,80 +1,71 @@
 # Similarity
 
-Find notes with similar meaning intelligently, helping you uncover hidden connections and insights within your Obsidian vault. Built with privacy in mind, this plugin operates entirely on your local device—your data stays private and secure.
+Find notes by meaning—not just keywords.
 
-![Screenshot](https://github.com/JoramMillenaar/obsidian-related-notes/raw/master/example.gif)
+Similarity helps you uncover hidden connections across your Obsidian vault by understanding what your notes *actually say*, not just what words they contain.
 
-
-## Features
-
-- **Fully Local and Private**: Your notes and data are never sent outside your device. All processing is done locally to ensure complete privacy.
-
-## Install (Early Access via BRAT)
-
-If this plugin isn’t available in Obsidian Community Plugins yet (or you want the latest build), you can install it directly from GitHub using **BRAT** (Beta Reviewers Auto-update Tool).
-
-1. Open **Obsidian → Settings → Community plugins**
-   - Turn off **Safe mode**
-   - Click **Browse** and install **Obsidian42 - BRAT**
-2. Enable **Obsidian42 - BRAT**
-3. Open the **Command Palette** (`Ctrl/Cmd + P`) and run:  
-   **BRAT: Add a beta plugin for testing**
-4. When prompted, paste this repository URL: https://github.com/JoramMillenaar/obsidian-related-notes
-5. After adding it, go to **Settings → Community plugins** and enable **Similarity**.
-
-### Updating
-
-To pull the latest changes from GitHub, open the Command Palette and run:  
-**BRAT: Check for updates to all beta plugins and UPDATE**
-
-
-
-## Usage
-
-1. After enabling the plugin, a telescope icon will appear in the note’s right sidebar within a few seconds.
-2. On first use, you’ll see a button to start indexing your vault.
-3. Indexing can take anywhere from 1 to 20 minutes depending on your device and vault size, so it's not recommended to do this on mobile.
-4. Once indexing is complete, open any note and click the telescope icon to see notes that are most similar in meaning.
-5. Click any note in the list to navigate to it.
-6. Use the refresh button to update the list of related notes.
-
-## Privacy and Security
-
-One of Obsidian's greatest strengths is its commitment to data ownership and privacy. This plugin upholds that philosophy by making privacy its highest priority. All processing and note relations happen entirely on your device, ensuring your notes stay yours—always. 
-
-**Similarity** is built with privacy at its core:  
-- **Local Processing**: Every analysis and operation occurs directly on your device. Your notes never leave your vault.  
-- **No Third-Party Dependencies**: Once installed, the plugin requires no internet access or external APIs, providing a fully private and secure experience.  
-
-## Development
-
-Want to contribute? Here's how to set up the development environment:
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/JoramMillenaar/related-notes.git
-   ```
-2. Navigate to the plugin directory and install dependencies:
-   ```bash
-   cd related-notes-finder
-   npm install
-   ```
-3. Run the plugin in development mode:
-   ```bash
-   npm run dev
-   ```
-
-For more information on developing Obsidian plugins, check out the [Obsidian Plugin API documentation](https://github.com/obsidianmd/obsidian-api).
-
-## Contributing
-
-Contributions are very welcome! If you have ideas for improvements or new features, please open an issue or submit a pull request to start a discussion. I have plenty of ideas on powerful features to implement in the future, but I can use some help in getting the plugin to a stable point first.
-
-
-### License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+Runs fully local. No APIs. Your data _never_ leaves your machine.
 
 ---
 
-With **Similarity**, explore your knowledge in a new way—intelligently, locally, and privately.
+## What it does
+
+### Browse related notes instantly
+Jump through semantically similar notes and explore ideas that are actually connected.
+
+![leaf-demo](https://github.com/user-attachments/assets/15c79d6e-e5f9-42d2-9f95-563856b832eb)
+
+### Search by meaning
+Look up notes based on intent, not exact phrasing.
+
+![modal-demo](https://github.com/user-attachments/assets/1957eb5a-e984-452a-bdaa-95745809b751)
+
+---
+
+## Why this matters
+
+Folders and tags force structure upfront.  
+Similarity lets structure emerge naturally.
+
+- Discover notes you forgot existed  
+- Connect ideas across different topics  
+- Reduce reliance on rigid organization  
+
+---
+
+## Features
+
+- **Semantic search** – find notes by meaning, not keywords  
+- **Related notes view** – explore connections instantly  
+- **Fully local** – runs entirely on-device  
+- **No external APIs** – zero data leaves your vault  
+
+---
+
+## Install (Early Access via BRAT)
+
+Obsidian plugin review is currently slow. Until this is officially listed, you can install via BRAT:
+
+1. Install the BRAT plugin
+2. Add this repo:
+
+https://github.com/JoramMillenaar/obsidian-related-notes
+
+
+![setup-demo](https://github.com/user-attachments/assets/8c85a7b8-3247-4f50-a380-6e34a9570ad1)
+
+---
+
+## Privacy
+
+This plugin is built around one principle: your notes stay yours.
+
+- All processing happens locally  
+- No internet connection required after install  
+- No tracking, no telemetry, no external services  
+
+---
+
+## Support
+
+Giving the repo a star helps ⭐️! It'll help visibility with the Obsidian team :).
