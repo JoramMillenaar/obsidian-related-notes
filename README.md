@@ -62,8 +62,21 @@ This plugin is built around one principle: your notes stay yours.
 
 - All processing happens locally  
 - No internet connection required after install  
-- No tracking, no telemetry, no external services  
+- No tracking, no telemetry, no external services
 
+---
+
+## Why Similarity
+
+There are many great plugins in this space, each with their own strengths and approaches.
+
+This plugin is built around a different set of priorities:
+
+- **Fully local, by design** – your data never leaves your device. No APIs, no background calls, no risk.
+- **Lightweight and fast** – minimal overhead, built to stay responsive even as your vault grows.
+- **Keeping it simple** – hiding all the complicated parts so you can focus on writing.
+- **Focused experience** – no fancy AI LLM agents, just practical semantic discovery that fits naturally into your workflow.
+- **Cross-platform consistency** – works on desktop and mobile, with a shared index so you don’t need to reindex per device.
 ---
 
 ## Support
