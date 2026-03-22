@@ -3,6 +3,7 @@ import { SearchModal } from "./ui/SearchModal";
 import { initializePlugin } from "./app/initializePlugin";
 import { AppServices, buildAppServices } from "./app/buildAppServices";
 import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "./ui/SimilarNotesListView";
+import { ProjectionView, VIEW_TYPE_PROJECTIONS } from "./ui/ProjectionView";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
@@ -20,6 +21,11 @@ export default class RelatedNotes extends Plugin {
 				getSimilarNotes: this.appServices.getSimilarNotes,
 				indexVault: this.appServices.syncIndexToVault,
 			})
+		);
+
+		this.registerView(
+			VIEW_TYPE_PROJECTIONS,
+			(leaf) => new ProjectionView(leaf)
 		);
 
 		this.addCommand({
@@ -69,6 +75,26 @@ export default class RelatedNotes extends Plugin {
 				new SearchModal(this.app, {
 					getSimilarNotes: this.appServices.getSimilarNotes,
 				}).open();
+			},
+		});
+
+		this.addCommand({
+			id: "open-projection-view",
+			name: "Open Projections",
+			callback: async () => {
+				const {workspace} = this.app;
+
+				let leaf = workspace.getLeavesOfType(VIEW_TYPE_PROJECTIONS)[0];
+
+				if (!leaf) {
+					leaf = workspace.getLeaf("tab");
+					await leaf.setViewState({
+						type: VIEW_TYPE_PROJECTIONS,
+						active: true,
+					});
+				}
+
+				await workspace.revealLeaf(leaf);
 			},
 		});
 
