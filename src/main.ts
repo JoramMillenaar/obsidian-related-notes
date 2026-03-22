@@ -23,10 +23,7 @@ export default class RelatedNotes extends Plugin {
 			})
 		);
 
-		this.registerView(
-			VIEW_TYPE_PROJECTIONS,
-			(leaf) => new ProjectionView(leaf)
-		);
+		this.registerView(VIEW_TYPE_PROJECTIONS, (leaf) => new ProjectionView(leaf, this.app));
 
 		this.addCommand({
 			id: "sync-vault",
@@ -82,19 +79,39 @@ export default class RelatedNotes extends Plugin {
 			id: "open-projection-view",
 			name: "Open Projections",
 			callback: async () => {
-				const {workspace} = this.app;
+				const leaf = this.app.workspace.getLeaf("tab");
 
-				let leaf = workspace.getLeavesOfType(VIEW_TYPE_PROJECTIONS)[0];
+				await leaf.setViewState({
+					type: VIEW_TYPE_PROJECTIONS,
+					active: true,
+					state: {
+						mode: "global",
+					},
+				});
 
-				if (!leaf) {
-					leaf = workspace.getLeaf("tab");
-					await leaf.setViewState({
-						type: VIEW_TYPE_PROJECTIONS,
-						active: true,
-					});
-				}
+				await this.app.workspace.revealLeaf(leaf);
+			},
+		});
 
-				await workspace.revealLeaf(leaf);
+		this.addCommand({
+			id: "open-note-projection-view",
+			name: "Open Current Note's Projections",
+			callback: async () => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file) return;
+
+				const leaf = this.app.workspace.getLeaf("tab");
+
+				await leaf.setViewState({
+					type: VIEW_TYPE_PROJECTIONS,
+					active: true,
+					state: {
+						mode: "note",
+						filePath: file.path,
+					},
+				});
+
+				await this.app.workspace.revealLeaf(leaf);
 			},
 		});
 
