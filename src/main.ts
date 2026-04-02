@@ -3,6 +3,7 @@ import { SearchModal } from "./ui/SearchModal";
 import { initializePlugin } from "./app/initializePlugin";
 import { AppServices, buildAppServices } from "./app/buildAppServices";
 import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "./ui/SimilarNotesListView";
+import { activateRightLeafView } from "./app/activateRightLeafView";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
@@ -69,6 +70,14 @@ export default class RelatedNotes extends Plugin {
 				new SearchModal(this.app, {
 					getSimilarNotes: this.appServices.getSimilarNotes,
 				}).open();
+			},
+		});
+
+		this.addCommand({
+			id: "open-similar-notes",
+			name: "Open similar notes",
+			callback: async () => {
+				await activateRightLeafView(this, {reveal: true, focus: true});
 			},
 		});
 
