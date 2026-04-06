@@ -64,3 +64,8 @@ export interface StatusReporter {
 }
 
 export type OnProgressCallback = (p: { phase: string; processed: number; total: number }) => void;
+
+
+export interface SimilaritySettings {
+	ignoredPaths: string[];
+}

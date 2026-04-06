@@ -4,13 +4,18 @@ import { initializePlugin } from "./app/initializePlugin";
 import { AppServices, buildAppServices } from "./app/buildAppServices";
 import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "./ui/SimilarNotesListView";
 import { activateRightLeafView } from "./app/activateRightLeafView";
+import { SettingView } from "./ui/SettingsView";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
+	private settingsLoaded: Promise<void> = Promise.resolve();
 
 	onload(): void {
 		this.appServices = buildAppServices(this);
 		this.appServices.status.update("Loading…");
+
+		this.settingsLoaded = this.appServices.loadSettings();
+		this.addSettingTab(new SettingView(this.app, this, this.appServices));
 
 		this.registerView(
 			VIEW_TYPE_SIMILARITY,
@@ -20,6 +25,8 @@ export default class RelatedNotes extends Plugin {
 				indexNote: this.appServices.indexNote,
 				getSimilarNotes: this.appServices.getSimilarNotes,
 				indexVault: this.appServices.syncIndexToVault,
+				getIgnoredPaths: () => this.appServices.settings.ignoredPaths,
+				isIgnoredPath: (path: string) => this.appServices.isIgnoredPath(path),
 			})
 		);
 
@@ -34,6 +41,7 @@ export default class RelatedNotes extends Plugin {
 							this.appServices.status.update(`${p.processed}/${p.total} indexed`);
 						},
 					});
+					this.refreshView();
 					this.appServices.status.update("Index synced", 2500);
 					new Notice("Similarity index synced");
 				} catch (error) {
@@ -82,7 +90,7 @@ export default class RelatedNotes extends Plugin {
 		});
 
 		this.app.workspace.onLayoutReady(() => {
-			void initializePlugin(this, this.appServices);
+			void this.settingsLoaded.then(() => initializePlugin(this, this.appServices));
 		});
 	}
 
