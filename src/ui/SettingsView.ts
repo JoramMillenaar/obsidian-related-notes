@@ -19,12 +19,14 @@ export class SettingView extends PluginSettingTab {
 		super(app, plugin);
 	}
 
-	async display() {
+	display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName("Similarity").setHeading();
+		void this.render(containerEl);
+	}
 
+	private async render(containerEl: HTMLElement) {
 		const settings = await this.deps.settingsRepo.get();
 		let draftIgnored = settings.ignoredPaths;
 
@@ -53,7 +55,7 @@ export class SettingView extends PluginSettingTab {
 						if (syncResult) {
 							new Notice(`Settings saved. Re-synced index (indexed: ${syncResult.indexed}, removed: ${syncResult.deleted}).`);
 						} else {
-							new Notice(`Settings saved.`)
+							new Notice(`Settings saved.`);
 						}
 					} finally {
 						button.setDisabled(false);

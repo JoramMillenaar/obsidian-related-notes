@@ -10,15 +10,15 @@ Runs fully local. No APIs. Your data _never_ leaves your machine.
 
 ## What it does
 
-### Browse related notes instantly
-Jump through semantically similar notes and explore ideas that are actually connected.
-
-![leaf-demo](https://github.com/user-attachments/assets/15c79d6e-e5f9-42d2-9f95-563856b832eb)
-
 ### Search by meaning
 Look up notes based on intent, not exact phrasing.
 
 ![modal-demo](https://github.com/user-attachments/assets/1957eb5a-e984-452a-bdaa-95745809b751)
+
+### Browse related notes instantly
+Jump through semantically similar notes and explore ideas that are actually connected.
+
+![leaf-demo](https://github.com/user-attachments/assets/15c79d6e-e5f9-42d2-9f95-563856b832eb)
 
 ---
 
