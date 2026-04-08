@@ -1,6 +1,6 @@
 import { ReconciliationResult } from "../domain/setReconciliation";
 import { yieldToUI } from "../domain/yieldToUI";
-import { IndexRepository, OnProgressCallback } from "../types";
+import { IndexRepository, OnProgressCallback, SyncResults } from "../types";
 import { IndexNoteUseCase } from "./indexNote";
 
 
@@ -9,10 +9,7 @@ export type ExecuteSyncActionsUseCase = (args: {
 	batchSize?: number;
 	onBatchComplete?: () => Promise<void>;
 	onProgress?: OnProgressCallback;
-}) => Promise<{
-	indexed: number;
-	deleted: number;
-}>
+}) => Promise<SyncResults>
 
 export function makeExecuteSyncActions(deps: {
 	indexNote: IndexNoteUseCase;

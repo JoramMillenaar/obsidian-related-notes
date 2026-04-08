@@ -24,8 +24,7 @@ export type SimilarNotesListViewDeps = {
 	indexNote: IndexNoteUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase,
 	indexVault: SyncIndexToVaultUseCase,
-	getIgnoredPaths: () => string[];
-	isIgnoredPath: (path: string) => boolean;
+	isIgnoredPath: (path: string) => Promise<boolean>;
 }
 
 
@@ -132,7 +131,7 @@ export class SimilarNotesListView extends ItemView {
 				this.deps.noteSource.isEmpty(active.path),
 			]);
 
-			if (this.deps.isIgnoredPath(active.path)) {
+			if (await this.deps.isIgnoredPath(active.path)) {
 				loadingEl.remove();
 				this.renderMessage(container, "This note is ignored by settings. Remove it from ignored paths to see related notes.");
 				return;

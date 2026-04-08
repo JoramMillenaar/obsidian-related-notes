@@ -17,6 +17,11 @@ export interface IframeMessage {
 	payload: string;
 }
 
+export interface SyncResults {
+	indexed: number;
+	deleted: number;
+}
+
 export interface EmbeddingPort {
 	embed(text: string): Promise<number[] | null>;
 
@@ -63,9 +68,23 @@ export interface StatusReporter {
 	clear(): void;
 }
 
+export interface SettingsRepository {
+	get(): Promise<SimilaritySettings>;
+
+	update(settings: SimilaritySettings): Promise<void>;
+
+	updatePartial(patch: Partial<SimilaritySettings>): Promise<void>;
+}
+
 export type OnProgressCallback = (p: { phase: string; processed: number; total: number }) => void;
 
 
 export interface SimilaritySettings {
 	ignoredPaths: string[];
 }
+
+export interface SimilarityPluginData {
+	settings: SimilaritySettings;
+	index: IndexedNote[];
+}
+

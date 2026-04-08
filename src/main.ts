@@ -8,26 +8,27 @@ import { SettingView } from "./ui/SettingsView";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
-	private settingsLoaded: Promise<void> = Promise.resolve();
 
 	onload(): void {
 		this.appServices = buildAppServices(this);
 		this.appServices.status.update("Loading…");
 
-		this.settingsLoaded = this.appServices.loadSettings();
-		this.addSettingTab(new SettingView(this.app, this, this.appServices));
+		this.addSettingTab(new SettingView(this.app, this, {
+			settingsRepo: this.appServices.settingsRepo,
+			updateIgnoredPaths: this.appServices.updateIgnoredPaths
+		}));
 
 		this.registerView(
 			VIEW_TYPE_SIMILARITY,
-			(leaf) => new SimilarNotesListView(leaf, {
-				indexRepo: this.appServices.indexRepo,
-				noteSource: this.appServices.noteSource,
-				indexNote: this.appServices.indexNote,
-				getSimilarNotes: this.appServices.getSimilarNotes,
-				indexVault: this.appServices.syncIndexToVault,
-				getIgnoredPaths: () => this.appServices.settings.ignoredPaths,
-				isIgnoredPath: (path: string) => this.appServices.isIgnoredPath(path),
-			})
+			(leaf) =>
+				new SimilarNotesListView(leaf, {
+					indexRepo: this.appServices.indexRepo,
+					noteSource: this.appServices.noteSource,
+					indexNote: this.appServices.indexNote,
+					getSimilarNotes: this.appServices.getSimilarNotes,
+					indexVault: this.appServices.syncIndexToVault,
+					isIgnoredPath: this.appServices.isIgnoredPath,
+				})
 		);
 
 		this.addCommand({
@@ -90,7 +91,7 @@ export default class RelatedNotes extends Plugin {
 		});
 
 		this.app.workspace.onLayoutReady(() => {
-			void this.settingsLoaded.then(() => initializePlugin(this, this.appServices));
+			void initializePlugin(this, this.appServices);
 		});
 	}
 

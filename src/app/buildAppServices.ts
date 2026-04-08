@@ -15,11 +15,13 @@ import {
 	IndexRepository,
 	IndexStorage,
 	NoteSource,
-	SimilaritySettings,
+	SettingsRepository,
 	StatusReporter,
 } from "../types";
-import { DEFAULT_SETTINGS } from "../constants";
-import { isPathIgnored } from "../domain/ignoreRules";
+import { ObsidianPluginDataStore } from "../infra/obsidian/obsidianPluginDataStore";
+import { ObsidianSettingsRepository } from "../infra/obsidian/obsidianSettings";
+import { IsIgnoredPath, makeIsIgnoredPath } from "./isIgnoredPath";
+import { makeUpdateIgnoredPaths, UpdateIgnoredPathsUseCase } from "./updateIgnoredPaths";
 
 export type AppServices = {
 	status: StatusReporter;
@@ -27,16 +29,13 @@ export type AppServices = {
 	indexStorage: IndexStorage;
 	embedder: EmbeddingPort;
 	indexRepo: IndexRepository;
-	settings: SimilaritySettings;
+	settingsRepo: SettingsRepository;
 
 	indexNote: IndexNoteUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase;
 	syncIndexToVault: SyncIndexToVaultUseCase;
-	loadSettings(): Promise<void>;
-	saveSettings(): Promise<void>;
-	isIgnoredPath(path: string): boolean;
-	countVaultNotesForIgnoredPaths(ignoredPaths: string[]): number;
-	saveIgnoredPathsAndSync(ignoredPaths: string[]): Promise<{ indexed: number; deleted: number } | undefined>;
+	isIgnoredPath: IsIgnoredPath;
+	updateIgnoredPaths: UpdateIgnoredPathsUseCase;
 
 	upsertDebouncer: KeyedDebouncer<string>;
 
@@ -46,12 +45,15 @@ export type AppServices = {
 export function buildAppServices(plugin: Plugin): AppServices {
 	const status = new ObsidianStatusBar(plugin);
 	const noteSource = new ObsidianNoteSource(plugin);
-	const indexStorage = new ObsidianPluginDataIndexStorage(plugin);
+	const storage = new ObsidianPluginDataStore(plugin);
+	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
 	const embedder = new EmbeddingProvider();
 	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
-	const settings: SimilaritySettings = {...DEFAULT_SETTINGS};
+	const settingsRepo = new ObsidianSettingsRepository(storage);
 
-	const isIgnoredPath = (path: string) => isPathIgnored(path, settings.ignoredPaths);
+	const isIgnoredPath = makeIsIgnoredPath({
+		settingsRepo,
+	})
 
 	const indexNote = makeIndexNote({
 		noteSource,
@@ -68,7 +70,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const getSyncActions = makeGetSyncActions({
 		noteSource,
 		indexRepo,
-		isIgnoredPath,
+		settingsRepo,
 	});
 
 	const executeSyncActions = makeExecuteSyncActions({
@@ -81,34 +83,13 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		executeSyncActions,
 	});
 
-	const loadSettings = async (): Promise<void> => {
-		const data = (await plugin.loadData()) ?? {};
-		const loadedSettings = (data.settings ?? data) as Partial<SimilaritySettings>;
-
-		settings.ignoredPaths = Array.isArray(loadedSettings.ignoredPaths)
-			? loadedSettings.ignoredPaths
-			: DEFAULT_SETTINGS.ignoredPaths;
-	};
-
-	const saveSettings = async (): Promise<void> => {
-		const data = (await plugin.loadData()) ?? {};
-		await plugin.saveData({...data, settings});
-	};
-
-	const countVaultNotesForIgnoredPaths = (ignoredPaths: string[]): number => {
-		const noteIds = noteSource.listIds();
-		return noteIds.filter((noteId) => isPathIgnored(noteId, ignoredPaths)).length;
-	};
-
-	const saveIgnoredPathsAndSync = async (ignoredPaths: string[]) => {
-		settings.ignoredPaths = ignoredPaths;
-		await saveSettings();
-		if (!await indexStorage.isEmpty()) {
-			return await syncIndexToVault();
-		}
-	};
-
 	const upsertDebouncer = new KeyedDebouncer<string>(1100);
+
+	const updateIgnoredPaths = makeUpdateIgnoredPaths({
+		settingsRepo,
+		indexStorage,
+		syncIndexToVault
+	})
 
 	return {
 		status,
@@ -116,15 +97,12 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		indexStorage,
 		embedder,
 		indexRepo,
-		settings,
+		settingsRepo,
 		indexNote,
 		getSimilarNotes,
 		syncIndexToVault,
-		loadSettings,
-		saveSettings,
 		isIgnoredPath,
-		countVaultNotesForIgnoredPaths,
-		saveIgnoredPathsAndSync,
+		updateIgnoredPaths,
 		upsertDebouncer,
 		shutdown() {
 			upsertDebouncer.cancel();

@@ -1,19 +1,20 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
 import { EmbeddingPort, IndexRepository, NoteSource } from "../types";
+import { IsIgnoredPath } from "./isIgnoredPath";
 
 export type IndexNoteDeps = {
 	noteSource: NoteSource;
 	embedder: EmbeddingPort;
 	indexRepo: IndexRepository;
-	isIgnoredPath?: (path: string) => boolean;
+	isIgnoredPath: IsIgnoredPath;
 };
 
 export type IndexNoteUseCase = (noteId: string) => Promise<void>;
 
 export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 	return async function indexNote(noteId: string) {
-		if (deps.isIgnoredPath?.(noteId)) {
+		if (await deps.isIgnoredPath(noteId)) {
 			await deps.indexRepo.remove(noteId);
 			return;
 		}
