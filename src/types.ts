@@ -81,10 +81,10 @@ export type OnProgressCallback = (p: { phase: string; processed: number; total: 
 
 export interface SimilaritySettings {
 	ignoredPaths: string[];
+	initialIndexCompleted: boolean;
 }
 
 export interface SimilarityPluginData {
 	settings: SimilaritySettings;
 	index: IndexedNote[];
 }
-

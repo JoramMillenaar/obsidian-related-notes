@@ -28,6 +28,8 @@ export default class RelatedNotes extends Plugin {
 					getSimilarNotes: this.appServices.getSimilarNotes,
 					indexVault: this.appServices.syncIndexToVault,
 					isIgnoredPath: this.appServices.isIgnoredPath,
+					isInitialIndexCompleted: this.appServices.isInitialIndexCompleted,
+					markInitialIndexCompleted: this.appServices.markInitialIndexCompleted,
 				})
 		);
 
@@ -42,6 +44,7 @@ export default class RelatedNotes extends Plugin {
 							this.appServices.status.update(`${p.processed}/${p.total} indexed`);
 						},
 					});
+					await this.appServices.markInitialIndexCompleted();
 					this.refreshView();
 					this.appServices.status.update("Index synced", 2500);
 					new Notice("Similarity index synced");
@@ -78,6 +81,8 @@ export default class RelatedNotes extends Plugin {
 			callback: () => {
 				new SearchModal(this.app, {
 					getSimilarNotes: this.appServices.getSimilarNotes,
+					isInitialIndexCompleted: this.appServices.isInitialIndexCompleted,
+					indexRepo: this.appServices.indexRepo,
 				}).open();
 			},
 		});

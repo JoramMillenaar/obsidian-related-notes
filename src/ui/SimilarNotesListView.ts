@@ -25,6 +25,8 @@ export type SimilarNotesListViewDeps = {
 	getSimilarNotes: GetSimilarNotesUseCase,
 	indexVault: SyncIndexToVaultUseCase,
 	isIgnoredPath: (path: string) => Promise<boolean>;
+	isInitialIndexCompleted: () => Promise<boolean>;
+	markInitialIndexCompleted: () => Promise<void>;
 }
 
 
@@ -126,9 +128,10 @@ export class SimilarNotesListView extends ItemView {
 			const active = this.getActiveFileOrShowEmptyState(container, loadingEl);
 			if (!active) return;
 
-			const [indexEmpty, noteEmpty] = await Promise.all([
+			const [indexEmpty, noteEmpty, initialIndexCompleted] = await Promise.all([
 				this.deps.indexRepo.isEmpty(),
 				this.deps.noteSource.isEmpty(active.path),
+				this.deps.isInitialIndexCompleted(),
 			]);
 
 			if (await this.deps.isIgnoredPath(active.path)) {
@@ -137,9 +140,14 @@ export class SimilarNotesListView extends ItemView {
 				return;
 			}
 
-			if (indexEmpty) {
+			if (!initialIndexCompleted) {
 				loadingEl.remove();
 				this.renderEmptyIndex(container);
+				return;
+			}
+			if (indexEmpty) {
+				loadingEl.remove();
+				this.renderMessage(container, "Your index currently has no notes. Run “Sync vault index” to rebuild it.");
 				return;
 			}
 			if (noteEmpty) {
@@ -286,6 +294,7 @@ export class SimilarNotesListView extends ItemView {
 
 		try {
 			await this.deps.indexVault({onProgress});
+			await this.deps.markInitialIndexCompleted();
 
 			ui.progressText?.setText("Done.");
 			if (ui.progressBar) {

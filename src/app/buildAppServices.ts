@@ -22,6 +22,12 @@ import { ObsidianPluginDataStore } from "../infra/obsidian/obsidianPluginDataSto
 import { ObsidianSettingsRepository } from "../infra/obsidian/obsidianSettings";
 import { IsIgnoredPath, makeIsIgnoredPath } from "./isIgnoredPath";
 import { makeUpdateIgnoredPaths, UpdateIgnoredPathsUseCase } from "./updateIgnoredPaths";
+import {
+	IsInitialIndexCompletedUseCase,
+	makeIsInitialIndexCompleted,
+	makeMarkInitialIndexCompleted,
+	MarkInitialIndexCompletedUseCase,
+} from "./initialIndexState";
 
 export type AppServices = {
 	status: StatusReporter;
@@ -36,6 +42,8 @@ export type AppServices = {
 	syncIndexToVault: SyncIndexToVaultUseCase;
 	isIgnoredPath: IsIgnoredPath;
 	updateIgnoredPaths: UpdateIgnoredPathsUseCase;
+	isInitialIndexCompleted: IsInitialIndexCompletedUseCase;
+	markInitialIndexCompleted: MarkInitialIndexCompletedUseCase;
 
 	upsertDebouncer: KeyedDebouncer<string>;
 
@@ -90,6 +98,8 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		indexStorage,
 		syncIndexToVault
 	})
+	const isInitialIndexCompleted = makeIsInitialIndexCompleted({settingsRepo});
+	const markInitialIndexCompleted = makeMarkInitialIndexCompleted({settingsRepo});
 
 	return {
 		status,
@@ -103,6 +113,8 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		syncIndexToVault,
 		isIgnoredPath,
 		updateIgnoredPaths,
+		isInitialIndexCompleted,
+		markInitialIndexCompleted,
 		upsertDebouncer,
 		shutdown() {
 			upsertDebouncer.cancel();

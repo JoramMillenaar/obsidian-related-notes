@@ -1,10 +1,12 @@
 import { App, SuggestModal, TFile } from "obsidian";
 import { KeyedDebouncer } from "../domain/debouncer";
-import { RelatedNote } from "../types";
+import { IndexRepository, RelatedNote } from "../types";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
 
 export type SearchModalDeps = {
-	getSimilarNotes: GetSimilarNotesUseCase
+	getSimilarNotes: GetSimilarNotesUseCase;
+	indexRepo: IndexRepository;
+	isInitialIndexCompleted: () => Promise<boolean>;
 }
 
 
@@ -14,6 +16,8 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	private static readonly DEFAULT_EMPTY_STATE = "Type to search related notes.";
 	private static readonly LOADING_EMPTY_STATE = "Searching related notes...";
 	private static readonly NO_RESULTS_EMPTY_STATE = "No related notes found.";
+	private static readonly NEEDS_INITIAL_INDEX_STATE = "Run “Sync vault index” first to build your semantic index.";
+	private static readonly EMPTY_INDEX_STATE = "Your index is empty. Run “Sync vault index” to rebuild it.";
 
 	constructor(app: App, deps: SearchModalDeps) {
 		super(app);
@@ -34,6 +38,21 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 		return new Promise((resolve) => {
 			this.debouncer.schedule("search", async () => {
 				try {
+					const [isInitialIndexCompleted, indexEmpty] = await Promise.all([
+						this.deps.isInitialIndexCompleted(),
+						this.deps.indexRepo.isEmpty(),
+					]);
+					if (!isInitialIndexCompleted) {
+						this.emptyStateText = SearchModal.NEEDS_INITIAL_INDEX_STATE;
+						resolve([]);
+						return;
+					}
+					if (indexEmpty) {
+						this.emptyStateText = SearchModal.EMPTY_INDEX_STATE;
+						resolve([]);
+						return;
+					}
+
 					const results = await this.deps.getSimilarNotes({text: query});
 					this.emptyStateText = results.length > 0
 						? SearchModal.DEFAULT_EMPTY_STATE
