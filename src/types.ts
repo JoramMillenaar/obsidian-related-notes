@@ -63,7 +63,7 @@ export interface NoteSource {
 }
 
 export interface ActiveEditor {
-	insertTextAtCursor(text: string): Promise<boolean>;
+	insertTextAtCursor(text: string): boolean;
 }
 
 export interface StatusReporter {

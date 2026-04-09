@@ -58,7 +58,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	}
 
 	onOpen(): void {
-		super.onOpen();
+		void super.onOpen();
 		window.setTimeout(() => this.inputEl.dispatchEvent(new Event("input")), 0);
 	}
 

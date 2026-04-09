@@ -29,7 +29,7 @@ import {
 	makeMarkInitialIndexCompleted,
 	MarkInitialIndexCompletedUseCase,
 } from "./initialIndexState";
-import { ObsidianActiveEditor } from "../infra/obsidian/obsidianCursorTextInserter";
+import { ObsidianActiveEditor } from "../infra/obsidian/obsidianActiveEditor";
 
 export type AppServices = {
 	status: StatusReporter;
