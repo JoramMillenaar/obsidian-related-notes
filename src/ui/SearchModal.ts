@@ -107,7 +107,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 		this.chooseMode = "open";
 
 		if (chooseMode === "insert-link" && evt instanceof KeyboardEvent) {
-			void this.handleInsertLink(item);
+			this.handleInsertLink(item);
 			return;
 		}
 
@@ -125,8 +125,8 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 		}
 	}
 
-	private async handleInsertLink(item: RelatedNote): Promise<void> {
-		const result = await this.deps.insertWikilinkAtCursor(item.id);
+	private handleInsertLink(item: RelatedNote): void {
+		const result = this.deps.insertWikilinkAtCursor(item.id);
 		if (result === "inserted") {
 			this.close();
 			return;
@@ -136,8 +136,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	}
 
 	renderSuggestion(value: RelatedNote, el: HTMLElement): void {
-		const file = this.app.vault.getAbstractFileByPath(value.id);
-		let fileName = file?.name ?? value.id;
+		let fileName = value.id;
 		if (fileName.endsWith('.md')) fileName = fileName.slice(0, -3);
 		const scorePercent = (value.score * 100).toFixed(1);
 

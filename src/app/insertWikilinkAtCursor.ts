@@ -1,15 +1,18 @@
 import { formatWikilink } from "../domain/wikilink";
-import { ActiveEditor } from "../types";
+import { ActiveEditor, NoteSource } from "../types";
 
 export type InsertWikilinkAtCursorResult = "inserted" | "no-editor";
 
-export type InsertWikilinkAtCursorUseCase = (noteId: string) => Promise<InsertWikilinkAtCursorResult>;
+export type InsertWikilinkAtCursorUseCase = (noteId: string) => InsertWikilinkAtCursorResult;
 
 export function makeInsertWikilinkAtCursor(deps: {
   activeEditor: ActiveEditor;
+  noteSource: NoteSource;
 }): InsertWikilinkAtCursorUseCase {
-  return async function insertWikilinkAtCursor(noteId: string): Promise<InsertWikilinkAtCursorResult> {
-    const inserted = await deps.activeEditor.insertTextAtCursor(formatWikilink(noteId));
+  return function insertWikilinkAtCursor(noteId: string): InsertWikilinkAtCursorResult {
+    const inserted = deps.activeEditor.insertTextAtCursor(
+      formatWikilink(noteId, deps.noteSource.listIds())
+    );
     return inserted ? "inserted" : "no-editor";
   };
 }

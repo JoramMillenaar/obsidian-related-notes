@@ -79,7 +79,10 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		embedder,
 	});
 
-	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({activeEditor});
+	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({
+		activeEditor,
+		noteSource,
+	});
 
 	const getSyncActions = makeGetSyncActions({
 		noteSource,

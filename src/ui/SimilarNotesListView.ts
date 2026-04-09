@@ -200,10 +200,18 @@ export class SimilarNotesListView extends ItemView {
 			itemSelf.addEventListener("click", () => this.openNote(path));
 
 			const itemInner = itemSelf.createEl("div", {cls: "tree-item-inner"});
-			const itemInnerText = itemInner.createEl("div", {cls: "tree-item-inner-text"});
 
 			const title = path.split("/").pop()?.replace(/\.md$/i, "") ?? path;
-			itemInnerText.createEl("span", {cls: "tree-item-inner-text", text: title});
+			const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+			const itemInnerText = itemInner.createEl("div", {cls: "tree-item-inner-text"});
+
+			const textWrapper = itemInnerText.createEl("div", {cls: "related-text"});
+
+			textWrapper.createEl("span", {cls: "related-title", text: title});
+
+			if (parentPath) {
+				textWrapper.createEl("small", {cls: "related-parent", text: parentPath});
+			}
 
 			const flairOuter = itemSelf.createEl("div", {cls: "tree-item-flair-outer"});
 			flairOuter.createEl("span", {
