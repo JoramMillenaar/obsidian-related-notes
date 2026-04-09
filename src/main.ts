@@ -81,8 +81,11 @@ export default class RelatedNotes extends Plugin {
 			callback: () => {
 				new SearchModal(this.app, {
 					getSimilarNotes: this.appServices.getSimilarNotes,
+					insertWikilinkAtCursor: this.appServices.insertWikilinkAtCursor,
 					isInitialIndexCompleted: this.appServices.isInitialIndexCompleted,
 					indexRepo: this.appServices.indexRepo,
+					noteSource: this.appServices.noteSource,
+					isIgnoredPath: this.appServices.isIgnoredPath,
 				}).open();
 			},
 		});

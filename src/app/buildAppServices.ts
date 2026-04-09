@@ -7,6 +7,7 @@ import { EmbeddingProvider } from "../infra/embedder/embeddingProvider";
 import { JsonIndexedNoteRepository } from "../infra/index/jsonIndexedNoteRepository";
 import { IndexNoteUseCase, makeIndexNote } from "./indexNote";
 import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./getSimilarNotes";
+import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./insertWikilinkAtCursor";
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
 import { makeGetSyncActions } from "./getSyncActions";
 import { makeExecuteSyncActions } from "./executeSyncActions";
@@ -28,6 +29,7 @@ import {
 	makeMarkInitialIndexCompleted,
 	MarkInitialIndexCompletedUseCase,
 } from "./initialIndexState";
+import { ObsidianActiveEditor } from "../infra/obsidian/obsidianCursorTextInserter";
 
 export type AppServices = {
 	status: StatusReporter;
@@ -39,6 +41,7 @@ export type AppServices = {
 
 	indexNote: IndexNoteUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase;
+	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
 	syncIndexToVault: SyncIndexToVaultUseCase;
 	isIgnoredPath: IsIgnoredPath;
 	updateIgnoredPaths: UpdateIgnoredPathsUseCase;
@@ -58,6 +61,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const embedder = new EmbeddingProvider();
 	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
 	const settingsRepo = new ObsidianSettingsRepository(storage);
+	const activeEditor = new ObsidianActiveEditor(plugin);
 
 	const isIgnoredPath = makeIsIgnoredPath({
 		settingsRepo,
@@ -74,6 +78,8 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		indexRepo,
 		embedder,
 	});
+
+	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({activeEditor});
 
 	const getSyncActions = makeGetSyncActions({
 		noteSource,
@@ -110,6 +116,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		settingsRepo,
 		indexNote,
 		getSimilarNotes,
+		insertWikilinkAtCursor,
 		syncIndexToVault,
 		isIgnoredPath,
 		updateIgnoredPaths,

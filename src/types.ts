@@ -62,6 +62,10 @@ export interface NoteSource {
 	isEmpty(noteId: string): Promise<boolean>;
 }
 
+export interface ActiveEditor {
+	insertTextAtCursor(text: string): Promise<boolean>;
+}
+
 export interface StatusReporter {
 	update(text: string, timeout?: number): void;
 
