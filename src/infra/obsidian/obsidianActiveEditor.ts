@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin } from "obsidian";
+import { EditorPosition, MarkdownView, Plugin } from "obsidian";
 import { ActiveEditor } from "../../types";
 
 export class ObsidianActiveEditor implements ActiveEditor {
@@ -11,7 +11,16 @@ export class ObsidianActiveEditor implements ActiveEditor {
 		if (!editor) return false;
 
 		const cursor = editor.getCursor();
+
 		editor.replaceRange(text, cursor);
+
+		const newCursor: EditorPosition = {
+			line: cursor.line,
+			ch: cursor.ch + text.length,
+		};
+
+		editor.setCursor(newCursor);
+
 		return true;
 	}
 }
