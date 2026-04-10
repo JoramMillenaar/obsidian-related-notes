@@ -3,6 +3,7 @@ import { SyncIndexToVaultUseCase } from "../app/syncIndexToVault";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
 import { IndexRepository, NoteSource } from "../types";
 import { IndexNoteUseCase } from "../app/indexNote";
+import { isMarkdownPath } from "../domain/markdownPath";
 
 export function logError(message: unknown, ...optionalParams: unknown[]) {
 	console.error("[Similarity]:", message, ...optionalParams);
@@ -127,6 +128,11 @@ export class SimilarNotesListView extends ItemView {
 		try {
 			const active = this.getActiveFileOrShowEmptyState(container, loadingEl);
 			if (!active) return;
+			if (!isMarkdownPath(active.path)) {
+				loadingEl.remove();
+				this.renderMessage(container, "Semantic matching only supports Markdown notes. Open a .md file to see similar notes.");
+				return;
+			}
 
 			const [indexEmpty, noteEmpty, initialIndexCompleted] = await Promise.all([
 				this.deps.indexRepo.isEmpty(),

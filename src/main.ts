@@ -5,6 +5,7 @@ import { AppServices, buildAppServices } from "./app/buildAppServices";
 import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "./ui/SimilarNotesListView";
 import { activateRightLeafView } from "./app/activateRightLeafView";
 import { SettingView } from "./ui/SettingsView";
+import { isMarkdownPath } from "./domain/markdownPath";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
@@ -62,6 +63,11 @@ export default class RelatedNotes extends Plugin {
 			callback: async () => {
 				const f = this.app.workspace.getActiveFile();
 				if (!f) return;
+				if (!isMarkdownPath(f.path)) {
+					this.appServices.status.update("Only Markdown notes are indexed", 3000);
+					this.refreshView();
+					return;
+				}
 
 				this.appServices.status.update("Indexing current note…");
 				try {

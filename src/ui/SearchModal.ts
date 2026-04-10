@@ -1,6 +1,7 @@
 import { App, Notice, Platform, SuggestModal, TFile } from "obsidian";
 import { InsertWikilinkAtCursorUseCase } from "../app/insertWikilinkAtCursor";
 import { KeyedDebouncer } from "../domain/debouncer";
+import { isMarkdownPath } from "../domain/markdownPath";
 import { IndexRepository, NoteSource, RelatedNote } from "../types";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
 
@@ -25,6 +26,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	private static readonly EMPTY_INDEX_STATE = "Your index is empty. Run “Sync vault index” to rebuild it.";
 	private static readonly IGNORED_NOTE_STATE = "The current note is ignored by settings.";
 	private static readonly EMPTY_NOTE_STATE = "The current note is empty. Add content to see related notes.";
+	private static readonly NON_MARKDOWN_NOTE_STATE = this.DEFAULT_EMPTY_STATE;
 	private static readonly NO_ACTIVE_NOTE_STATE = "Open a note to see similar notes.";
 
 	constructor(app: App, deps: SearchModalDeps) {
@@ -148,6 +150,10 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 		const active = this.app.workspace.getActiveFile();
 		if (!active) {
 			this.emptyStateText = SearchModal.NO_ACTIVE_NOTE_STATE;
+			return [];
+		}
+		if (!isMarkdownPath(active.path)) {
+			this.emptyStateText = SearchModal.NON_MARKDOWN_NOTE_STATE;
 			return [];
 		}
 

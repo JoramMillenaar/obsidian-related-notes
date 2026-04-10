@@ -1,5 +1,6 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
+import { isMarkdownPath } from "../domain/markdownPath";
 import { EmbeddingPort, IndexRepository, NoteSource } from "../types";
 import { IsIgnoredPath } from "./isIgnoredPath";
 
@@ -14,6 +15,11 @@ export type IndexNoteUseCase = (noteId: string) => Promise<void>;
 
 export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 	return async function indexNote(noteId: string) {
+		if (!isMarkdownPath(noteId)) {
+			await deps.indexRepo.remove(noteId);
+			return;
+		}
+
 		if (await deps.isIgnoredPath(noteId)) {
 			await deps.indexRepo.remove(noteId);
 			return;
