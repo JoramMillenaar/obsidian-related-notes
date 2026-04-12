@@ -13,6 +13,7 @@ import { ResetPerformanceReportUseCase, makeResetPerformanceReport } from "./res
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
 import { makeGetSyncActions } from "./getSyncActions";
 import { makeExecuteSyncActions } from "./executeSyncActions";
+import { makeEmbedText } from "./embedText";
 import {
 	EmbeddingPort,
 	IndexRepository,
@@ -65,6 +66,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const storage = new ObsidianPluginDataStore(plugin, performanceMonitor);
 	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
 	const embedder = new EmbeddingProvider(performanceMonitor);
+	const embedText = makeEmbedText({ embedder });
 	const indexRepo = new JsonIndexedNoteRepository(indexStorage, performanceMonitor);
 	const settingsRepo = new ObsidianSettingsRepository(storage);
 	const activeEditor = new ObsidianActiveEditor(plugin);
@@ -75,7 +77,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 
 	const indexNote = makeIndexNote({
 		noteSource,
-		embedder,
+		embedText,
 		indexRepo,
 		isIgnoredPath,
 		performanceMonitor,
@@ -83,7 +85,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 
 	const getSimilarNotes = makeGetSimilarNotes({
 		indexRepo,
-		embedder,
+		embedText,
 		performanceMonitor,
 	});
 

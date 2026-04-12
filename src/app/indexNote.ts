@@ -1,12 +1,13 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { EmbeddingPort, IndexRepository, NotePerformanceSample, NoteSource, PerformanceMonitor } from "../types";
+import { IndexRepository, NotePerformanceSample, NoteSource, PerformanceMonitor } from "../types";
+import { EmbedTextUseCase } from "./embedText";
 import { IsIgnoredPath } from "./isIgnoredPath";
 
 export type IndexNoteDeps = {
 	noteSource: NoteSource;
-	embedder: EmbeddingPort;
+	embedText: EmbedTextUseCase;
 	indexRepo: IndexRepository;
 	isIgnoredPath: IsIgnoredPath;
 	performanceMonitor: PerformanceMonitor;
@@ -82,7 +83,7 @@ export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 					profile.avgInputLengthPerCall = textProfile.cleanChars > 0 ? textProfile.cleanChars : 0;
 
 					const embedStartedAt = now();
-					const rawEmbedding = await deps.embedder.embed(textProfile.cleanText);
+					const rawEmbedding = await deps.embedText(textProfile.cleanText);
 					profile.embedMs = now() - embedStartedAt;
 					if (!rawEmbedding?.length) {
 						profile.outcome = "failed";
