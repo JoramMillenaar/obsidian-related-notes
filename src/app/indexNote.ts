@@ -1,7 +1,8 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexRepository, NotePerformanceSample, NoteSource, PerformanceMonitor } from "../types";
+import { chunkTextByFixedWindow } from "../domain/textChunking";
+import { EmbeddingChunkConfig, IndexRepository, NotePerformanceSample, NoteSource, PerformanceMonitor } from "../types";
 import { EmbedTextUseCase } from "./embedText";
 import { IsIgnoredPath } from "./isIgnoredPath";
 
@@ -11,6 +12,7 @@ export type IndexNoteDeps = {
 	indexRepo: IndexRepository;
 	isIgnoredPath: IsIgnoredPath;
 	performanceMonitor: PerformanceMonitor;
+	getChunkConfig?: () => EmbeddingChunkConfig | undefined;
 };
 
 export type IndexNoteUseCase = (noteId: string) => Promise<void>;
@@ -78,9 +80,12 @@ export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 						return;
 					}
 
-					profile.chunkCount = textProfile.cleanChars > 0 ? 1 : 0;
-					profile.embedCallsPerNote = textProfile.cleanChars > 0 ? 1 : 0;
-					profile.avgInputLengthPerCall = textProfile.cleanChars > 0 ? textProfile.cleanChars : 0;
+					const chunks = chunkTextByFixedWindow(textProfile.cleanText, deps.getChunkConfig?.());
+					profile.chunkCount = chunks.length;
+					profile.embedCallsPerNote = chunks.length;
+					profile.avgInputLengthPerCall = chunks.length > 0
+						? chunks.reduce((sum, chunk) => sum + chunk.length, 0) / chunks.length
+						: 0;
 
 					const embedStartedAt = now();
 					const rawEmbedding = await deps.embedText(textProfile.cleanText);

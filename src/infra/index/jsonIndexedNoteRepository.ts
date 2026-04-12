@@ -118,4 +118,11 @@ export class JsonIndexedNoteRepository implements IndexRepository {
 			await this.storage.rewrite([...filtered, renamed]);
 		})();
 	}
+
+	async clear(): Promise<void> {
+		await this.performanceMonitor?.measure(
+			"infra.indexRepo.clear",
+			() => this.storage.rewrite([]),
+		) ?? await this.storage.rewrite([]);
+	}
 }

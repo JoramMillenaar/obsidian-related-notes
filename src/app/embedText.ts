@@ -1,14 +1,15 @@
 import { averageEmbeddings } from "../domain/embedding";
 import { chunkTextByFixedWindow } from "../domain/textChunking";
-import { EmbeddingPort } from "../types";
+import { EmbeddingChunkConfig, EmbeddingPort } from "../types";
 
 export type EmbedTextUseCase = (text: string) => Promise<number[] | null>;
 
 export function makeEmbedText(deps: {
 	embedder: EmbeddingPort;
+	getChunkConfig?: () => EmbeddingChunkConfig | undefined;
 }): EmbedTextUseCase {
 	return async function embedText(text: string): Promise<number[] | null> {
-		const chunks = chunkTextByFixedWindow(text);
+		const chunks = chunkTextByFixedWindow(text, deps.getChunkConfig?.());
 		if (chunks.length === 0) return null;
 
 		const embeddings: number[][] = [];

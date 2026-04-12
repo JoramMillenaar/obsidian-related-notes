@@ -44,6 +44,8 @@ export interface IndexRepository {
 	remove(noteId: string): Promise<void>;
 
 	rename(oldId: string, newId: string): Promise<void>;
+
+	clear(): Promise<void>;
 }
 
 export interface IndexStorage {
@@ -83,6 +85,11 @@ export type NoteTextProfile = {
 	rawChars: number;
 	cleanChars: number;
 	paragraphCount: number;
+};
+
+export type EmbeddingChunkConfig = {
+	windowSize: number;
+	overlap: number;
 };
 
 export type NotePerformanceSample = {

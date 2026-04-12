@@ -1,4 +1,4 @@
-import { Notice, Plugin } from "obsidian";
+import { Notice, Plugin, TFile } from "obsidian";
 import { SearchModal } from "./ui/SearchModal";
 import { initializePlugin } from "./app/initializePlugin";
 import { AppServices, buildAppServices } from "./app/buildAppServices";
@@ -7,6 +7,7 @@ import { activateRightLeafView } from "./app/activateRightLeafView";
 import { SettingView } from "./ui/SettingsView";
 import { isMarkdownPath } from "./domain/markdownPath";
 import { PerformanceReportModal } from "./ui/PerformanceReportModal";
+import { benchmarkNotePath } from "./app/runChunkingBenchmark";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
@@ -122,6 +123,36 @@ export default class RelatedNotes extends Plugin {
 			callback: () => {
 				this.appServices.resetPerformanceReport();
 				this.appServices.status.update("Performance report reset", 2000);
+			},
+		});
+
+		this.addCommand({
+			id: "run-chunking-benchmark",
+			name: "Run chunking benchmark",
+			callback: async () => {
+				this.appServices.status.update("Running chunking benchmark…");
+				try {
+					const {markdown} = await this.appServices.runChunkingBenchmark();
+					console.log(markdown);
+					const reportPath = benchmarkNotePath();
+					const existing = this.app.vault.getAbstractFileByPath(reportPath);
+
+					let file: TFile;
+					if (existing instanceof TFile) {
+						await this.app.vault.modify(existing, markdown);
+						file = existing;
+					} else {
+						file = await this.app.vault.create(reportPath, markdown);
+					}
+
+					await this.app.workspace.getLeaf(true).openFile(file);
+					this.appServices.status.update("Chunking benchmark complete", 3000);
+					new Notice(`Chunking benchmark saved to ${reportPath}`);
+				} catch (error) {
+					this.appServices.status.update("Chunking benchmark failed", 5000);
+					console.error("[Similarity] Chunking benchmark failed", error);
+					new Notice("Chunking benchmark failed");
+				}
 			},
 		});
 

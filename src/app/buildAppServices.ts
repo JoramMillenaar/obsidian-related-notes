@@ -10,6 +10,7 @@ import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./getSimilarNotes";
 import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./insertWikilinkAtCursor";
 import { GetPerformanceReportUseCase, makeGetPerformanceReport } from "./getPerformanceReport";
 import { ResetPerformanceReportUseCase, makeResetPerformanceReport } from "./resetPerformanceReport";
+import { makeRunChunkingBenchmark, RunChunkingBenchmarkUseCase } from "./runChunkingBenchmark";
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
 import { makeGetSyncActions } from "./getSyncActions";
 import { makeExecuteSyncActions } from "./executeSyncActions";
@@ -48,6 +49,7 @@ export type AppServices = {
 	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
 	getPerformanceReport: GetPerformanceReportUseCase;
 	resetPerformanceReport: ResetPerformanceReportUseCase;
+	runChunkingBenchmark: RunChunkingBenchmarkUseCase;
 	syncIndexToVault: SyncIndexToVaultUseCase;
 	isIgnoredPath: IsIgnoredPath;
 	updateIgnoredPaths: UpdateIgnoredPathsUseCase;
@@ -81,6 +83,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		indexRepo,
 		isIgnoredPath,
 		performanceMonitor,
+		getChunkConfig: () => undefined,
 	});
 
 	const getSimilarNotes = makeGetSimilarNotes({
@@ -115,6 +118,14 @@ export function buildAppServices(plugin: Plugin): AppServices {
 
 	const getPerformanceReport = makeGetPerformanceReport({performanceMonitor});
 	const resetPerformanceReport = makeResetPerformanceReport({performanceMonitor});
+	const runChunkingBenchmark = makeRunChunkingBenchmark({
+		embedder,
+		indexRepo,
+		noteSource,
+		settingsRepo,
+		isIgnoredPath,
+		createPerformanceMonitor: () => new ObsidianPerformanceMonitor(),
+	});
 
 	const upsertDebouncer = new KeyedDebouncer<string>(1100);
 
@@ -138,6 +149,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		insertWikilinkAtCursor,
 		getPerformanceReport,
 		resetPerformanceReport,
+		runChunkingBenchmark,
 		syncIndexToVault,
 		isIgnoredPath,
 		updateIgnoredPaths,
