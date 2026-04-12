@@ -19,6 +19,29 @@ export function normalizeEmbedding(embedding: Embedding): Embedding {
 	return out as unknown as Embedding;
 }
 
+export function averageEmbeddings(embeddings: Embedding[]): Embedding | null {
+	if (embeddings.length === 0) return null;
+
+	const embeddingSize = embeddings[0].length;
+	const meanEmbedding = new Array<number>(embeddingSize).fill(0);
+
+	for (const embedding of embeddings) {
+		if (embedding.length !== embeddingSize) {
+			throw new Error(`averageEmbeddings: length mismatch (${embedding.length} vs ${embeddingSize})`);
+		}
+
+		for (let i = 0; i < embeddingSize; i++) {
+			meanEmbedding[i] += embedding[i];
+		}
+	}
+
+	for (let i = 0; i < embeddingSize; i++) {
+		meanEmbedding[i] /= embeddings.length;
+	}
+
+	return meanEmbedding as Embedding;
+}
+
 export function cosineSimilarity(a: number[], b: number[]): number {
 	if (a.length !== b.length) {
 		throw new Error(`cosineSimilarity: length mismatch (${a.length} vs ${b.length})`);

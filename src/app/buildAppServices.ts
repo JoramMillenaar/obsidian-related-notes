@@ -11,6 +11,7 @@ import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./ins
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
 import { makeGetSyncActions } from "./getSyncActions";
 import { makeExecuteSyncActions } from "./executeSyncActions";
+import { makeEmbedText } from "./embedText";
 import {
 	EmbeddingPort,
 	IndexRepository,
@@ -59,6 +60,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const storage = new ObsidianPluginDataStore(plugin);
 	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
 	const embedder = new EmbeddingProvider();
+	const embedText = makeEmbedText({ embedder });
 	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
 	const settingsRepo = new ObsidianSettingsRepository(storage);
 	const activeEditor = new ObsidianActiveEditor(plugin);
@@ -69,14 +71,14 @@ export function buildAppServices(plugin: Plugin): AppServices {
 
 	const indexNote = makeIndexNote({
 		noteSource,
-		embedder,
+		embedText,
 		indexRepo,
 		isIgnoredPath,
 	});
 
 	const getSimilarNotes = makeGetSimilarNotes({
 		indexRepo,
-		embedder,
+		embedText,
 	});
 
 	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({
