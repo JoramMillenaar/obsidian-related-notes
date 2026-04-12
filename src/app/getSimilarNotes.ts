@@ -1,5 +1,6 @@
-import { EmbeddingPort, IndexRepository, RelatedNote } from "../types";
+import { IndexRepository, RelatedNote } from "../types";
 import { cosineSimilarity, normalizeEmbedding } from "../domain/embedding";
+import { EmbedTextUseCase } from "./embedText";
 
 
 export type GetSimilarNotesUseCase = (args: {
@@ -11,7 +12,7 @@ export type GetSimilarNotesUseCase = (args: {
 
 export function makeGetSimilarNotes(deps: {
 	indexRepo: IndexRepository;
-	embedder: EmbeddingPort;
+	embedText: EmbedTextUseCase;
 }): GetSimilarNotesUseCase {
 	return async function getSimilarNotes(args): Promise<RelatedNote[]> {
 		const {
@@ -34,7 +35,7 @@ export function makeGetSimilarNotes(deps: {
 			if (!text) {
 				throw new Error("getRelatedNotes: need either noteId present in index, or text to embed.");
 			}
-			const embedding = await deps.embedder.embed(text);
+			const embedding = await deps.embedText(text);
 			if (!embedding) throw new Error("getRelatedNotes: could not embed text");
 			queryEmbedding = normalizeEmbedding(embedding);
 		}

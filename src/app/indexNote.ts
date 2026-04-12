@@ -1,12 +1,13 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { EmbeddingPort, IndexRepository, NoteSource } from "../types";
+import { IndexRepository, NoteSource } from "../types";
+import { EmbedTextUseCase } from "./embedText";
 import { IsIgnoredPath } from "./isIgnoredPath";
 
 export type IndexNoteDeps = {
 	noteSource: NoteSource;
-	embedder: EmbeddingPort;
+	embedText: EmbedTextUseCase;
 	indexRepo: IndexRepository;
 	isIgnoredPath: IsIgnoredPath;
 };
@@ -35,7 +36,7 @@ export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 			return;
 		}
 
-		const rawEmbedding = await deps.embedder.embed(text);
+		const rawEmbedding = await deps.embedText(text);
 		if (!rawEmbedding?.length) {
 			await deps.indexRepo.remove(noteId);
 			return;

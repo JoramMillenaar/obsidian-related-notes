@@ -12,39 +12,14 @@
       this.pipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     }
     async generateDocumentEmbedding(text) {
-      const paragraphs = text
-        .split(/\n\s*\n/)
-        .map((paragraph) => paragraph.trim())
-        .filter((paragraph) => paragraph.length > 0);
-
-      if (paragraphs.length === 0) {
-        console.warn('No valid paragraphs found in the text.');
+      const input = text.trim();
+      if (!input) {
+        console.warn('No valid text found in the input.');
         return null;
       }
 
-      const embeddings = [];
-      for (const paragraph of paragraphs) {
-        const result = await this.pipeline(paragraph, { pooling: 'mean' });
-        embeddings.push(result.data);
-      }
-
-      return this.calculateMeanEmbedding(embeddings);
-    }
-
-    calculateMeanEmbedding(embeddings) {
-      const numEmbeddings = embeddings.length;
-      const embeddingSize = embeddings[0].length;
-      const meanEmbedding = new Float32Array(embeddingSize);
-
-      embeddings.forEach((embedding) => {
-        for (let i = 0; i < embeddingSize; i++) {
-          meanEmbedding[i] += embedding[i];
-        }
-      });
-      for (let i = 0; i < embeddingSize; i++) {
-        meanEmbedding[i] /= numEmbeddings;
-      }
-      return meanEmbedding;
+      const result = await this.pipeline(input, { pooling: 'mean' });
+      return result.data;
     }
   }
 
