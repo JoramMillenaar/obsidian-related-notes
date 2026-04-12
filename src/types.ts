@@ -66,6 +66,23 @@ export interface ActiveEditor {
 	insertTextAtCursor(text: string): boolean;
 }
 
+export type PerformanceSample = {
+	name: string;
+	count: number;
+	totalMs: number;
+	avgMs: number;
+	maxMs: number;
+	lastMs: number;
+};
+
+export interface PerformanceMonitor {
+	measure<T>(name: string, run: () => Promise<T> | T): Promise<T>;
+
+	getReport(): PerformanceSample[];
+
+	reset(): void;
+}
+
 export interface StatusReporter {
 	update(text: string, timeout?: number): void;
 

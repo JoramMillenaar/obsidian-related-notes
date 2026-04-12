@@ -8,6 +8,8 @@ import { JsonIndexedNoteRepository } from "../infra/index/jsonIndexedNoteReposit
 import { IndexNoteUseCase, makeIndexNote } from "./indexNote";
 import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./getSimilarNotes";
 import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./insertWikilinkAtCursor";
+import { GetPerformanceReportUseCase, makeGetPerformanceReport } from "./getPerformanceReport";
+import { ResetPerformanceReportUseCase, makeResetPerformanceReport } from "./resetPerformanceReport";
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
 import { makeGetSyncActions } from "./getSyncActions";
 import { makeExecuteSyncActions } from "./executeSyncActions";
@@ -30,6 +32,7 @@ import {
 	MarkInitialIndexCompletedUseCase,
 } from "./initialIndexState";
 import { ObsidianActiveEditor } from "../infra/obsidian/obsidianActiveEditor";
+import { ObsidianPerformanceMonitor } from "../infra/obsidian/obsidianPerformanceMonitor";
 
 export type AppServices = {
 	status: StatusReporter;
@@ -42,6 +45,8 @@ export type AppServices = {
 	indexNote: IndexNoteUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase;
 	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
+	getPerformanceReport: GetPerformanceReportUseCase;
+	resetPerformanceReport: ResetPerformanceReportUseCase;
 	syncIndexToVault: SyncIndexToVaultUseCase;
 	isIgnoredPath: IsIgnoredPath;
 	updateIgnoredPaths: UpdateIgnoredPathsUseCase;
@@ -55,11 +60,12 @@ export type AppServices = {
 
 export function buildAppServices(plugin: Plugin): AppServices {
 	const status = new ObsidianStatusBar(plugin);
-	const noteSource = new ObsidianNoteSource(plugin);
-	const storage = new ObsidianPluginDataStore(plugin);
+	const performanceMonitor = new ObsidianPerformanceMonitor();
+	const noteSource = new ObsidianNoteSource(plugin, performanceMonitor);
+	const storage = new ObsidianPluginDataStore(plugin, performanceMonitor);
 	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
-	const embedder = new EmbeddingProvider();
-	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
+	const embedder = new EmbeddingProvider(performanceMonitor);
+	const indexRepo = new JsonIndexedNoteRepository(indexStorage, performanceMonitor);
 	const settingsRepo = new ObsidianSettingsRepository(storage);
 	const activeEditor = new ObsidianActiveEditor(plugin);
 
@@ -72,11 +78,13 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		embedder,
 		indexRepo,
 		isIgnoredPath,
+		performanceMonitor,
 	});
 
 	const getSimilarNotes = makeGetSimilarNotes({
 		indexRepo,
 		embedder,
+		performanceMonitor,
 	});
 
 	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({
@@ -88,17 +96,23 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		noteSource,
 		indexRepo,
 		settingsRepo,
+		performanceMonitor,
 	});
 
 	const executeSyncActions = makeExecuteSyncActions({
 		indexNote,
 		indexRepo,
+		performanceMonitor,
 	});
 
 	const syncIndexToVault = makeSyncIndexToVault({
 		getSyncActions,
 		executeSyncActions,
+		performanceMonitor,
 	});
+
+	const getPerformanceReport = makeGetPerformanceReport({performanceMonitor});
+	const resetPerformanceReport = makeResetPerformanceReport({performanceMonitor});
 
 	const upsertDebouncer = new KeyedDebouncer<string>(1100);
 
@@ -120,6 +134,8 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		indexNote,
 		getSimilarNotes,
 		insertWikilinkAtCursor,
+		getPerformanceReport,
+		resetPerformanceReport,
 		syncIndexToVault,
 		isIgnoredPath,
 		updateIgnoredPaths,

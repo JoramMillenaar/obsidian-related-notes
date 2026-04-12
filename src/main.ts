@@ -6,6 +6,7 @@ import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "./ui/SimilarNotesLis
 import { activateRightLeafView } from "./app/activateRightLeafView";
 import { SettingView } from "./ui/SettingsView";
 import { isMarkdownPath } from "./domain/markdownPath";
+import { PerformanceReportModal } from "./ui/PerformanceReportModal";
 
 export default class RelatedNotes extends Plugin {
 	private appServices!: AppServices;
@@ -101,6 +102,26 @@ export default class RelatedNotes extends Plugin {
 			name: "Open similar notes",
 			callback: async () => {
 				await activateRightLeafView(this, {reveal: true, focus: true});
+			},
+		});
+
+		this.addCommand({
+			id: "open-performance-report",
+			name: "Open performance report",
+			callback: () => {
+				new PerformanceReportModal(
+					this.app,
+					this.appServices.getPerformanceReport,
+				).open();
+			},
+		});
+
+		this.addCommand({
+			id: "reset-performance-report",
+			name: "Reset performance report",
+			callback: () => {
+				this.appServices.resetPerformanceReport();
+				this.appServices.status.update("Performance report reset", 2000);
 			},
 		});
 
