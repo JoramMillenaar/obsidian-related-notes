@@ -1,6 +1,6 @@
 import { Plugin, TFile } from "obsidian";
 import { cleanMarkdownToPlainText } from "../../domain/text";
-import { NoteSource, PerformanceMonitor } from "../../types";
+import { NoteSource, NoteTextProfile, PerformanceMonitor } from "../../types";
 
 export class ObsidianNoteSource implements NoteSource {
 	constructor(
@@ -10,22 +10,28 @@ export class ObsidianNoteSource implements NoteSource {
 	}
 
 	async getTextById(noteId: string): Promise<string> {
-		return await this.performanceMonitor?.measure(
+		const profile = await this.getTextProfileById(noteId);
+		return profile.cleanText;
+	}
+
+	async getTextProfileById(noteId: string): Promise<NoteTextProfile> {
+		return await this.measure(
 			"infra.noteSource.getTextById",
 			async () => {
 				const f = this.plugin.app.vault.getAbstractFileByPath(noteId);
 				if (!(f instanceof TFile)) throw new Error("Unable to read file");
-				const md = await this.plugin.app.vault.read(f);
-				const title = f.basename;
-				return await cleanMarkdownToPlainText(`${title}\n\n${md}`, this.plugin);
+				const markdown = await this.plugin.app.vault.read(f);
+				const rawText = `${f.basename}\n\n${markdown}`;
+				const cleanText = await cleanMarkdownToPlainText(rawText, this.plugin);
+				return {
+					rawText,
+					cleanText,
+					rawChars: rawText.length,
+					cleanChars: cleanText.length,
+					paragraphCount: this.countParagraphs(cleanText),
+				};
 			},
-		) ?? await (async () => {
-			const f = this.plugin.app.vault.getAbstractFileByPath(noteId);
-			if (!(f instanceof TFile)) throw new Error("Unable to read file");
-			const md = await this.plugin.app.vault.read(f);
-			const title = f.basename;
-			return await cleanMarkdownToPlainText(`${title}\n\n${md}`, this.plugin);
-		})();
+		);
 	}
 
 	listIds() {
@@ -37,4 +43,16 @@ export class ObsidianNoteSource implements NoteSource {
 		return text.length === 0;
 	}
 
+	private async measure<T>(name: string, run: () => Promise<T>): Promise<T> {
+		if (this.performanceMonitor) {
+			return await this.performanceMonitor.measure(name, run);
+		}
+		return await run();
+	}
+
+	private countParagraphs(text: string): number {
+		const trimmed = text.trim();
+		if (!trimmed) return 0;
+		return trimmed.split(/\n\s*\n/).filter(Boolean).length;
+	}
 }

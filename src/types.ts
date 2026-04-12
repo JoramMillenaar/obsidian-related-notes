@@ -57,6 +57,8 @@ export interface IndexStorage {
 export interface NoteSource {
 	getTextById(noteId: string): Promise<string>;
 
+	getTextProfileById(noteId: string): Promise<NoteTextProfile>;
+
 	listIds(): string[];
 
 	isEmpty(noteId: string): Promise<boolean>;
@@ -75,10 +77,75 @@ export type PerformanceSample = {
 	lastMs: number;
 };
 
+export type NoteTextProfile = {
+	rawText: string;
+	cleanText: string;
+	rawChars: number;
+	cleanChars: number;
+	paragraphCount: number;
+};
+
+export type NotePerformanceSample = {
+	noteId: string;
+	rawChars: number;
+	cleanChars: number;
+	paragraphCount: number;
+	chunkCount: number;
+	embedCallsPerNote: number;
+	avgInputLengthPerCall: number;
+	getTextMs: number;
+	embedMs: number;
+	saveMs: number;
+	totalMs: number;
+	outcome: "indexed" | "skipped" | "failed";
+	reason?: string;
+};
+
+export type PerformancePercentiles = {
+	p50: number;
+	p90: number;
+	p95: number;
+	p99: number;
+};
+
+export type SchedulerSample = {
+	notesProcessed: number;
+	durationMs: number;
+	notesPerSecond: number;
+	yieldCount: number;
+	longestBlockMs: number;
+	longestYieldGapMs: number;
+};
+
+export type PerformanceReport = {
+	operations: PerformanceSample[];
+	noteProfiles: NotePerformanceSample[];
+	embedMsPercentiles: PerformancePercentiles;
+	totalMsPercentiles: PerformancePercentiles;
+	scheduler: {
+		runs: number;
+		avgNotesPerSecond: number;
+		maxNotesPerSecond: number;
+		longestBlockMs: number;
+		longestYieldGapMs: number;
+	};
+	counters: {
+		skippedNotes: number;
+		failedNotes: number;
+		failedEmbeddings: number;
+	};
+};
+
 export interface PerformanceMonitor {
 	measure<T>(name: string, run: () => Promise<T> | T): Promise<T>;
 
-	getReport(): PerformanceSample[];
+	recordNoteProfile(sample: NotePerformanceSample): void;
+
+	recordSchedulerSample(sample: SchedulerSample): void;
+
+	incrementCounter(name: "skippedNotes" | "failedNotes" | "failedEmbeddings", amount?: number): void;
+
+	getReport(): PerformanceReport;
 
 	reset(): void;
 }

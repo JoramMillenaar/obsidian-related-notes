@@ -3,6 +3,10 @@ import { yieldToUI } from "../domain/yieldToUI";
 import { IndexRepository, OnProgressCallback, PerformanceMonitor, SyncResults } from "../types";
 import { IndexNoteUseCase } from "./indexNote";
 
+function now(): number {
+	return globalThis.performance?.now?.() ?? Date.now();
+}
+
 
 export type ExecuteSyncActionsUseCase = (args: {
 	actions: ReconciliationResult<string>;
@@ -20,6 +24,11 @@ export function makeExecuteSyncActions(deps: {
 		return await deps.performanceMonitor.measure(
 			"usecase.executeSyncActions",
 			async () => {
+				const runStartedAt = now();
+				let lastYieldEndedAt = runStartedAt;
+				let longestBlockMs = 0;
+				let longestYieldGapMs = 0;
+				let yieldCount = 0;
 				const {
 					actions,
 					batchSize = 25,
@@ -41,7 +50,13 @@ export function makeExecuteSyncActions(deps: {
 					onProgress?.({phase: "delete", processed: deleted, total: toRemove.length});
 
 					if (deleted % batchSize === 0) {
+						const blockingWindowMs = now() - lastYieldEndedAt;
+						longestBlockMs = Math.max(longestBlockMs, blockingWindowMs);
 						await onBatchComplete();
+						const yieldEndedAt = now();
+						longestYieldGapMs = Math.max(longestYieldGapMs, yieldEndedAt - lastYieldEndedAt);
+						lastYieldEndedAt = yieldEndedAt;
+						yieldCount++;
 					}
 				}
 
@@ -58,9 +73,28 @@ export function makeExecuteSyncActions(deps: {
 					onProgress?.({phase: "index", processed: indexed, total: toAdd.length});
 
 					if (indexed % batchSize === 0) {
+						const blockingWindowMs = now() - lastYieldEndedAt;
+						longestBlockMs = Math.max(longestBlockMs, blockingWindowMs);
 						await onBatchComplete();
+						const yieldEndedAt = now();
+						longestYieldGapMs = Math.max(longestYieldGapMs, yieldEndedAt - lastYieldEndedAt);
+						lastYieldEndedAt = yieldEndedAt;
+						yieldCount++;
 					}
 				}
+
+				const remainingBlockMs = now() - lastYieldEndedAt;
+				longestBlockMs = Math.max(longestBlockMs, remainingBlockMs);
+				const durationMs = now() - runStartedAt;
+				const notesProcessed = indexed + deleted;
+				deps.performanceMonitor.recordSchedulerSample({
+					notesProcessed,
+					durationMs,
+					notesPerSecond: durationMs > 0 ? notesProcessed / (durationMs / 1000) : 0,
+					yieldCount,
+					longestBlockMs,
+					longestYieldGapMs,
+				});
 
 				return {
 					indexed,

@@ -1,11 +1,11 @@
-import { PerformanceMonitor, PerformanceSample } from "../types";
+import { PerformanceMonitor, PerformanceReport } from "../types";
 
-export type GetPerformanceReportUseCase = () => PerformanceSample[];
+export type GetPerformanceReportUseCase = () => PerformanceReport;
 
 export function makeGetPerformanceReport(deps: {
 	performanceMonitor: PerformanceMonitor;
 }): GetPerformanceReportUseCase {
-	return function getPerformanceReport(): PerformanceSample[] {
+	return function getPerformanceReport(): PerformanceReport {
 		return deps.performanceMonitor.getReport();
 	};
 }
