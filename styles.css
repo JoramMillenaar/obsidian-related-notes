@@ -43,3 +43,19 @@
 	opacity: 0.7;
 	font-size: 0.85em;
 }
+
+.similarity-setting-section-heading {
+	cursor: pointer;
+}
+
+.similarity-setting-section-heading .setting-item-name::before {
+	content: "\25B6";
+	display: inline-block;
+	margin-right: 0.5em;
+	font-size: 0.8em;
+	transition: transform 120ms ease;
+}
+
+.similarity-setting-section-heading.is-open .setting-item-name::before {
+	transform: rotate(90deg);
+}

@@ -121,6 +121,7 @@ export type PrepareNoteResult =
 export interface SimilaritySettings {
 	ignoredPaths: string[];
 	initialIndexCompleted: boolean;
+	advancedOpen: boolean;
 	maxRawMarkdownChars: number;
 	maxExtractedChars: number;
 	maxChunks: number;

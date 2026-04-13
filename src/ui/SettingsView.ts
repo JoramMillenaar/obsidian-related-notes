@@ -29,6 +29,7 @@ export class SettingView extends PluginSettingTab {
 	private async render(containerEl: HTMLElement) {
 		const settings = await this.deps.settingsRepo.get();
 		let draftIgnored = settings.ignoredPaths;
+		let advancedOpen = settings.advancedOpen;
 		const draftIndexing = {
 			maxRawMarkdownChars: settings.maxRawMarkdownChars,
 			maxExtractedChars: settings.maxExtractedChars,
@@ -50,10 +51,40 @@ export class SettingView extends PluginSettingTab {
 				text.inputEl.cols = 40;
 			});
 
-		containerEl.createEl("h3", {text: "Advanced indexing"});
+		const advancedSection = containerEl.createDiv("similarity-setting-section");
+		const advancedHeading = new Setting(advancedSection)
+			.setName("Advanced")
+			.setHeading()
+			.setClass("similarity-setting-section-heading");
+		advancedHeading.settingEl.tabIndex = 0;
+		advancedHeading.settingEl.setAttr("role", "button");
+
+		const advancedBody = advancedSection.createDiv("similarity-setting-section-body");
+		const renderAdvancedSection = () => {
+			advancedBody.style.display = advancedOpen ? "block" : "none";
+			advancedHeading.settingEl.toggleClass("is-open", advancedOpen);
+			advancedHeading.settingEl.setAttr("aria-expanded", String(advancedOpen));
+		};
+		const toggleAdvancedSection = async () => {
+			advancedOpen = !advancedOpen;
+			await this.deps.settingsRepo.updatePartial({advancedOpen});
+			renderAdvancedSection();
+		};
+
+		advancedHeading.settingEl.addEventListener("click", () => {
+			void toggleAdvancedSection();
+		});
+		advancedHeading.settingEl.addEventListener("keydown", (event: KeyboardEvent) => {
+			if (event.key !== "Enter" && event.key !== " ") {
+				return;
+			}
+
+			event.preventDefault();
+			void toggleAdvancedSection();
+		});
 
 		this.addNumericSetting(
-			containerEl,
+			advancedBody,
 			"Max raw markdown characters",
 			"Upper bound applied before MarkdownRenderer runs.",
 			settings.maxRawMarkdownChars,
@@ -62,7 +93,7 @@ export class SettingView extends PluginSettingTab {
 			},
 		);
 		this.addNumericSetting(
-			containerEl,
+			advancedBody,
 			"Max extracted characters",
 			"Upper bound for prepared plain text after extraction and title weighting.",
 			settings.maxExtractedChars,
@@ -71,7 +102,7 @@ export class SettingView extends PluginSettingTab {
 			},
 		);
 		this.addNumericSetting(
-			containerEl,
+			advancedBody,
 			"Max chunks",
 			"Maximum embedding chunks kept per note after chunking.",
 			settings.maxChunks,
@@ -80,7 +111,7 @@ export class SettingView extends PluginSettingTab {
 			},
 		);
 		this.addNumericSetting(
-			containerEl,
+			advancedBody,
 			"Title weight",
 			"How many times the note title is prepended before chunking.",
 			settings.titleWeight,
@@ -88,6 +119,7 @@ export class SettingView extends PluginSettingTab {
 				draftIndexing.titleWeight = value;
 			},
 		);
+		renderAdvancedSection();
 
 		new Setting(containerEl)
 			.setName("Save settings")

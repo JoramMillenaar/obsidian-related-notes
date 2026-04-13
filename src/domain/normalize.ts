@@ -6,6 +6,7 @@ export function normalizeSettings(
 ): SimilaritySettings {
 	const ignored = value?.ignoredPaths;
 	const initialIndexCompleted = value?.initialIndexCompleted;
+	const advancedOpen = value?.advancedOpen;
 	const maxRawMarkdownChars = value?.maxRawMarkdownChars;
 	const maxExtractedChars = value?.maxExtractedChars;
 	const maxChunks = value?.maxChunks;
@@ -18,6 +19,9 @@ export function normalizeSettings(
 		initialIndexCompleted: typeof initialIndexCompleted === "boolean"
 			? initialIndexCompleted
 			: false,
+		advancedOpen: typeof advancedOpen === "boolean"
+			? advancedOpen
+			: DEFAULT_SETTINGS.advancedOpen,
 		maxRawMarkdownChars: typeof maxRawMarkdownChars === "number" && maxRawMarkdownChars > 0
 			? maxRawMarkdownChars
 			: DEFAULT_SETTINGS.maxRawMarkdownChars,
