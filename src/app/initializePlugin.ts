@@ -82,5 +82,5 @@ export async function initializePlugin(
 		}),
 	);
 
-	await activateRightLeafView(plugin);
+	await activateRightLeafView(plugin, {reveal: false, focus: false});
 }
