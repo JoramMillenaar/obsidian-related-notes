@@ -1,5 +1,11 @@
 export type Embedding = number[];
 
+export type RawNote = {
+	id: string;
+	title: string;
+	markdown: string;
+};
+
 export type IndexedNote = {
 	id: string;
 	embedding: number[];
@@ -30,6 +36,10 @@ export interface EmbeddingPort {
 	unload(): void;
 }
 
+export interface MarkdownTextExtractor {
+	extract(markdown: string): Promise<string>;
+}
+
 export interface IndexRepository {
 	findById(noteId: string): Promise<IndexedNote | null>;
 
@@ -55,11 +65,9 @@ export interface IndexStorage {
 }
 
 export interface NoteSource {
-	getTextById(noteId: string): Promise<string>;
+	getNoteById(noteId: string): Promise<RawNote | null>;
 
 	listIds(): string[];
-
-	isEmpty(noteId: string): Promise<boolean>;
 }
 
 export interface ActiveEditor {
@@ -82,10 +90,41 @@ export interface SettingsRepository {
 
 export type OnProgressCallback = (p: { phase: string; processed: number; total: number }) => void;
 
+export type IndexingWarning =
+	| "raw-markdown-truncated"
+	| "prepared-text-truncated"
+	| "chunk-limit-reached";
+
+export type PrepareNoteRejectReason =
+	| "missing-note"
+	| "empty-content"
+	| "non-semantic-content";
+
+export type PreparedNoteForEmbedding = {
+	noteId: string;
+	preparedText: string;
+	chunks: string[];
+	warnings: IndexingWarning[];
+};
+
+export type PrepareNoteResult =
+	| {
+		status: "ready";
+		value: PreparedNoteForEmbedding;
+	}
+	| {
+		status: "reject";
+		reason: PrepareNoteRejectReason;
+		warnings: IndexingWarning[];
+	};
 
 export interface SimilaritySettings {
 	ignoredPaths: string[];
 	initialIndexCompleted: boolean;
+	maxRawMarkdownChars: number;
+	maxExtractedChars: number;
+	maxChunks: number;
+	titleWeight: number;
 }
 
 export interface SimilarityPluginData {

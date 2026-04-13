@@ -43,17 +43,21 @@ export function makeExecuteSyncActions(deps: {
 
 		// Phase 2: Index new notes
 		let indexed = 0;
+		let processed = 0;
 		for (const noteId of toAdd) {
 			try {
-				await deps.indexNote(noteId);
-				indexed++;
+				const outcome = await deps.indexNote(noteId);
+				if (outcome === "indexed") {
+					indexed++;
+				}
 			} catch (error) {
 				console.error(`Failed to index note ${noteId}:`, error);
 			}
 
-			onProgress?.({phase: "index", processed: indexed, total: toAdd.length});
+			processed++;
+			onProgress?.({phase: "index", processed, total: toAdd.length});
 
-			if (indexed % batchSize === 0) {
+			if (processed % batchSize === 0) {
 				await onBatchComplete();
 			}
 		}

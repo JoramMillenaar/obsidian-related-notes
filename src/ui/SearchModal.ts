@@ -2,14 +2,13 @@ import { App, Notice, Platform, SuggestModal, TFile } from "obsidian";
 import { InsertWikilinkAtCursorUseCase } from "../app/insertWikilinkAtCursor";
 import { KeyedDebouncer } from "../domain/debouncer";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexRepository, NoteSource, RelatedNote } from "../types";
+import { IndexRepository, RelatedNote } from "../types";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
 
 export type SearchModalDeps = {
 	getSimilarNotes: GetSimilarNotesUseCase;
 	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
 	indexRepo: IndexRepository;
-	noteSource: NoteSource;
 	isIgnoredPath: (path: string) => Promise<boolean>;
 	isInitialIndexCompleted: () => Promise<boolean>;
 }
@@ -25,7 +24,6 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	private static readonly NEEDS_INITIAL_INDEX_STATE = "Run “Sync vault index” first to build your semantic index.";
 	private static readonly EMPTY_INDEX_STATE = "Your index is empty. Run “Sync vault index” to rebuild it.";
 	private static readonly IGNORED_NOTE_STATE = "The current note is ignored by settings.";
-	private static readonly EMPTY_NOTE_STATE = "The current note is empty. Add content to see related notes.";
 	private static readonly NON_MARKDOWN_NOTE_STATE = this.DEFAULT_EMPTY_STATE;
 	private static readonly NO_ACTIVE_NOTE_STATE = "Open a note to see similar notes.";
 
@@ -161,11 +159,10 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 		this.onNoSuggestion();
 
 		try {
-			const [isInitialIndexCompleted, indexEmpty, isIgnored, noteEmpty] = await Promise.all([
+			const [isInitialIndexCompleted, indexEmpty, isIgnored] = await Promise.all([
 				this.deps.isInitialIndexCompleted(),
 				this.deps.indexRepo.isEmpty(),
 				this.deps.isIgnoredPath(active.path),
-				this.deps.noteSource.isEmpty(active.path),
 			]);
 
 			if (!isInitialIndexCompleted) {
@@ -180,13 +177,8 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 				this.emptyStateText = SearchModal.IGNORED_NOTE_STATE;
 				return [];
 			}
-			if (noteEmpty) {
-				this.emptyStateText = SearchModal.EMPTY_NOTE_STATE;
-				return [];
-			}
 
-			const noteText = await this.deps.noteSource.getTextById(active.path);
-			const results = await this.deps.getSimilarNotes({noteId: active.path, text: noteText});
+			const results = await this.deps.getSimilarNotes({noteId: active.path});
 			this.emptyStateText = results.length > 0
 				? SearchModal.DEFAULT_EMPTY_STATE
 				: SearchModal.NO_RESULTS_EMPTY_STATE;

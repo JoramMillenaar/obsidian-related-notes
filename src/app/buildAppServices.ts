@@ -1,6 +1,7 @@
 import { Plugin } from "obsidian";
 import { KeyedDebouncer } from "../domain/debouncer";
 import { ObsidianStatusBar } from "../infra/obsidian/obsidianStatusBar";
+import { ObsidianMarkdownTextExtractor } from "../infra/obsidian/obsidianMarkdownTextExtractor";
 import { ObsidianNoteSource } from "../infra/obsidian/obsidianNoteSource";
 import { ObsidianPluginDataIndexStorage } from "../infra/obsidian/obsidianStorage";
 import { EmbeddingProvider } from "../infra/embedder/embeddingProvider";
@@ -11,11 +12,12 @@ import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./ins
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
 import { makeGetSyncActions } from "./getSyncActions";
 import { makeExecuteSyncActions } from "./executeSyncActions";
-import { makeEmbedText } from "./embedText";
+import { makeEmbedChunks, makeEmbedText } from "./embedText";
 import {
 	EmbeddingPort,
 	IndexRepository,
 	IndexStorage,
+	MarkdownTextExtractor,
 	NoteSource,
 	SettingsRepository,
 	StatusReporter,
@@ -23,7 +25,7 @@ import {
 import { ObsidianPluginDataStore } from "../infra/obsidian/obsidianPluginDataStore";
 import { ObsidianSettingsRepository } from "../infra/obsidian/obsidianSettings";
 import { IsIgnoredPath, makeIsIgnoredPath } from "./isIgnoredPath";
-import { makeUpdateIgnoredPaths, UpdateIgnoredPathsUseCase } from "./updateIgnoredPaths";
+import { makeUpdateSettings, UpdateSettingsUseCase } from "./updateSettings";
 import {
 	IsInitialIndexCompletedUseCase,
 	makeIsInitialIndexCompleted,
@@ -31,21 +33,24 @@ import {
 	MarkInitialIndexCompletedUseCase,
 } from "./initialIndexState";
 import { ObsidianActiveEditor } from "../infra/obsidian/obsidianActiveEditor";
+import { makePrepareNoteForEmbedding, PrepareNoteForEmbeddingUseCase } from "./prepareNoteForEmbedding";
 
 export type AppServices = {
 	status: StatusReporter;
 	noteSource: NoteSource;
+	markdownTextExtractor: MarkdownTextExtractor;
 	indexStorage: IndexStorage;
 	embedder: EmbeddingPort;
 	indexRepo: IndexRepository;
 	settingsRepo: SettingsRepository;
 
 	indexNote: IndexNoteUseCase;
+	prepareNoteForEmbedding: PrepareNoteForEmbeddingUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase;
 	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
 	syncIndexToVault: SyncIndexToVaultUseCase;
 	isIgnoredPath: IsIgnoredPath;
-	updateIgnoredPaths: UpdateIgnoredPathsUseCase;
+	updateSettings: UpdateSettingsUseCase;
 	isInitialIndexCompleted: IsInitialIndexCompletedUseCase;
 	markInitialIndexCompleted: MarkInitialIndexCompletedUseCase;
 
@@ -57,10 +62,12 @@ export type AppServices = {
 export function buildAppServices(plugin: Plugin): AppServices {
 	const status = new ObsidianStatusBar(plugin);
 	const noteSource = new ObsidianNoteSource(plugin);
+	const markdownTextExtractor = new ObsidianMarkdownTextExtractor(plugin);
 	const storage = new ObsidianPluginDataStore(plugin);
 	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
 	const embedder = new EmbeddingProvider();
 	const embedText = makeEmbedText({ embedder });
+	const embedChunks = makeEmbedChunks({ embedder });
 	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
 	const settingsRepo = new ObsidianSettingsRepository(storage);
 	const activeEditor = new ObsidianActiveEditor(plugin);
@@ -69,9 +76,15 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		settingsRepo,
 	})
 
-	const indexNote = makeIndexNote({
+	const prepareNoteForEmbedding = makePrepareNoteForEmbedding({
 		noteSource,
-		embedText,
+		markdownTextExtractor,
+		settingsRepo,
+	});
+
+	const indexNote = makeIndexNote({
+		prepareNoteForEmbedding,
+		embedChunks,
 		indexRepo,
 		isIgnoredPath,
 	});
@@ -79,6 +92,8 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const getSimilarNotes = makeGetSimilarNotes({
 		indexRepo,
 		embedText,
+		embedChunks,
+		prepareNoteForEmbedding,
 	});
 
 	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({
@@ -104,7 +119,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 
 	const upsertDebouncer = new KeyedDebouncer<string>(1100);
 
-	const updateIgnoredPaths = makeUpdateIgnoredPaths({
+	const updateSettings = makeUpdateSettings({
 		settingsRepo,
 		indexStorage,
 		syncIndexToVault
@@ -115,16 +130,18 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	return {
 		status,
 		noteSource,
+		markdownTextExtractor,
 		indexStorage,
 		embedder,
 		indexRepo,
 		settingsRepo,
 		indexNote,
+		prepareNoteForEmbedding,
 		getSimilarNotes,
 		insertWikilinkAtCursor,
 		syncIndexToVault,
 		isIgnoredPath,
-		updateIgnoredPaths,
+		updateSettings,
 		isInitialIndexCompleted,
 		markInitialIndexCompleted,
 		upsertDebouncer,

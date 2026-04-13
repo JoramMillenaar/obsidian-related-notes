@@ -1,45 +1,62 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexRepository, NoteSource } from "../types";
-import { EmbedTextUseCase } from "./embedText";
+import { IndexRepository, PrepareNoteResult } from "../types";
+import { EmbedChunksUseCase } from "./embedText";
 import { IsIgnoredPath } from "./isIgnoredPath";
+import { PrepareNoteForEmbeddingUseCase } from "./prepareNoteForEmbedding";
 
 export type IndexNoteDeps = {
-	noteSource: NoteSource;
-	embedText: EmbedTextUseCase;
+	prepareNoteForEmbedding: PrepareNoteForEmbeddingUseCase;
+	embedChunks: EmbedChunksUseCase;
 	indexRepo: IndexRepository;
 	isIgnoredPath: IsIgnoredPath;
 };
 
-export type IndexNoteUseCase = (noteId: string) => Promise<void>;
+export type IndexNoteOutcome = "indexed" | "removed" | "unchanged";
+export type IndexNoteUseCase = (noteId: string) => Promise<IndexNoteOutcome>;
 
 export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 	return async function indexNote(noteId: string) {
 		if (!isMarkdownPath(noteId)) {
 			await deps.indexRepo.remove(noteId);
-			return;
+			return "removed";
 		}
 
 		if (await deps.isIgnoredPath(noteId)) {
 			await deps.indexRepo.remove(noteId);
-			return;
+			return "removed";
 		}
 
-		const text = await deps.noteSource.getTextById(noteId);
-		if (text == null) throw new Error(`Could not find note with id ${noteId}`);
+		let prepared: PrepareNoteResult;
+		try {
+			prepared = await deps.prepareNoteForEmbedding(noteId);
+		} catch (error) {
+			await deps.indexRepo.remove(noteId);
+			throw error;
+		}
+		if (prepared.status === "reject") {
+			await deps.indexRepo.remove(noteId);
+			return "removed";
+		}
 
-		const contentHash = hashText(text);
+		const contentHash = hashText(prepared.value.preparedText);
 
 		const existing = await deps.indexRepo.findById(noteId);
 		if (existing && existing.contentHash === contentHash) {
-			return;
+			return "unchanged";
 		}
 
-		const rawEmbedding = await deps.embedText(text);
+		let rawEmbedding: number[] | null;
+		try {
+			rawEmbedding = await deps.embedChunks(prepared.value.chunks);
+		} catch (error) {
+			await deps.indexRepo.remove(noteId);
+			throw error;
+		}
 		if (!rawEmbedding?.length) {
 			await deps.indexRepo.remove(noteId);
-			return;
+			return "removed";
 		}
 
 		const indexedNote = {
@@ -50,5 +67,6 @@ export function makeIndexNote(deps: IndexNoteDeps): IndexNoteUseCase {
 		};
 
 		await deps.indexRepo.upsert(indexedNote);
+		return "indexed";
 	}
 }

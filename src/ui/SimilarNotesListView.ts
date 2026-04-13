@@ -1,7 +1,7 @@
 import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import { SyncIndexToVaultUseCase } from "../app/syncIndexToVault";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
-import { IndexRepository, NoteSource } from "../types";
+import { IndexRepository } from "../types";
 import { IndexNoteUseCase } from "../app/indexNote";
 import { isMarkdownPath } from "../domain/markdownPath";
 
@@ -21,7 +21,6 @@ type SimilarNote = { id: string; score: number };
 
 export type SimilarNotesListViewDeps = {
 	indexRepo: IndexRepository,
-	noteSource: NoteSource,
 	indexNote: IndexNoteUseCase;
 	getSimilarNotes: GetSimilarNotesUseCase,
 	indexVault: SyncIndexToVaultUseCase,
@@ -134,9 +133,8 @@ export class SimilarNotesListView extends ItemView {
 				return;
 			}
 
-			const [indexEmpty, noteEmpty, initialIndexCompleted] = await Promise.all([
+			const [indexEmpty, initialIndexCompleted] = await Promise.all([
 				this.deps.indexRepo.isEmpty(),
-				this.deps.noteSource.isEmpty(active.path),
 				this.deps.isInitialIndexCompleted(),
 			]);
 
@@ -154,11 +152,6 @@ export class SimilarNotesListView extends ItemView {
 			if (indexEmpty) {
 				loadingEl.remove();
 				this.renderMessage(container, "Your index currently has no notes. Run “Sync vault index” to rebuild it.");
-				return;
-			}
-			if (noteEmpty) {
-				loadingEl.remove();
-				this.renderMessage(container, "The current note is empty. Add content to see related notes.");
 				return;
 			}
 
@@ -189,8 +182,7 @@ export class SimilarNotesListView extends ItemView {
 	}
 
 	private async loadSimilarNotesForActiveFile(notePath: string): Promise<SimilarNote[]> {
-		const noteText = await this.deps.noteSource.getTextById(notePath);
-		return this.deps.getSimilarNotes({noteId: notePath, text: noteText});
+		return this.deps.getSimilarNotes({noteId: notePath});
 	}
 
 	private renderRelatedList(container: HTMLElement, related: SimilarNote[]) {

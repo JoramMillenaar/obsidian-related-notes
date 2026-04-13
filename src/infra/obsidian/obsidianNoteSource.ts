@@ -1,26 +1,22 @@
 import { Plugin, TFile } from "obsidian";
-import { cleanMarkdownToPlainText } from "../../domain/text";
-import { NoteSource } from "../../types";
+import { NoteSource, RawNote } from "../../types";
 
 export class ObsidianNoteSource implements NoteSource {
 	constructor(private readonly plugin: Plugin) {
 	}
 
-	async getTextById(noteId: string): Promise<string> {
+	async getNoteById(noteId: string): Promise<RawNote | null> {
 		const f = this.plugin.app.vault.getAbstractFileByPath(noteId);
-		if (!(f instanceof TFile)) throw new Error("Unable to read file");
-		const md = await this.plugin.app.vault.read(f);
-		const title = f.basename;
-		return await cleanMarkdownToPlainText(`${title}\n\n${md}`, this.plugin)
+		if (!(f instanceof TFile)) return null;
+
+		return {
+			id: noteId,
+			title: f.basename,
+			markdown: await this.plugin.app.vault.read(f),
+		};
 	}
 
 	listIds() {
 		return this.plugin.app.vault.getMarkdownFiles().map(f => f.path);
 	}
-
-	async isEmpty(noteId: string) {
-		const text = await this.getTextById(noteId);
-		return text.length === 0;
-	}
-
 }

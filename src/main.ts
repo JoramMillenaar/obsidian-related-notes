@@ -16,7 +16,7 @@ export default class RelatedNotes extends Plugin {
 
 		this.addSettingTab(new SettingView(this.app, this, {
 			settingsRepo: this.appServices.settingsRepo,
-			updateIgnoredPaths: this.appServices.updateIgnoredPaths
+			updateSettings: this.appServices.updateSettings
 		}));
 
 		this.registerView(
@@ -24,7 +24,6 @@ export default class RelatedNotes extends Plugin {
 			(leaf) =>
 				new SimilarNotesListView(leaf, {
 					indexRepo: this.appServices.indexRepo,
-					noteSource: this.appServices.noteSource,
 					indexNote: this.appServices.indexNote,
 					getSimilarNotes: this.appServices.getSimilarNotes,
 					indexVault: this.appServices.syncIndexToVault,
@@ -71,9 +70,15 @@ export default class RelatedNotes extends Plugin {
 
 				this.appServices.status.update("Indexing current note…");
 				try {
-					await this.appServices.indexNote(f.path);
+					const outcome = await this.appServices.indexNote(f.path);
 					this.refreshView();
-					this.appServices.status.update("Current note indexed", 2000);
+					if (outcome === "indexed") {
+						this.appServices.status.update("Current note indexed", 2000);
+					} else if (outcome === "removed") {
+						this.appServices.status.update("Current note removed from index", 2500);
+					} else {
+						this.appServices.status.update("Current note already up to date", 2000);
+					}
 				} catch (error) {
 					this.appServices.status.update("Index failed (see console)", 5000);
 					console.error("[Similarity] Reindex current failed", error);
@@ -90,7 +95,6 @@ export default class RelatedNotes extends Plugin {
 					insertWikilinkAtCursor: this.appServices.insertWikilinkAtCursor,
 					isInitialIndexCompleted: this.appServices.isInitialIndexCompleted,
 					indexRepo: this.appServices.indexRepo,
-					noteSource: this.appServices.noteSource,
 					isIgnoredPath: this.appServices.isIgnoredPath,
 				}).open();
 			},

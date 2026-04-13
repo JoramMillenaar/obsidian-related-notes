@@ -6,6 +6,10 @@ export function normalizeSettings(
 ): SimilaritySettings {
 	const ignored = value?.ignoredPaths;
 	const initialIndexCompleted = value?.initialIndexCompleted;
+	const maxRawMarkdownChars = value?.maxRawMarkdownChars;
+	const maxExtractedChars = value?.maxExtractedChars;
+	const maxChunks = value?.maxChunks;
+	const titleWeight = value?.titleWeight;
 
 	return {
 		ignoredPaths: Array.isArray(ignored)
@@ -14,6 +18,18 @@ export function normalizeSettings(
 		initialIndexCompleted: typeof initialIndexCompleted === "boolean"
 			? initialIndexCompleted
 			: false,
+		maxRawMarkdownChars: typeof maxRawMarkdownChars === "number" && maxRawMarkdownChars > 0
+			? maxRawMarkdownChars
+			: DEFAULT_SETTINGS.maxRawMarkdownChars,
+		maxExtractedChars: typeof maxExtractedChars === "number" && maxExtractedChars > 0
+			? maxExtractedChars
+			: DEFAULT_SETTINGS.maxExtractedChars,
+		maxChunks: typeof maxChunks === "number" && maxChunks > 0
+			? maxChunks
+			: DEFAULT_SETTINGS.maxChunks,
+		titleWeight: typeof titleWeight === "number" && titleWeight >= 0
+			? titleWeight
+			: DEFAULT_SETTINGS.titleWeight,
 	};
 }
 

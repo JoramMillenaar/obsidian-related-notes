@@ -1,12 +1,12 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import RelatedNotes from "../main";
 import { parseIgnoredPaths } from "../domain/ignoreRules";
-import { SettingsRepository } from "../types";
-import { UpdateIgnoredPathsUseCase } from "../app/updateIgnoredPaths";
+import { SettingsRepository, SimilaritySettings } from "../types";
+import { UpdateSettingsUseCase } from "../app/updateSettings";
 
 export type SettingsViewDeps = {
 	settingsRepo: SettingsRepository,
-	updateIgnoredPaths: UpdateIgnoredPathsUseCase,
+	updateSettings: UpdateSettingsUseCase,
 }
 
 
@@ -29,6 +29,12 @@ export class SettingView extends PluginSettingTab {
 	private async render(containerEl: HTMLElement) {
 		const settings = await this.deps.settingsRepo.get();
 		let draftIgnored = settings.ignoredPaths;
+		const draftIndexing = {
+			maxRawMarkdownChars: settings.maxRawMarkdownChars,
+			maxExtractedChars: settings.maxExtractedChars,
+			maxChunks: settings.maxChunks,
+			titleWeight: settings.titleWeight,
+		};
 
 		new Setting(containerEl)
 			.setName("Ignored paths/folders")
@@ -44,6 +50,45 @@ export class SettingView extends PluginSettingTab {
 				text.inputEl.cols = 40;
 			});
 
+		containerEl.createEl("h3", {text: "Advanced indexing"});
+
+		this.addNumericSetting(
+			containerEl,
+			"Max raw markdown characters",
+			"Upper bound applied before MarkdownRenderer runs.",
+			settings.maxRawMarkdownChars,
+			(value) => {
+				draftIndexing.maxRawMarkdownChars = value;
+			},
+		);
+		this.addNumericSetting(
+			containerEl,
+			"Max extracted characters",
+			"Upper bound for prepared plain text after extraction and title weighting.",
+			settings.maxExtractedChars,
+			(value) => {
+				draftIndexing.maxExtractedChars = value;
+			},
+		);
+		this.addNumericSetting(
+			containerEl,
+			"Max chunks",
+			"Maximum embedding chunks kept per note after chunking.",
+			settings.maxChunks,
+			(value) => {
+				draftIndexing.maxChunks = value;
+			},
+		);
+		this.addNumericSetting(
+			containerEl,
+			"Title weight",
+			"How many times the note title is prepended before chunking.",
+			settings.titleWeight,
+			(value) => {
+				draftIndexing.titleWeight = value;
+			},
+		);
+
 		new Setting(containerEl)
 			.setName("Save settings")
 			.setDesc("Saving updates your similarity results to match these settings.")
@@ -51,7 +96,16 @@ export class SettingView extends PluginSettingTab {
 				button.setButtonText("Save").setCta().onClick(async () => {
 					button.setDisabled(true);
 					try {
-						const syncResult = await this.deps.updateIgnoredPaths(draftIgnored);
+						const validationError = validateIndexingSettings(draftIndexing);
+						if (validationError) {
+							new Notice(validationError);
+							return;
+						}
+
+						const syncResult = await this.deps.updateSettings({
+							ignoredPaths: draftIgnored,
+							...draftIndexing,
+						});
 						if (syncResult) {
 							new Notice(`Settings saved. Re-synced index (indexed: ${syncResult.indexed}, removed: ${syncResult.deleted}).`);
 						} else {
@@ -63,4 +117,48 @@ export class SettingView extends PluginSettingTab {
 				});
 			});
 	}
+
+	private addNumericSetting(
+		containerEl: HTMLElement,
+		name: string,
+		description: string,
+		initialValue: number,
+		onChange: (value: number) => void,
+	) {
+		new Setting(containerEl)
+			.setName(name)
+			.setDesc(description)
+			.addText((text) => {
+				text
+					.setPlaceholder(String(initialValue))
+					.setValue(String(initialValue))
+					.onChange((value) => {
+						const parsed = Number.parseInt(value, 10);
+						if (Number.isFinite(parsed)) {
+							onChange(parsed);
+						}
+					});
+				text.inputEl.inputMode = "numeric";
+			});
+	}
+}
+
+function validateIndexingSettings(settings: Pick<
+	SimilaritySettings,
+	"maxRawMarkdownChars" | "maxExtractedChars" | "maxChunks" | "titleWeight"
+>): string | null {
+	if (settings.maxRawMarkdownChars <= 0) {
+		return "Max raw markdown characters must be greater than 0.";
+	}
+	if (settings.maxExtractedChars <= 0) {
+		return "Max extracted characters must be greater than 0.";
+	}
+	if (settings.maxChunks <= 0) {
+		return "Max chunks must be greater than 0.";
+	}
+	if (settings.titleWeight < 0) {
+		return "Title weight cannot be negative.";
+	}
+
+	return null;
 }
