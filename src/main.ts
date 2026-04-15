@@ -24,12 +24,12 @@ export default class RelatedNotes extends Plugin {
 			(leaf) =>
 				new SimilarNotesListView(leaf, {
 					indexRepo: this.appServices.indexRepo,
-					indexNote: this.appServices.indexNote,
 					getSimilarNotes: this.appServices.getSimilarNotes,
-					indexVault: this.appServices.syncIndexToVault,
+					startOrRefreshIndexSync: this.appServices.startOrRefreshIndexSync,
+					bumpIndexPriority: this.appServices.bumpIndexPriority,
+					awaitIndexedNote: this.appServices.awaitIndexedNote,
+					subscribeIndexingState: this.appServices.subscribeIndexingState,
 					isIgnoredPath: this.appServices.isIgnoredPath,
-					isInitialIndexCompleted: this.appServices.isInitialIndexCompleted,
-					markInitialIndexCompleted: this.appServices.markInitialIndexCompleted,
 				})
 		);
 
@@ -44,7 +44,6 @@ export default class RelatedNotes extends Plugin {
 							this.appServices.status.update(`${p.processed}/${p.total} indexed`);
 						},
 					});
-					await this.appServices.markInitialIndexCompleted();
 					this.refreshView();
 					this.appServices.status.update("Index synced", 2500);
 					new Notice("Similarity index synced");
@@ -70,15 +69,10 @@ export default class RelatedNotes extends Plugin {
 
 				this.appServices.status.update("Indexing current note…");
 				try {
-					const outcome = await this.appServices.indexNote(f.path);
+					await this.appServices.bumpIndexPriority(f.path, "manual");
+					await this.appServices.awaitIndexedNote(f.path);
 					this.refreshView();
-					if (outcome === "indexed") {
-						this.appServices.status.update("Current note indexed", 2000);
-					} else if (outcome === "removed") {
-						this.appServices.status.update("Current note removed from index", 2500);
-					} else {
-						this.appServices.status.update("Current note already up to date", 2000);
-					}
+					this.appServices.status.update("Current note refreshed", 2000);
 				} catch (error) {
 					this.appServices.status.update("Index failed (see console)", 5000);
 					console.error("[Similarity] Reindex current failed", error);
@@ -93,7 +87,7 @@ export default class RelatedNotes extends Plugin {
 				new SearchModal(this.app, {
 					getSimilarNotes: this.appServices.getSimilarNotes,
 					insertWikilinkAtCursor: this.appServices.insertWikilinkAtCursor,
-					isInitialIndexCompleted: this.appServices.isInitialIndexCompleted,
+					subscribeIndexingState: this.appServices.subscribeIndexingState,
 					indexRepo: this.appServices.indexRepo,
 					isIgnoredPath: this.appServices.isIgnoredPath,
 				}).open();

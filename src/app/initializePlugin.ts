@@ -12,18 +12,15 @@ export async function initializePlugin(
 	try {
 		await app.embedder.load();
 
-		const isEmpty = await app.indexRepo.isEmpty();
-		if (!isEmpty) {
-			app.status.update("Repairing index…");
-			try {
-				await app.syncIndexToVault({
-					onProgress: (p) => {
-						app.status.update(`${p.processed}/${p.total} indexed`);
-					},
-				});
-			} catch (error) {
+		const [isEmpty, initialIndexCompleted] = await Promise.all([
+			app.indexRepo.isEmpty(),
+			app.isInitialIndexCompleted(),
+		]);
+		if (!initialIndexCompleted || !isEmpty) {
+			app.status.update(initialIndexCompleted ? "Repairing index…" : "Indexing vault…");
+			void app.startOrRefreshIndexSync().catch((error) => {
 				console.error("[Similarity] Index repair failed", error);
-			}
+			});
 		}
 
 		app.status.update("Ready", 1500);
@@ -38,7 +35,7 @@ export async function initializePlugin(
 			if (!(file instanceof TFile)) return;
 
 			app.upsertDebouncer.schedule(file.path, async () => {
-				await app.indexNote(file.path).catch((error) => {
+				await app.bumpIndexPriority(file.path, "edit").catch((error) => {
 					console.error("[Similarity] Reindex failed", error);
 				});
 			});
@@ -51,6 +48,9 @@ export async function initializePlugin(
 
 			void app.indexRepo.remove(file.path).catch((error) => {
 				console.error("[Similarity] Delete from index failed", error);
+			});
+			void app.startOrRefreshIndexSync().catch((error) => {
+				console.error("[Similarity] Queue refresh after delete failed", error);
 			});
 
 			app.status.update("Note removed from index", 1500);
@@ -65,8 +65,8 @@ export async function initializePlugin(
 				console.error("[Similarity] Rename note failed", error);
 			});
 
-			void app.indexNote(file.path).catch((error) => {
-				console.error("[Similarity] Reindex after rename failed", error);
+			void app.startOrRefreshIndexSync().catch((error) => {
+				console.error("[Similarity] Queue refresh after rename failed", error);
 			});
 
 			app.status.update("Index updated (rename)", 1500);
@@ -74,7 +74,13 @@ export async function initializePlugin(
 	);
 
 	plugin.registerEvent(
-		plugin.app.workspace.on("file-open", () => {
+		plugin.app.workspace.on("file-open", (file) => {
+			if (file instanceof TFile) {
+				void app.bumpIndexPriority(file.path, "open").catch((error) => {
+					console.error("[Similarity] Priority bump failed", error);
+				});
+			}
+
 			const leaf = plugin.app.workspace.getLeavesOfType(VIEW_TYPE_SIMILARITY).first();
 			if (leaf && leaf.view instanceof SimilarNotesListView) {
 				void leaf.view.refresh();

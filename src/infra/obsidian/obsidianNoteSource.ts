@@ -1,5 +1,5 @@
 import { Plugin, TFile } from "obsidian";
-import { NoteSource, RawNote } from "../../types";
+import { NoteIndexCandidate, NoteSource, RawNote } from "../../types";
 
 export class ObsidianNoteSource implements NoteSource {
 	constructor(private readonly plugin: Plugin) {
@@ -18,5 +18,16 @@ export class ObsidianNoteSource implements NoteSource {
 
 	listIds() {
 		return this.plugin.app.vault.getMarkdownFiles().map(f => f.path);
+	}
+
+	listIndexCandidates(): NoteIndexCandidate[] {
+		const recentFiles = this.plugin.app.workspace.getLastOpenFiles();
+		const recentOpenRanks = new Map(recentFiles.map((path, index) => [path, index]));
+
+		return this.plugin.app.vault.getMarkdownFiles().map((file) => ({
+			id: file.path,
+			modifiedAt: file.stat.mtime,
+			recentOpenRank: recentOpenRanks.get(file.path),
+		}));
 	}
 }

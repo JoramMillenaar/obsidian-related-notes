@@ -52,7 +52,7 @@ export class IframeMessenger {
 
     async sendMessage(payload: string, retries = 3): Promise<number[] | null> {
         if (!this.iframe || !this.iframe.contentWindow) {
-            throw new Error("Iframe is not ready. Did you call 'initialize()'?");
+            throw new Error("Could not find the Iframe. Is it loaded'?");
         }
 
         for (let attempt = 0; attempt < retries; attempt++) {

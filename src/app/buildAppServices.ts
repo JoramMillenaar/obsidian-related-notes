@@ -10,8 +10,6 @@ import { IndexNoteUseCase, makeIndexNote } from "./indexNote";
 import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./getSimilarNotes";
 import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./insertWikilinkAtCursor";
 import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
-import { makeGetSyncActions } from "./getSyncActions";
-import { makeExecuteSyncActions } from "./executeSyncActions";
 import { makeEmbedChunks, makeEmbedText } from "./embedText";
 import {
 	EmbeddingPort,
@@ -34,6 +32,14 @@ import {
 } from "./initialIndexState";
 import { ObsidianActiveEditor } from "../infra/obsidian/obsidianActiveEditor";
 import { makePrepareNoteForEmbedding, PrepareNoteForEmbeddingUseCase } from "./prepareNoteForEmbedding";
+import {
+	AwaitIndexedNoteUseCase,
+	BumpIndexPriorityUseCase,
+	GetIndexingStateUseCase,
+	makeIndexingCoordinator,
+	StartOrRefreshIndexSyncUseCase,
+	SubscribeIndexingStateUseCase,
+} from "./indexingCoordinator";
 
 export type AppServices = {
 	status: StatusReporter;
@@ -49,6 +55,11 @@ export type AppServices = {
 	getSimilarNotes: GetSimilarNotesUseCase;
 	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
 	syncIndexToVault: SyncIndexToVaultUseCase;
+	startOrRefreshIndexSync: StartOrRefreshIndexSyncUseCase;
+	bumpIndexPriority: BumpIndexPriorityUseCase;
+	awaitIndexedNote: AwaitIndexedNoteUseCase;
+	subscribeIndexingState: SubscribeIndexingStateUseCase;
+	getIndexingState: GetIndexingStateUseCase;
 	isIgnoredPath: IsIgnoredPath;
 	updateSettings: UpdateSettingsUseCase;
 	isInitialIndexCompleted: IsInitialIndexCompletedUseCase;
@@ -66,8 +77,8 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const storage = new ObsidianPluginDataStore(plugin);
 	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
 	const embedder = new EmbeddingProvider();
-	const embedText = makeEmbedText({ embedder });
-	const embedChunks = makeEmbedChunks({ embedder });
+	const embedText = makeEmbedText({embedder});
+	const embedChunks = makeEmbedChunks({embedder});
 	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
 	const settingsRepo = new ObsidianSettingsRepository(storage);
 	const activeEditor = new ObsidianActiveEditor(plugin);
@@ -101,20 +112,16 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		noteSource,
 	});
 
-	const getSyncActions = makeGetSyncActions({
+	const indexingCoordinator = makeIndexingCoordinator({
 		noteSource,
 		indexRepo,
 		settingsRepo,
-	});
-
-	const executeSyncActions = makeExecuteSyncActions({
 		indexNote,
-		indexRepo,
 	});
 
 	const syncIndexToVault = makeSyncIndexToVault({
-		getSyncActions,
-		executeSyncActions,
+		startOrRefreshSync: indexingCoordinator.startOrRefreshSync,
+		subscribe: indexingCoordinator.subscribe,
 	});
 
 	const upsertDebouncer = new KeyedDebouncer<string>(1100);
@@ -122,7 +129,7 @@ export function buildAppServices(plugin: Plugin): AppServices {
 	const updateSettings = makeUpdateSettings({
 		settingsRepo,
 		indexStorage,
-		syncIndexToVault
+		startOrRefreshIndexSync: indexingCoordinator.startOrRefreshSync,
 	})
 	const isInitialIndexCompleted = makeIsInitialIndexCompleted({settingsRepo});
 	const markInitialIndexCompleted = makeMarkInitialIndexCompleted({settingsRepo});
@@ -140,12 +147,18 @@ export function buildAppServices(plugin: Plugin): AppServices {
 		getSimilarNotes,
 		insertWikilinkAtCursor,
 		syncIndexToVault,
+		startOrRefreshIndexSync: indexingCoordinator.startOrRefreshSync,
+		bumpIndexPriority: indexingCoordinator.bumpPriority,
+		awaitIndexedNote: indexingCoordinator.awaitNote,
+		subscribeIndexingState: indexingCoordinator.subscribe,
+		getIndexingState: indexingCoordinator.getSnapshot,
 		isIgnoredPath,
 		updateSettings,
 		isInitialIndexCompleted,
 		markInitialIndexCompleted,
 		upsertDebouncer,
 		shutdown() {
+			indexingCoordinator.unload();
 			upsertDebouncer.cancel();
 			embedder.unload();
 			status.clear();

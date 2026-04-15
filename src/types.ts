@@ -6,6 +6,12 @@ export type RawNote = {
 	markdown: string;
 };
 
+export type NoteIndexCandidate = {
+	id: string;
+	modifiedAt: number;
+	recentOpenRank?: number;
+};
+
 export type IndexedNote = {
 	id: string;
 	embedding: number[];
@@ -68,6 +74,8 @@ export interface NoteSource {
 	getNoteById(noteId: string): Promise<RawNote | null>;
 
 	listIds(): string[];
+
+	listIndexCandidates(): NoteIndexCandidate[];
 }
 
 export interface ActiveEditor {
@@ -89,6 +97,28 @@ export interface SettingsRepository {
 }
 
 export type OnProgressCallback = (p: { phase: string; processed: number; total: number }) => void;
+
+export type IndexingPriorityReason = "seed" | "open" | "edit" | "manual";
+
+export type IndexingBannerState = {
+	kind: "hidden" | "initial" | "updating" | "failed";
+	message: string;
+	progressLabel?: string;
+	processed: number;
+	total: number;
+};
+
+export type IndexingQueueSnapshot = {
+	isRunning: boolean;
+	hasCompletedInitialIndex: boolean;
+	currentNoteId?: string;
+	pending: number;
+	processed: number;
+	total: number;
+	failed: number;
+	fatalError?: string;
+	banner: IndexingBannerState;
+};
 
 export type IndexingWarning =
 	| "raw-markdown-truncated"

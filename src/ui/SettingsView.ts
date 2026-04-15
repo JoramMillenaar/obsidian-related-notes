@@ -134,14 +134,14 @@ export class SettingView extends PluginSettingTab {
 							return;
 						}
 
-						const syncResult = await this.deps.updateSettings({
+						const result = await this.deps.updateSettings({
 							ignoredPaths: draftIgnored,
 							...draftIndexing,
 						});
-						if (syncResult) {
-							new Notice(`Settings saved. Re-synced index (indexed: ${syncResult.indexed}, removed: ${syncResult.deleted}).`);
+						if (result.reindexQueued) {
+							new Notice("Settings saved. Index rebuild queued in the background.");
 						} else {
-							new Notice(`Settings saved.`);
+							new Notice("Settings saved.");
 						}
 					} finally {
 						button.setDisabled(false);

@@ -4,33 +4,76 @@
 }
 
 .small-pad-top {
-        padding-top: 4px;
+	padding-top: 4px;
 }
 
 .related-notes-empty {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
 .related-notes-warning {
-        color: var(--text-muted);
-        font-size: var(--font-small);
+	color: var(--text-muted);
+	font-size: var(--font-small);
 }
 
 .related-notes-actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+	display: flex;
+	gap: 8px;
+	align-items: center;
 }
 
 .related-notes-button {
-        align-self: flex-start;
+	align-self: flex-start;
+}
+
+.similarity-index-banner {
+	margin-bottom: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 10px;
+	background: var(--background-secondary);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.similarity-index-banner.is-hidden {
+	display: none;
+}
+
+.similarity-index-banner-message {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	line-height: 1.4;
+}
+
+.similarity-index-banner-progress {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.similarity-index-banner-bar {
+	flex: 1;
+	height: 6px;
+}
+
+.similarity-index-banner-label {
+	color: var(--text-faint);
+	font-size: var(--font-smaller);
+	white-space: nowrap;
+}
+
+.similarity-index-banner-failed {
+	border-color: var(--text-error);
+	background: color-mix(in srgb, var(--background-secondary) 86%, var(--text-error) 14%);
 }
 
 .suggestion-note {
-        color: var(--text-muted);
-        font-size: var(--font-smallest);
+	color: var(--text-muted);
+	font-size: var(--font-smallest);
 }
 
 
