@@ -1,13 +1,8 @@
-import { ItemView, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
-import {
-	AwaitIndexedNoteUseCase,
-	BumpIndexPriorityUseCase,
-	StartOrRefreshIndexSyncUseCase,
-	SubscribeIndexingStateUseCase,
-} from "../app/indexingCoordinator";
+import { StartOrRefreshIndexSyncUseCase, SubscribeIndexingStateUseCase, } from "../app/indexingCoordinator";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexRepository, IndexingQueueSnapshot } from "../types";
+import { IndexingQueueSnapshot, IndexRepository } from "../types";
 
 export function logError(message: unknown, ...optionalParams: unknown[]) {
 	console.error("[Similarity]:", message, ...optionalParams);
@@ -21,8 +16,6 @@ export type SimilarNotesListViewDeps = {
 	indexRepo: IndexRepository;
 	getSimilarNotes: GetSimilarNotesUseCase;
 	startOrRefreshIndexSync: StartOrRefreshIndexSyncUseCase;
-	bumpIndexPriority: BumpIndexPriorityUseCase;
-	awaitIndexedNote: AwaitIndexedNoteUseCase;
 	subscribeIndexingState: SubscribeIndexingStateUseCase;
 	isIgnoredPath: (path: string) => Promise<boolean>;
 }
@@ -96,41 +89,8 @@ export class SimilarNotesListView extends ItemView {
 
 	async render() {
 		this.containerEl.empty();
-		this.buildHeader(this.containerEl);
 		const content = this.containerEl.createEl("div", {cls: "tag-container"});
 		await this.renderContent(content);
-	}
-
-	private buildHeader(root: HTMLElement) {
-		const header = root.createEl("div", {cls: "nav-header"});
-		const navHeader = header.createEl("div", {cls: "nav-buttons-container"});
-
-		const refreshButton = navHeader.createEl("div", {
-			cls: "clickable-icon nav-action-button",
-			attr: {"aria-label": "Refresh related notes"},
-		});
-		setIcon(refreshButton, "refresh-ccw");
-		refreshButton.addEventListener("click", () => void this.handleRefresh());
-	}
-
-	private async handleRefresh() {
-		if (this.isLoading) return;
-
-		const active = this.app.workspace.getActiveFile();
-		if (!active || !isMarkdownPath(active.path)) {
-			await this.refresh();
-			return;
-		}
-
-		try {
-			await this.deps.bumpIndexPriority(active.path, "manual");
-			await this.deps.awaitIndexedNote(active.path);
-		} catch (error) {
-			logError("Error refreshing current note:", error);
-			new Notice("Failed to refresh related notes.");
-		} finally {
-			await this.refresh();
-		}
 	}
 
 	private renderLoading(container: HTMLElement) {
@@ -194,7 +154,7 @@ export class SimilarNotesListView extends ItemView {
 		});
 	}
 
-	private async renderContent(targetContainer: HTMLElement, options: {showLoading?: boolean} = {}) {
+	private async renderContent(targetContainer: HTMLElement, options: { showLoading?: boolean } = {}) {
 		const showLoading = options.showLoading ?? true;
 		const workingContainer = showLoading ? targetContainer : document.createElement("div");
 		if (showLoading) {
@@ -347,7 +307,7 @@ export class SimilarNotesListView extends ItemView {
 		}, delay);
 	}
 
-	async refresh(args: {background?: boolean} = {}) {
+	async refresh(args: { background?: boolean } = {}) {
 		if (this.isLoading) return;
 		const contentContainer = this.containerEl.querySelector(".tag-container");
 		if (contentContainer) {
@@ -407,11 +367,13 @@ export class SimilarNotesListView extends ItemView {
 		return false;
 	}
 
-	async onClose() {
+	override onClose(): Promise<void> {
 		if (this.refreshTimer) {
 			window.clearTimeout(this.refreshTimer);
 			this.refreshTimer = undefined;
 		}
 		this.unsubscribeIndexingState?.();
+
+		return Promise.resolve();
 	}
 }

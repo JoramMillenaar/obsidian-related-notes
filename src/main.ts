@@ -26,8 +26,6 @@ export default class RelatedNotes extends Plugin {
 					indexRepo: this.appServices.indexRepo,
 					getSimilarNotes: this.appServices.getSimilarNotes,
 					startOrRefreshIndexSync: this.appServices.startOrRefreshIndexSync,
-					bumpIndexPriority: this.appServices.bumpIndexPriority,
-					awaitIndexedNote: this.appServices.awaitIndexedNote,
 					subscribeIndexingState: this.appServices.subscribeIndexingState,
 					isIgnoredPath: this.appServices.isIgnoredPath,
 				})
