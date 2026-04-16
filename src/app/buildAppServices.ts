@@ -41,127 +41,110 @@ import {
 	SubscribeIndexingStateUseCase,
 } from "./indexingCoordinator";
 
-export type AppServices = {
-	status: StatusReporter;
-	noteSource: NoteSource;
-	markdownTextExtractor: MarkdownTextExtractor;
-	indexStorage: IndexStorage;
-	embedder: EmbeddingPort;
-	indexRepo: IndexRepository;
-	settingsRepo: SettingsRepository;
+export class AppServices {
+	readonly status: StatusReporter;
+	readonly noteSource: NoteSource;
+	readonly markdownTextExtractor: MarkdownTextExtractor;
+	readonly indexStorage: IndexStorage;
+	readonly embedder: EmbeddingPort;
+	readonly indexRepo: IndexRepository;
+	readonly settingsRepo: SettingsRepository;
 
-	indexNote: IndexNoteUseCase;
-	prepareNoteForEmbedding: PrepareNoteForEmbeddingUseCase;
-	getSimilarNotes: GetSimilarNotesUseCase;
-	insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
-	syncIndexToVault: SyncIndexToVaultUseCase;
-	startOrRefreshIndexSync: StartOrRefreshIndexSyncUseCase;
-	bumpIndexPriority: BumpIndexPriorityUseCase;
-	awaitIndexedNote: AwaitIndexedNoteUseCase;
-	subscribeIndexingState: SubscribeIndexingStateUseCase;
-	getIndexingState: GetIndexingStateUseCase;
-	isIgnoredPath: IsIgnoredPath;
-	updateSettings: UpdateSettingsUseCase;
-	isInitialIndexCompleted: IsInitialIndexCompletedUseCase;
-	markInitialIndexCompleted: MarkInitialIndexCompletedUseCase;
+	readonly indexNote: IndexNoteUseCase;
+	readonly prepareNoteForEmbedding: PrepareNoteForEmbeddingUseCase;
+	readonly getSimilarNotes: GetSimilarNotesUseCase;
+	readonly insertWikilinkAtCursor: InsertWikilinkAtCursorUseCase;
+	readonly syncIndexToVault: SyncIndexToVaultUseCase;
+	readonly startOrRefreshIndexSync: StartOrRefreshIndexSyncUseCase;
+	readonly bumpIndexPriority: BumpIndexPriorityUseCase;
+	readonly awaitIndexedNote: AwaitIndexedNoteUseCase;
+	readonly subscribeIndexingState: SubscribeIndexingStateUseCase;
+	readonly getIndexingState: GetIndexingStateUseCase;
+	readonly isIgnoredPath: IsIgnoredPath;
+	readonly updateSettings: UpdateSettingsUseCase;
+	readonly isInitialIndexCompleted: IsInitialIndexCompletedUseCase;
+	readonly markInitialIndexCompleted: MarkInitialIndexCompletedUseCase;
 
-	upsertDebouncer: KeyedDebouncer<string>;
+	readonly upsertDebouncer: KeyedDebouncer<string>;
 
-	shutdown(): void;
-};
+	private readonly unloadIndexingCoordinator: () => void;
 
-export function buildAppServices(plugin: Plugin): AppServices {
-	const status = new ObsidianStatusBar(plugin);
-	const noteSource = new ObsidianNoteSource(plugin);
-	const markdownTextExtractor = new ObsidianMarkdownTextExtractor(plugin);
-	const storage = new ObsidianPluginDataStore(plugin);
-	const indexStorage = new ObsidianPluginDataIndexStorage(storage);
-	const embedder = new EmbeddingProvider();
-	const embedText = makeEmbedText({embedder});
-	const embedChunks = makeEmbedChunks({embedder});
-	const indexRepo = new JsonIndexedNoteRepository(indexStorage);
-	const settingsRepo = new ObsidianSettingsRepository(storage);
-	const activeEditor = new ObsidianActiveEditor(plugin);
+	constructor(plugin: Plugin) {
+		this.status = new ObsidianStatusBar(plugin);
+		this.noteSource = new ObsidianNoteSource(plugin);
+		this.markdownTextExtractor = new ObsidianMarkdownTextExtractor(plugin);
+		const storage = new ObsidianPluginDataStore(plugin);
+		this.indexStorage = new ObsidianPluginDataIndexStorage(storage);
+		this.embedder = new EmbeddingProvider();
+		const embedText = makeEmbedText({embedder: this.embedder});
+		const embedChunks = makeEmbedChunks({embedder: this.embedder});
+		this.indexRepo = new JsonIndexedNoteRepository(this.indexStorage);
+		this.settingsRepo = new ObsidianSettingsRepository(storage);
+		const activeEditor = new ObsidianActiveEditor(plugin);
 
-	const isIgnoredPath = makeIsIgnoredPath({
-		settingsRepo,
-	})
+		this.isIgnoredPath = makeIsIgnoredPath({
+			settingsRepo: this.settingsRepo,
+		});
 
-	const prepareNoteForEmbedding = makePrepareNoteForEmbedding({
-		noteSource,
-		markdownTextExtractor,
-		settingsRepo,
-	});
+		this.prepareNoteForEmbedding = makePrepareNoteForEmbedding({
+			noteSource: this.noteSource,
+			markdownTextExtractor: this.markdownTextExtractor,
+			settingsRepo: this.settingsRepo,
+		});
 
-	const indexNote = makeIndexNote({
-		prepareNoteForEmbedding,
-		embedChunks,
-		indexRepo,
-		isIgnoredPath,
-	});
+		this.indexNote = makeIndexNote({
+			prepareNoteForEmbedding: this.prepareNoteForEmbedding,
+			embedChunks,
+			indexRepo: this.indexRepo,
+			isIgnoredPath: this.isIgnoredPath,
+		});
 
-	const getSimilarNotes = makeGetSimilarNotes({
-		indexRepo,
-		embedText,
-		embedChunks,
-		prepareNoteForEmbedding,
-	});
+		this.getSimilarNotes = makeGetSimilarNotes({
+			indexRepo: this.indexRepo,
+			embedText,
+			embedChunks,
+			prepareNoteForEmbedding: this.prepareNoteForEmbedding,
+		});
 
-	const insertWikilinkAtCursor = makeInsertWikilinkAtCursor({
-		activeEditor,
-		noteSource,
-	});
+		this.insertWikilinkAtCursor = makeInsertWikilinkAtCursor({
+			activeEditor,
+			noteSource: this.noteSource,
+		});
 
-	const indexingCoordinator = makeIndexingCoordinator({
-		noteSource,
-		indexRepo,
-		settingsRepo,
-		indexNote,
-	});
+		const indexingCoordinator = makeIndexingCoordinator({
+			noteSource: this.noteSource,
+			indexRepo: this.indexRepo,
+			settingsRepo: this.settingsRepo,
+			indexNote: this.indexNote,
+		});
 
-	const syncIndexToVault = makeSyncIndexToVault({
-		startOrRefreshSync: indexingCoordinator.startOrRefreshSync,
-		subscribe: indexingCoordinator.subscribe,
-	});
+		this.syncIndexToVault = makeSyncIndexToVault({
+			startOrRefreshSync: indexingCoordinator.startOrRefreshSync,
+			subscribe: indexingCoordinator.subscribe,
+		});
 
-	const upsertDebouncer = new KeyedDebouncer<string>(1100);
+		this.startOrRefreshIndexSync = indexingCoordinator.startOrRefreshSync;
+		this.bumpIndexPriority = indexingCoordinator.bumpPriority;
+		this.awaitIndexedNote = indexingCoordinator.awaitNote;
+		this.subscribeIndexingState = indexingCoordinator.subscribe;
+		this.getIndexingState = indexingCoordinator.getSnapshot;
+		this.unloadIndexingCoordinator = indexingCoordinator.unload;
 
-	const updateSettings = makeUpdateSettings({
-		settingsRepo,
-		indexStorage,
-		startOrRefreshIndexSync: indexingCoordinator.startOrRefreshSync,
-	})
-	const isInitialIndexCompleted = makeIsInitialIndexCompleted({settingsRepo});
-	const markInitialIndexCompleted = makeMarkInitialIndexCompleted({settingsRepo});
+		this.upsertDebouncer = new KeyedDebouncer<string>(1100);
 
-	return {
-		status,
-		noteSource,
-		markdownTextExtractor,
-		indexStorage,
-		embedder,
-		indexRepo,
-		settingsRepo,
-		indexNote,
-		prepareNoteForEmbedding,
-		getSimilarNotes,
-		insertWikilinkAtCursor,
-		syncIndexToVault,
-		startOrRefreshIndexSync: indexingCoordinator.startOrRefreshSync,
-		bumpIndexPriority: indexingCoordinator.bumpPriority,
-		awaitIndexedNote: indexingCoordinator.awaitNote,
-		subscribeIndexingState: indexingCoordinator.subscribe,
-		getIndexingState: indexingCoordinator.getSnapshot,
-		isIgnoredPath,
-		updateSettings,
-		isInitialIndexCompleted,
-		markInitialIndexCompleted,
-		upsertDebouncer,
-		shutdown() {
-			indexingCoordinator.unload();
-			upsertDebouncer.cancel();
-			embedder.unload();
-			status.clear();
-		},
-	};
+		this.updateSettings = makeUpdateSettings({
+			settingsRepo: this.settingsRepo,
+			indexStorage: this.indexStorage,
+			startOrRefreshIndexSync: this.startOrRefreshIndexSync,
+		});
+		this.isInitialIndexCompleted = makeIsInitialIndexCompleted({settingsRepo: this.settingsRepo});
+		this.markInitialIndexCompleted = makeMarkInitialIndexCompleted({settingsRepo: this.settingsRepo});
+	}
+
+	shutdown(): void {
+		this.unloadIndexingCoordinator();
+		this.upsertDebouncer.cancel();
+		this.embedder.unload();
+		this.status.clear();
+	}
 }
