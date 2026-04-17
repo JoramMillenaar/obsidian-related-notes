@@ -148,12 +148,12 @@ export class IndexingCoordinator {
 
 	getSnapshot: GetIndexingStateUseCase = () => this.runtime.getSnapshot();
 
-	unload() {
+	unload = () => {
 		this.isUnloaded = true;
 		this.processingPromise = null;
 		this.refreshChain = Promise.resolve();
 		this.runtime.unload();
-	}
+	};
 
 	private async ensureInitialStateLoaded() {
 		if (this.hasLoadedInitialIndexState || this.isUnloaded) {
