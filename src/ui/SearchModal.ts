@@ -178,7 +178,7 @@ export class SearchModal extends SuggestModal<RelatedNote> {
 	renderSuggestion(value: RelatedNote, el: HTMLElement): void {
 		let fileName = value.id;
 		if (fileName.endsWith(".md")) fileName = fileName.slice(0, -3);
-		const scorePercent = (value.score * 100).toFixed(1);
+		const scorePercent = (value.score * 100).toFixed(0);
 
 		el.createEl("div", {text: fileName});
 		el.createEl("small", {text: `${scorePercent}%`, cls: "suggestion-note"});
