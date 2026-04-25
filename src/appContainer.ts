@@ -1,16 +1,16 @@
 import { Plugin } from "obsidian";
-import { KeyedDebouncer } from "../domain/debouncer";
-import { ObsidianStatusBar } from "../infra/obsidian/obsidianStatusBar";
-import { ObsidianMarkdownTextExtractor } from "../infra/obsidian/obsidianMarkdownTextExtractor";
-import { ObsidianNoteSource } from "../infra/obsidian/obsidianNoteSource";
-import { ObsidianPluginDataIndexStorage } from "../infra/obsidian/obsidianStorage";
-import { EmbeddingProvider } from "../infra/embedder/embeddingProvider";
-import { JsonIndexedNoteRepository } from "../infra/index/jsonIndexedNoteRepository";
-import { IndexNoteUseCase, makeIndexNote } from "./indexNote";
-import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./getSimilarNotes";
-import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./insertWikilinkAtCursor";
-import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./syncIndexToVault";
-import { makeEmbedChunks, makeEmbedText } from "./embedText";
+import { KeyedDebouncer } from "./domain/debouncer";
+import { ObsidianStatusBar } from "./infra/obsidian/obsidianStatusBar";
+import { ObsidianMarkdownTextExtractor } from "./infra/obsidian/obsidianMarkdownTextExtractor";
+import { ObsidianNoteSource } from "./infra/obsidian/obsidianNoteSource";
+import { ObsidianPluginDataIndexStorage } from "./infra/obsidian/obsidianStorage";
+import { EmbeddingProvider } from "./infra/embedder/embeddingProvider";
+import { JsonIndexedNoteRepository } from "./infra/index/jsonIndexedNoteRepository";
+import { IndexNoteUseCase, makeIndexNote } from "./app/indexNote";
+import { GetSimilarNotesUseCase, makeGetSimilarNotes } from "./app/getSimilarNotes";
+import { InsertWikilinkAtCursorUseCase, makeInsertWikilinkAtCursor } from "./app/insertWikilinkAtCursor";
+import { makeSyncIndexToVault, SyncIndexToVaultUseCase } from "./app/syncIndexToVault";
+import { makeEmbedChunks, makeEmbedText } from "./app/embedText";
 import {
 	EmbeddingPort,
 	IndexRepository,
@@ -19,19 +19,19 @@ import {
 	NoteSource,
 	SettingsRepository,
 	StatusReporter,
-} from "../types";
-import { ObsidianPluginDataStore } from "../infra/obsidian/obsidianPluginDataStore";
-import { ObsidianSettingsRepository } from "../infra/obsidian/obsidianSettings";
-import { IsIgnoredPath, makeIsIgnoredPath } from "./isIgnoredPath";
-import { makeUpdateSettings, UpdateSettingsUseCase } from "./updateSettings";
+} from "./types";
+import { ObsidianPluginDataStore } from "./infra/obsidian/obsidianPluginDataStore";
+import { ObsidianSettingsRepository } from "./infra/obsidian/obsidianSettings";
+import { IsIgnoredPath, makeIsIgnoredPath } from "./app/isIgnoredPath";
+import { makeUpdateSettings, UpdateSettingsUseCase } from "./app/updateSettings";
 import {
 	IsInitialIndexCompletedUseCase,
 	makeIsInitialIndexCompleted,
 	makeMarkInitialIndexCompleted,
 	MarkInitialIndexCompletedUseCase,
-} from "./initialIndexState";
-import { ObsidianActiveEditor } from "../infra/obsidian/obsidianActiveEditor";
-import { makePrepareNoteForEmbedding, PrepareNoteForEmbeddingUseCase } from "./prepareNoteForEmbedding";
+} from "./app/initialIndexState";
+import { ObsidianActiveEditor } from "./infra/obsidian/obsidianActiveEditor";
+import { makePrepareNoteForEmbedding, PrepareNoteForEmbeddingUseCase } from "./app/prepareNoteForEmbedding";
 import {
 	AwaitIndexedNoteUseCase,
 	BumpIndexPriorityUseCase,
@@ -39,9 +39,13 @@ import {
 	makeIndexingCoordinator,
 	StartOrRefreshIndexSyncUseCase,
 	SubscribeIndexingStateUseCase,
-} from "./indexingCoordinator";
+} from "./app/indexingCoordinator";
 
-export class AppServices {
+/**
+ * Application container and composition root.
+ * Owns concrete infrastructure adapters, wires use cases, and releases runtime resources.
+ */
+export class AppContainer {
 	readonly status: StatusReporter;
 	readonly noteSource: NoteSource;
 	readonly markdownTextExtractor: MarkdownTextExtractor;

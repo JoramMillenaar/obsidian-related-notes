@@ -1,33 +1,33 @@
 import { Notice, Plugin } from "obsidian";
 import { SearchModal } from "./ui/SearchModal";
 import { initializePlugin } from "./app/initializePlugin";
-import { AppServices } from "./app/buildAppServices";
+import { AppContainer } from "./appContainer";
 import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "./ui/SimilarNotesListView";
 import { activateRightLeafView } from "./app/activateRightLeafView";
 import { SettingView } from "./ui/SettingsView";
 import { isMarkdownPath } from "./domain/markdownPath";
 
 export default class RelatedNotes extends Plugin {
-	private appServices!: AppServices;
+	private appContainer!: AppContainer;
 
 	onload(): void {
-		this.appServices = new AppServices(this);
-		this.appServices.status.update("Loading…");
+		this.appContainer = new AppContainer(this);
+		this.appContainer.status.update("Loading…");
 
 		this.addSettingTab(new SettingView(this.app, this, {
-			settingsRepo: this.appServices.settingsRepo,
-			updateSettings: this.appServices.updateSettings
+			settingsRepo: this.appContainer.settingsRepo,
+			updateSettings: this.appContainer.updateSettings
 		}));
 
 		this.registerView(
 			VIEW_TYPE_SIMILARITY,
 			(leaf) =>
 				new SimilarNotesListView(leaf, {
-					indexRepo: this.appServices.indexRepo,
-					getSimilarNotes: this.appServices.getSimilarNotes,
-					startOrRefreshIndexSync: this.appServices.startOrRefreshIndexSync,
-					subscribeIndexingState: this.appServices.subscribeIndexingState,
-					isIgnoredPath: this.appServices.isIgnoredPath,
+					indexRepo: this.appContainer.indexRepo,
+					getSimilarNotes: this.appContainer.getSimilarNotes,
+					startOrRefreshIndexSync: this.appContainer.startOrRefreshIndexSync,
+					subscribeIndexingState: this.appContainer.subscribeIndexingState,
+					isIgnoredPath: this.appContainer.isIgnoredPath,
 				})
 		);
 
@@ -35,18 +35,18 @@ export default class RelatedNotes extends Plugin {
 			id: "sync-vault",
 			name: "Sync vault index",
 			callback: async () => {
-				this.appServices.status.update("Syncing vault index…");
+				this.appContainer.status.update("Syncing vault index…");
 				try {
-					await this.appServices.syncIndexToVault({
+					await this.appContainer.syncIndexToVault({
 						onProgress: (p) => {
-							this.appServices.status.update(`${p.processed}/${p.total} indexed`);
+							this.appContainer.status.update(`${p.processed}/${p.total} indexed`);
 						},
 					});
 					this.refreshView();
-					this.appServices.status.update("Index synced", 2500);
+					this.appContainer.status.update("Index synced", 2500);
 					new Notice("Similarity index synced");
 				} catch (error) {
-					this.appServices.status.update("Sync failed (see console)", 5000);
+					this.appContainer.status.update("Sync failed (see console)", 5000);
 					console.error("[Similarity] Sync failed", error);
 					new Notice("Similarity sync failed");
 				}
@@ -60,19 +60,19 @@ export default class RelatedNotes extends Plugin {
 				const f = this.app.workspace.getActiveFile();
 				if (!f) return;
 				if (!isMarkdownPath(f.path)) {
-					this.appServices.status.update("Only Markdown notes are indexed", 3000);
+					this.appContainer.status.update("Only Markdown notes are indexed", 3000);
 					this.refreshView();
 					return;
 				}
 
-				this.appServices.status.update("Indexing current note…");
+				this.appContainer.status.update("Indexing current note…");
 				try {
-					await this.appServices.bumpIndexPriority(f.path, "manual");
-					await this.appServices.awaitIndexedNote(f.path);
+					await this.appContainer.bumpIndexPriority(f.path, "manual");
+					await this.appContainer.awaitIndexedNote(f.path);
 					this.refreshView();
-					this.appServices.status.update("Current note refreshed", 2000);
+					this.appContainer.status.update("Current note refreshed", 2000);
 				} catch (error) {
-					this.appServices.status.update("Index failed (see console)", 5000);
+					this.appContainer.status.update("Index failed (see console)", 5000);
 					console.error("[Similarity] Reindex current failed", error);
 				}
 			},
@@ -83,11 +83,11 @@ export default class RelatedNotes extends Plugin {
 			name: "Open semantic search",
 			callback: () => {
 				new SearchModal(this.app, {
-					getSimilarNotes: this.appServices.getSimilarNotes,
-					insertWikilinkAtCursor: this.appServices.insertWikilinkAtCursor,
-					subscribeIndexingState: this.appServices.subscribeIndexingState,
-					indexRepo: this.appServices.indexRepo,
-					isIgnoredPath: this.appServices.isIgnoredPath,
+					getSimilarNotes: this.appContainer.getSimilarNotes,
+					insertWikilinkAtCursor: this.appContainer.insertWikilinkAtCursor,
+					subscribeIndexingState: this.appContainer.subscribeIndexingState,
+					indexRepo: this.appContainer.indexRepo,
+					isIgnoredPath: this.appContainer.isIgnoredPath,
 				}).open();
 			},
 		});
@@ -101,12 +101,12 @@ export default class RelatedNotes extends Plugin {
 		});
 
 		this.app.workspace.onLayoutReady(() => {
-			void initializePlugin(this, this.appServices);
+			void initializePlugin(this, this.appContainer);
 		});
 	}
 
 	onunload(): void {
-		this.appServices.shutdown();
+		this.appContainer.shutdown();
 	}
 
 	private refreshView(): void {

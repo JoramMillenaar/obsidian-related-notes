@@ -1,11 +1,11 @@
 import { Plugin, TFile } from "obsidian";
 import { SimilarNotesListView, VIEW_TYPE_SIMILARITY } from "../ui/SimilarNotesListView";
-import { AppServices } from "./buildAppServices";
+import { AppContainer } from "../appContainer";
 import { activateRightLeafView } from "./activateRightLeafView";
 
 export async function initializePlugin(
 	plugin: Plugin,
-	app: AppServices,
+	app: AppContainer,
 ): Promise<void> {
 	app.status.update("Starting…");
 

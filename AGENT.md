@@ -75,7 +75,7 @@ Treat these boundaries as non-negotiable.
 
 1. **Ports in `src/types.ts`** define boundaries (`EmbeddingPort`, `IndexRepository`, `NoteSource`, `SettingsRepository`, etc.).
 2. **Use case factories** (`makeIndexNote`, `makeGetSimilarNotes`, etc.) are the primary composition style.
-3. **Single composition root** is `buildAppServices` where concrete infra adapters are wired to app use cases.
+3. **Single application container / composition root** is `AppContainer` in `src/app/appContainer.ts`, where concrete infra adapters are owned and wired to app use cases. Treat it as a container, not a normal application use case or `makeX` factory.
 4. **Domain functions are reused by app** (`deriveSyncActions`, `isPathIgnored`, `normalizeEmbedding`, etc.), not rewritten in adapters.
 5. **UI depends on use-case interfaces** (`GetSimilarNotesUseCase`, `SyncIndexToVaultUseCase`, etc.), not infra classes.
 
@@ -113,7 +113,7 @@ If uncertain, prefer extracting pure logic into `domain` and keep other layers t
 2. Add/update **port contracts** in `src/types.ts` if needed.
 3. Implement/extend **app use case** (`makeX`) to orchestrate behavior.
 4. Implement/extend **infra adapters** to satisfy contracts.
-5. Connect everything in **`buildAppServices`**.
+5. Connect everything in **`AppContainer`** (`src/app/appContainer.ts`).
 6. Invoke through **UI** components.
 
 This order keeps the core model clean and prevents architecture drift.
@@ -127,7 +127,7 @@ Before finalizing a task, verify:
 - [ ] No layer boundary violations.
 - [ ] New business logic lives in `domain` (or is clearly justified otherwise).
 - [ ] UI changes only call use cases/ports, not persistence internals.
-- [ ] Composition is centralized in `buildAppServices`.
+- [ ] Composition is centralized in `AppContainer` (`src/app/appContainer.ts`).
 - [ ] Build passes (`npm run build`).
 
 If a quick fix conflicts with this architecture, **do not shortcut**. Implement the proper layered change.
