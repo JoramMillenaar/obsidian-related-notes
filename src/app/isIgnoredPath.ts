@@ -1,4 +1,4 @@
-import { SettingsRepository } from "../types";
+import { SettingsRepository } from "../ports";
 import { isPathIgnored } from "../domain/ignoreRules";
 
 export type IsIgnoredPath = (path: string) => Promise<boolean>;

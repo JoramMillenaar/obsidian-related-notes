@@ -1,7 +1,8 @@
 import { hashText } from "../domain/text";
 import { normalizeEmbedding } from "../domain/embedding";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexRepository, PrepareNoteResult } from "../types";
+import { PrepareNoteResult } from "../types";
+import { IndexRepository } from "../ports";
 import { EmbedChunksUseCase } from "./embedText";
 import { IsIgnoredPath } from "./isIgnoredPath";
 import { PrepareNoteForEmbeddingUseCase } from "./prepareNoteForEmbedding";

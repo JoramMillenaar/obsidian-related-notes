@@ -1,6 +1,6 @@
 import { deriveSyncActions } from "../domain/getSyncActions";
 import { isPathIgnored } from "../domain/ignoreRules";
-import { IndexRepository, NoteSource, SettingsRepository } from "../types";
+import { IndexRepository, NoteSource, SettingsRepository } from "../ports";
 import { sortInitialIndexCandidates } from "../domain/indexingQueue";
 
 export type IndexSyncPlan = {

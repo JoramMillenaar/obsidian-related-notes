@@ -1,4 +1,5 @@
-import { IndexRepository, PrepareNoteResult, RelatedNote } from "../types";
+import { PrepareNoteResult, RelatedNote } from "../types";
+import { IndexRepository } from "../ports";
 import { cosineSimilarity, normalizeEmbedding } from "../domain/embedding";
 import { EmbedChunksUseCase, EmbedTextUseCase } from "./embedText";
 import { PrepareNoteForEmbeddingUseCase } from "./prepareNoteForEmbedding";

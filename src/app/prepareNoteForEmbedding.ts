@@ -1,5 +1,6 @@
 import { prepareExtractedNoteForEmbedding, truncateText } from "../domain/indexing";
-import { IndexingWarning, MarkdownTextExtractor, NoteSource, PrepareNoteResult, SettingsRepository } from "../types";
+import { IndexingWarning, PrepareNoteResult } from "../types";
+import { MarkdownTextExtractor, NoteSource, SettingsRepository } from "../ports";
 
 export type PrepareNoteForEmbeddingUseCase = (noteId: string) => Promise<PrepareNoteResult>;
 

@@ -1,4 +1,4 @@
-import { SettingsRepository } from "../types";
+import { SettingsRepository } from "../ports";
 
 export type IsInitialIndexCompletedUseCase = () => Promise<boolean>;
 export type MarkInitialIndexCompletedUseCase = () => Promise<void>;

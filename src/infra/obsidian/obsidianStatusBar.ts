@@ -1,5 +1,5 @@
 import { Plugin } from "obsidian";
-import { StatusReporter } from "../../types";
+import { StatusReporter } from "../../ports";
 
 export class ObsidianStatusBar implements StatusReporter {
 	private statusBarItem: HTMLElement;

@@ -1,6 +1,6 @@
 import { averageEmbeddings } from "../domain/embedding";
 import { chunkTextByFixedWindow } from "../domain/textChunking";
-import { EmbeddingPort } from "../types";
+import { EmbeddingPort } from "../ports";
 
 export type EmbedTextUseCase = (text: string) => Promise<number[] | null>;
 export type EmbedChunksUseCase = (chunks: string[]) => Promise<number[] | null>;

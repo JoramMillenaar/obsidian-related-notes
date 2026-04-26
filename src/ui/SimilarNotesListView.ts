@@ -2,7 +2,8 @@ import { ItemView, Notice, TFile, WorkspaceLeaf } from "obsidian";
 import { GetSimilarNotesUseCase } from "../app/getSimilarNotes";
 import { StartOrRefreshIndexSyncUseCase, SubscribeIndexingStateUseCase, } from "../app/indexingCoordinator";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexingQueueSnapshot, IndexRepository } from "../types";
+import { IndexingQueueSnapshot } from "../types";
+import { IndexRepository } from "../ports";
 
 export function logError(message: unknown, ...optionalParams: unknown[]) {
 	console.error("[Similarity]:", message, ...optionalParams);

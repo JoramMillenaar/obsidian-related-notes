@@ -1,5 +1,5 @@
 import { EditorPosition, MarkdownView, Plugin } from "obsidian";
-import { ActiveEditor } from "../../types";
+import { ActiveEditor } from "../../ports";
 
 export class ObsidianActiveEditor implements ActiveEditor {
 	constructor(private readonly plugin: Plugin) {

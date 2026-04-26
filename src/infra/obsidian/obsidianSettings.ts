@@ -1,4 +1,5 @@
-import { SettingsRepository, SimilaritySettings } from "../../types";
+import { SimilaritySettings } from "../../types";
+import { SettingsRepository } from "../../ports";
 import { ObsidianPluginDataStore } from "./obsidianPluginDataStore";
 
 export class ObsidianSettingsRepository implements SettingsRepository {

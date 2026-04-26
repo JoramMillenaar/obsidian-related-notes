@@ -1,5 +1,5 @@
 import { IframeMessenger } from "src/infra/embedder/iframe/messagingService";
-import { EmbeddingPort } from "../../types";
+import { EmbeddingPort } from "../../ports";
 
 
 export class EmbeddingProvider implements EmbeddingPort {

@@ -1,4 +1,5 @@
-import { IndexedNote, IndexRepository, IndexStorage } from "../../types";
+import { IndexedNote } from "../../types";
+import { IndexRepository, IndexStorage } from "../../ports";
 
 export class JsonIndexedNoteRepository implements IndexRepository {
 	constructor(

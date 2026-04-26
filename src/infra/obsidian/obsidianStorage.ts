@@ -1,4 +1,5 @@
-import { IndexedNote, IndexStorage } from "../../types";
+import { IndexedNote } from "../../types";
+import { IndexStorage } from "../../ports";
 import { ObsidianPluginDataStore } from "./obsidianPluginDataStore";
 
 export class ObsidianPluginDataIndexStorage implements IndexStorage {

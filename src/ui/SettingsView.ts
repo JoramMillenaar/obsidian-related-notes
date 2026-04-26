@@ -1,7 +1,8 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import RelatedNotes from "../main";
 import { parseIgnoredPaths } from "../domain/ignoreRules";
-import { SettingsRepository, SimilaritySettings } from "../types";
+import { SimilaritySettings } from "../types";
+import { SettingsRepository } from "../ports";
 import { UpdateSettingsUseCase } from "../app/updateSettings";
 
 export type SettingsViewDeps = {

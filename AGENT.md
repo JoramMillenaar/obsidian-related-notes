@@ -73,7 +73,7 @@ Treat these boundaries as non-negotiable.
 
 ## 2) Existing project patterns to keep
 
-1. **Ports in `src/types.ts`** define boundaries (`EmbeddingPort`, `IndexRepository`, `NoteSource`, `SettingsRepository`, etc.).
+1. **Ports in `src/ports`** define boundaries (`EmbeddingPort`, `IndexRepository`, `NoteSource`, `SettingsRepository`, etc.). Shared data shapes remain in `src/types.ts`.
 2. **Use case factories** (`makeIndexNote`, `makeGetSimilarNotes`, etc.) are the primary composition style.
 3. **Single application container / composition root** is `AppContainer` in `src/app/appContainer.ts`, where concrete infra adapters are owned and wired to app use cases. Treat it as a container, not a normal application use case or `makeX` factory.
 4. **Domain functions are reused by app** (`deriveSyncActions`, `isPathIgnored`, `normalizeEmbedding`, etc.), not rewritten in adapters.
@@ -110,7 +110,7 @@ If uncertain, prefer extracting pure logic into `domain` and keep other layers t
 ## 5) Preferred implementation flow for new features
 
 1. Add/update **domain rule(s)** first (if business logic changes).
-2. Add/update **port contracts** in `src/types.ts` if needed.
+2. Add/update **port contracts** in `src/ports` if needed.
 3. Implement/extend **app use case** (`makeX`) to orchestrate behavior.
 4. Implement/extend **infra adapters** to satisfy contracts.
 5. Connect everything in **`AppContainer`** (`src/app/appContainer.ts`).

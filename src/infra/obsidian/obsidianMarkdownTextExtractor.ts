@@ -1,5 +1,5 @@
 import { Component, MarkdownRenderer, Plugin } from "obsidian";
-import { MarkdownTextExtractor } from "../../types";
+import { MarkdownTextExtractor } from "../../ports";
 
 export class ObsidianMarkdownTextExtractor implements MarkdownTextExtractor {
 	constructor(private readonly plugin: Plugin) {

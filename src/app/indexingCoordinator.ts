@@ -3,11 +3,9 @@ import { isMarkdownPath } from "../domain/markdownPath";
 import {
 	IndexingPriorityReason,
 	IndexingQueueSnapshot,
-	IndexRepository,
-	NoteSource,
-	SettingsRepository,
 	SyncResults,
 } from "../types";
+import { IndexRepository, NoteSource, SettingsRepository } from "../ports";
 import { IndexNoteOutcome, IndexNoteUseCase } from "./indexNote";
 import { IndexingRuntime } from "./indexingRuntime";
 import {

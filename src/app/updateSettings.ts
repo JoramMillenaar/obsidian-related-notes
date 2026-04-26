@@ -1,4 +1,5 @@
-import { SettingsRepository, SimilaritySettings } from "../types";
+import { SimilaritySettings } from "../types";
+import { SettingsRepository } from "../ports";
 import { StartOrRefreshIndexSyncUseCase } from "./indexingCoordinator";
 
 export type UpdateSettingsResult = {

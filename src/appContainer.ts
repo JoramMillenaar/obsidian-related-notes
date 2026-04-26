@@ -19,7 +19,7 @@ import {
 	NoteSource,
 	SettingsRepository,
 	StatusReporter,
-} from "./types";
+} from "./ports";
 import { ObsidianPluginDataStore } from "./infra/obsidian/obsidianPluginDataStore";
 import { ObsidianSettingsRepository } from "./infra/obsidian/obsidianSettings";
 import { IsIgnoredPath, makeIsIgnoredPath } from "./app/isIgnoredPath";

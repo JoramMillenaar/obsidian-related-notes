@@ -34,68 +34,6 @@ export interface SyncResults {
 	deleted: number;
 }
 
-export interface EmbeddingPort {
-	embed(text: string): Promise<number[] | null>;
-
-	load(): Promise<void>;
-
-	unload(): void;
-}
-
-export interface MarkdownTextExtractor {
-	extract(markdown: string): Promise<string>;
-}
-
-export interface IndexRepository {
-	findById(noteId: string): Promise<IndexedNote | null>;
-
-	listAll(): Promise<IndexedNote[]>;
-
-	isEmpty(): Promise<boolean>;
-
-	upsert(note: IndexedNote): Promise<void>;
-
-	upsertMany(notes: IndexedNote[]): Promise<void>;
-
-	remove(noteId: string): Promise<void>;
-
-	rename(oldId: string, newId: string): Promise<void>;
-}
-
-export interface IndexStorage {
-	getAll(): Promise<IndexedNote[]>;
-
-	rewrite(index: IndexedNote[]): Promise<void>;
-
-	isEmpty(): Promise<boolean>;
-}
-
-export interface NoteSource {
-	getNoteById(noteId: string): Promise<RawNote | null>;
-
-	listIds(): string[];
-
-	listIndexCandidates(): NoteIndexCandidate[];
-}
-
-export interface ActiveEditor {
-	insertTextAtCursor(text: string): boolean;
-}
-
-export interface StatusReporter {
-	update(text: string, timeout?: number): void;
-
-	clear(): void;
-}
-
-export interface SettingsRepository {
-	get(): Promise<SimilaritySettings>;
-
-	update(settings: SimilaritySettings): Promise<void>;
-
-	updatePartial(patch: Partial<SimilaritySettings>): Promise<void>;
-}
-
 export type OnProgressCallback = (p: { phase: string; processed: number; total: number }) => void;
 
 export type IndexingPriorityReason = "seed" | "open" | "edit" | "manual";

@@ -1,5 +1,6 @@
 import { Plugin, TFile } from "obsidian";
-import { NoteIndexCandidate, NoteSource, RawNote } from "../../types";
+import { NoteIndexCandidate, RawNote } from "../../types";
+import { NoteSource } from "../../ports";
 
 export class ObsidianNoteSource implements NoteSource {
 	constructor(private readonly plugin: Plugin) {

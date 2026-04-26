@@ -1,5 +1,5 @@
 import { formatWikilink } from "../domain/wikilink";
-import { ActiveEditor, NoteSource } from "../types";
+import { ActiveEditor, NoteSource } from "../ports";
 
 export type InsertWikilinkAtCursorResult = "inserted" | "no-editor";
 

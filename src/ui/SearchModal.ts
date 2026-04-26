@@ -4,7 +4,8 @@ import { InsertWikilinkAtCursorUseCase } from "../app/insertWikilinkAtCursor";
 import { SubscribeIndexingStateUseCase } from "../app/indexingCoordinator";
 import { KeyedDebouncer } from "../domain/debouncer";
 import { isMarkdownPath } from "../domain/markdownPath";
-import { IndexRepository, IndexingQueueSnapshot, RelatedNote } from "../types";
+import { IndexingQueueSnapshot, RelatedNote } from "../types";
+import { IndexRepository } from "../ports";
 
 export type SearchModalDeps = {
 	getSimilarNotes: GetSimilarNotesUseCase;
